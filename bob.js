@@ -5,9 +5,11 @@ const fun = require("./fun.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
 const https = require('https');
+const Entities = require('html-entities').Html5Entities;
 
 const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
+const entities = new Entities();
 var categoryName = "Art's Dream - Any%";
 var prevCategoryName = "Art's Dream - Any%"; // Used to save full-game category when people do IL races
 var levelName = "The Open Door";
@@ -442,7 +444,7 @@ chooseDrmsMeLevel = (dreamURL, message) => {
             dataQueue += dataBuffer;
         });
         result.on("end", function () {
-            title = decodeHTML(dataQueue.substring(dataQueue.search(/<title>/) + 7, dataQueue.search(/ \| indreams\.me<\/title>/)).trim());
+            title = entities.decode(dataQueue.substring(dataQueue.search(/<title>/) + 7, dataQueue.search(/ \| indreams\.me<\/title>/)).trim());
             levelName = title + " - " + dreamURL;
             message.channel.send("Level updated to " + levelName + ".");
         });
@@ -1092,31 +1094,5 @@ placeEmote = (place) => {
             return ":checkered_flag:";
     }
 }
-
-// The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
-// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
-// Store markers outside of the function scope, not to recreate them on every call
-const entities = {
-    'amp': '&',
-    'apos': '\'',
-    'lt': '<',
-    'gt': '>',
-    'quot': '"',
-    'nbsp': ' '
-};
-const entityPattern = /&([a-z]+);/ig;
-
-decodeHTML = (text) => {
-    // A single replace pass with a static RegExp is faster than a loop
-    return text.replace(entityPattern, (match, entity) => {
-        entity = entity.toLowerCase();
-        if (entities.hasOwnProperty(entity)) {
-            return entities[entity];
-        }
-        // return original string if there is no matching entity (no replace)
-        return match;
-    });
-};
-// ----------------------------------------------------------------------------------------------------------------
 
 client.login(config.token);

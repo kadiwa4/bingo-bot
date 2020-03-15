@@ -7,13 +7,15 @@ Dreams speedrunning race bot for Discord based on RbdJellyfish’s LBP race bot.
 Install nodejs (version 6.x or higher).
 
 Get build tools.
-* Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
+* Windows: Install “VC++ 2015.3 v14.00 (v140) toolset for desktop” through VS Installer
 * Linux: `sudo apt-get install build-essential`
 
 Get dependencies.
 
+Note: this bot requires “html-entities”, while the LBP bot doesn’t
+
 * `npm init -y`
-* `npm i discord.js node-gyp better-sqlite3`
+* `npm i discord.js node-gyp better-sqlite3 html-entities`
 
 Create config.json in same directory as bob.js with your auth token.
 
