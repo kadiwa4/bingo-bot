@@ -563,7 +563,7 @@ unreadyCmd = (message) => {
 doneCmd = (message) => {
     if (raceState.state === State.ACTIVE) {
         if (raceState.entrants.has(message.author.id) && !raceState.doneEntrants.includes(message.author.id) && !raceState.ffEntrants.includes(message.author.id)) {
-            time = Date.now() / 1000 - raceState.startTime;
+            time = message.createdTimestamp / 1000 - raceState.startTime;
             raceState.entrants.get(message.author.id).doneTime = time;
             raceState.doneEntrants.push(message.author.id);
             points = raceState.entrants.size - raceState.doneEntrants.length + 1;
