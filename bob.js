@@ -8,10 +8,9 @@ const https = require('https');
 
 const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
-var gameName = "LittleBigPlanet";
-var categoryName = "Any% No Overlord";
-var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
-var levelName = "Introduction";
+var categoryName = "Art's Dream - Any%";
+var prevCategoryName = "Art's Dream - Any%"; // Used to save full-game category when people do IL races
+var levelName = "The Open Door";
 var raceId = 0;
 
 // References to timeouts, to cancel them if someone interrupts them
@@ -43,7 +42,7 @@ class RaceState {
         this.ilResults = [];
     }
 
-    // Adds an entrant. Returns true if succesful, returns false if the user has already joined.
+    // Adds an entrant. Returns true if successful, returns false if the user has already joined.
     addEntrant(message) {
         if (this.entrants.has(message.author.id)) {
             return false;
@@ -52,7 +51,7 @@ class RaceState {
         return true;
     }
 
-    // Removes an entrant. Returns true if succesful, returns false if the user isn't an entrant.
+    // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
             this.entrants.delete(id);
@@ -100,7 +99,7 @@ client.on("ready", () => {
     // Setup tables for keeping track of race results
     const resultsTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get();
     if (!resultsTable['count(*)']) {
-        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER);").run();
+        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
@@ -109,8 +108,8 @@ client.on("ready", () => {
     // Setup tables for keeping track of user stats
     const usersTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").get();
     if (!usersTable['count(*)']) {
-        sql.prepare("CREATE TABLE users (user_id TEXT, game TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();
-        sql.prepare("CREATE UNIQUE INDEX idx_users_id ON users (user_id, game, category);").run();
+        sql.prepare("CREATE TABLE users (user_id TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();
+        sql.prepare("CREATE UNIQUE INDEX idx_users_id ON users (user_id, category);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
     }
@@ -118,17 +117,17 @@ client.on("ready", () => {
     // Setup SQL queries for setting/retrieving results
     client.getLastRaceID = sql.prepare("SELECT MAX(race_id) AS id FROM results");
     client.getResults = sql.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY time ASC");
-    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, time, ff, dq) VALUES (@race_id, @user_id, @user_name, @game, @category, @time, @ff, @dq);");
+    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, category, time, ff, dq) VALUES (@race_id, @user_id, @user_name, @category, @time, @ff, @dq);");
 
     // Setup SQL queries for setting/retrieving user stats
-    client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
-    client.getUserStatsForCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? AND category = ?");
-    client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
-                                   + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
+    client.getUserStatsForCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND category = ?");
+    client.getUserStats = sql.prepare("SELECT * FROM users WHERE user_id = ? ORDER BY category ASC");
+    client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, category, races, gold, silver, bronze, ffs, elo, pb) "
+                                   + "VALUES (@user_id, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
 
     // Setup SQL query to show leaderboard
     client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_id AS user_id, results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
-                                      + "WHERE results.game = ? AND results.category = ? AND users.game = ? AND users.category = ? GROUP BY results.user_id ORDER BY users.elo DESC");
+                                      + "WHERE results.category = ? AND users.category = ? GROUP BY results.user_id ORDER BY users.elo DESC");
 
     // Set race ID to highest recorded race ID + 1
     raceId = client.getLastRaceID.get().id;
@@ -158,9 +157,6 @@ client.on("message", (message) => {
 
         else if (lowerMessage.startsWith("!ilrace"))
             ilRaceCmd(message);
-
-        else if (lowerMessage.startsWith("!game"))
-            gameCmd(message);
 
         else if (lowerMessage.startsWith("!category"))
             categoryCmd(message);
@@ -223,7 +219,7 @@ client.on("message", (message) => {
     else if (lowerMessage.startsWith("!s"))
         statusCmd(message);
 
-    else funCmds(lowerMessage, message);
+    else fun.funCmds(lowerMessage, message);
 });
 
 client.on('error', console.error);
@@ -233,8 +229,7 @@ helpCmd = (message) => {
     message.channel.send(`
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
-\`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
-\`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
+\`!category <category name>\` - Sets the category. Default is "Art's Dream - Any%".
 \`!exit\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -247,19 +242,19 @@ helpCmd = (message) => {
 
 **IL race commands**
 \`!ilrace\` - Starts a new series of IL races.
-\`!level <level name>\` - Sets the next level to race. Also accepts lbp.me links. Default is "Introduction".
+\`!level <level name>\` - Sets the next level to race. Also accepts indreams.me links. Default is "The Open Door".
 \`!luckydip\` - Sets the next level to race to a random lucky dip level.
 \`!ilresults\` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
 \`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
-\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
-\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
+\`!me\` - Shows your race statistics.
+\`!elo <category name>\` - Shows the ELO leaderboard for the given category (e.g. \`!elo any%\` shows the Art's Dream - Any% leaderboard).
 \`!help\` - Shows this message.
 
 **Fun command**
-\`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
+\`!nr\` / \`!newrunner\` - Mixes two halves of the names of random Dreams runners together.
 
 **Admin/moderator only**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
@@ -277,7 +272,7 @@ raceCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
-        message.channel.send(mention(message.author) + " has started a new race! Use `!race` to join; use `!game` and `!category` to setup the race further (currently " + gameName + " / " + categoryName + ").");
+        message.channel.send(mention(message.author) + " has started a new race! Use `!race` to join; use `!category` to setup the race further (currently " + categoryName + ").");
         raceState.state = State.JOINING;
 
     } else if (raceState.state === State.JOINING) {
@@ -304,7 +299,7 @@ ilRaceCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
-        message.channel.send(mention(message.author) + " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+        message.channel.send(mention(message.author) + " has started a new IL race! Use `!race` to join; use `!level` to setup the race further (currently " + levelName + ").");
         raceState.state = State.JOINING;
 
     } else if (raceState.state === State.JOINING) {
@@ -319,67 +314,23 @@ ilRaceCmd = (message) => {
     }
 }
 
-// !game
-gameCmd = (message) => {
-    if (raceState.state === State.JOINING) {
-        game = message.content.replace("!game", "").trim();
-        word = isILRace() ? "level" : "category";
-        name = isILRace() ? levelName : categoryName;
-
-        if (game === null || game === "") {
-            message.channel.send("Game / " + word + " is currently set to " + gameName + " / " + name + ". Set the game using: `!game <game name>`");
-            return;
-        }
-
-        game = categories.normalizeGameName(game);
-        if (game === null) {
-            message.channel.send("Specified game name was not a valid LBP game, try something else.");
-            return;
-        }
-
-        if (gameName !== game) {
-            gameName = game;
-            lastLetter = gameName.charAt(gameName.length - 1);
-            if (isILRace()) {
-                levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
-                name = levelName;
-            } else {
-                categoryName = "Any%";
-                switch (lastLetter) {
-                    case "t": case "2":
-                        categoryName += " No Overlord";
-                        break;
-                    case "3":
-                        categoryName += " No Create";
-                    default:
-                        break;
-                }
-                name = categoryName;
-            }
-            message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
-        } else {
-            message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
-        }
-    }
-}
-
 // !category
 categoryCmd = (message) => {
     if (raceState.state === State.JOINING) {
         category = message.content.replace("!category", "").trim();
         if (category === null || category === "") {
             if (isILRace()) {
-                message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + levelName + ".");
+                message.channel.send("IL race is currently in progress. Current level is set to " + levelName + ".");
             } else {
-                message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the category using: `!category <category name>`");
+                message.channel.send("The category is currently set to " + categoryName + ". Set it using: `!category <category name>`");
             }
             return;
         }
 
-        normalized = categories.normalizeCategory(gameName, category);
+        normalized = categories.normalizeCategory(category);
         if (normalized === null) {
             if (isILRace()) {
-                message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
+                message.channel.send("Switching from IL race to full-game race (" + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
             } else {
                 message.channel.send("Category updated to " + category + ". (This doesn't seem to be an official category, though; did you mean something else?)");
             }
@@ -391,17 +342,13 @@ categoryCmd = (message) => {
         if (normalized === "Individual Levels") {
             if (!isILRace()) {
                 categoryName = normalized;
-                message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+                message.channel.send("Switched to IL race. Use `!race` to join; use `!level` to setup the race further (currently " + levelName + ").");
             }
             return;
         }
 
-        if (normalized === "An3%" || normalized === "An7%") {
-            gameName = "LittleBigPlanet";
-        }
-
         if (isILRace()) {
-            message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + normalized + ").");
+            message.channel.send("Switching from IL race to full-game race (" + normalized + ").");
         } else {
             message.channel.send("Category updated to " + normalized + ".");
         }
@@ -419,21 +366,21 @@ levelCmd = (message) => {
     // Show current level
     level = message.content.replace("!level", "").trim();
     if (level === null || level === "") {
-        message.channel.send("Game / level is currently set to " + gameName + " / " + levelName + ". Set the level using: `!level <level name>`");
+        message.channel.send("The level is currently set to " + levelName + ". Set it using: `!level <level name>`");
         return;
     }
 
-    // Choose community level
-    if (level.includes("lbp.me/v/")) {
-        chooseLbpMeLevel(level, message);
+    // Choose community dream
+    if (level.includes("ms.me/")) {
+        chooseDrmsMeLevel(level, message);
         return;
     }
 
-    normalized = categories.normalizeLevel(gameName, level);
+    normalized = categories.normalizeLevel(level);
     if (normalized === null) {
-        // Choose other non-story level
+        // Choose other non-story dream
         levelName = level;
-        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/DLC level.)");
+        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level; try again if this isn't a community level.)");
         return;
     }
 
@@ -447,37 +394,11 @@ luckyDipCmd = (message) => {
     if (!isILRace() || raceState.state !== State.JOINING) {
         return;
     }
-
-    levelRegex = /-/;
-    luckyDipUrl = "";
-    lastLetter = gameName.charAt(gameName.length - 1);
-    switch(lastLetter) {
-        case "t":
-            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp1/g;
-            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp1";
-            break;
-        case "2":
-            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp2/g;
-            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp2";
-            break;
-        case "3":
-            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp3/g;
-            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp3";
-            break;
-        case "a":
-            levelRegex = /\/v\/([^"]+)/g;
-            luckyDipUrl = "https://vita.lbp.me/search?t=luckydip";
-            break;
-        default:
-            message.channel.send("Random community levels are unsupported for " + gameName);
-            return;
-    }
-
     "use-strict";
-    https.get(luckyDipUrl, function (result) {
+    https.get("https://indreams.me/search/results/?categories=interactive&type=dreams&sort=releasedate", function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Error: Couldn't follow " + luckyDipUrl + "; got a " + statusCode + " response.");
+            message.channel.send("Error: Couldn't follow https://indreams.me/search/results/?categories=interactive&type=dreams&sort=releasedate; got a " + statusCode + " response.");
             return;
         }
         var dataQueue = "";
@@ -486,33 +407,33 @@ luckyDipCmd = (message) => {
         });
         result.on("end", function () {
             matches = [];
-            dataQueue.replace(levelRegex, (wholeMatch, parenthesesContent) => {
+            dataQueue.replace(/href="\/dream\/(\w+)"/g, (wholeMatch, parenthesesContent) => {
                 matches.push(parenthesesContent);
             });
-            level = ((lastLetter === "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
-                    + matches[Math.floor(Math.random() * 12)];
-            chooseLbpMeLevel(level, message);
+            dreamURL = ("https://drms.me/")
+                    + matches[Math.floor(Math.random() * 48)];
+            chooseDrmsMeLevel(dreamURL, message);
         });
     });
     return;
 }
 
-// Sets the current level in an IL race to the level at the given lbp.me link
-chooseLbpMeLevel = (level, message) => {
-    isVita = level.includes("vita.lbp.me");
-    if (level.startsWith("http:")) {
-        level = level.replace("http:", "https:");
-    } else if (!level.startsWith("https:")) {
-        level = "https://" + level;
+// Sets the current level in an IL race to the dream at the given drms.me link
+chooseDrmsMeLevel = (dreamURL, message) => {
+    if (dreamURL.startsWith("http:")) {
+        dreamURL = dreamURL.replace("http:", "https:");
+    } else if (!dreamURL.startsWith("https:")) {
+        dreamURL = "https://" + dreamURL;
     }
-    if (level.split("/").length < 6) {
-        level += "/topreviews";
+    if (dreamURL.startsWith("https://i")) {
+        dreamURL = dreamURL.replace(/indreams\.me\/\w+\//, "drms.me/");
     }
+    longURL = dreamURL.replace("drms.me", "indreams.me/dream");
     "use-strict";
-    https.get(level, function (result) {
+    https.get(longURL, function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Error: Couldn't follow " + level + "; got a " + statusCode + " response.");
+            message.channel.send("Error: Couldn't follow " + longURL + "; got a " + statusCode + " response.");
             return;
         }
 
@@ -521,12 +442,8 @@ chooseLbpMeLevel = (level, message) => {
             dataQueue += dataBuffer;
         });
         result.on("end", function () {
-            start = dataQueue.search("<title>") + 7;
-            end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
-            titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
-            split = titleAuthor.split(" ");
-            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim(); // On vita.lbp.me there is a "By" between level name and author
-            levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
+            title = decodeHTML(dataQueue.substring(dataQueue.search(/<title>/) + 7, dataQueue.search(/ \| indreams\.me<\/title>/)).trim());
+            levelName = title + " - " + dreamURL;
             message.channel.send("Level updated to " + levelName + ".");
         });
     });
@@ -686,7 +603,7 @@ statusCmd = (message) => {
         message.channel.send("No race currently happening.");
 
     } else if (raceState.state === State.JOINING) {
-        raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant"
+        raceString = "**" + categoryName + " race is currently open with " + raceState.entrants.size + " entrant"
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
         if (isILRace()) {
             raceString += "*Starting " + formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
@@ -715,7 +632,7 @@ statusCmd = (message) => {
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.DONE) {
         // Say race is done if it is, otherwise say it's in progress and show the time
-        raceString = "**" + gameName + " / " + categoryName + " race is "
+        raceString = "**" + categoryName + " race is "
                 + (raceState.state === State.ACTIVE
                         ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
@@ -793,10 +710,9 @@ clearRaceCmd = (message) => {
     clearTimeout(raceDoneTimeout);
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
-    gameName = "LittleBigPlanet";
-    categoryName = "Any% No Overlord";
-    prevCategoryName = "Any% No Overlord";
-    levelName = "Introduction";
+    categoryName = "Art's Dream - Any%";
+    prevCategoryName = "Art's Dream - Any%";
+    levelName = "The Open Door";
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
         raceId = 0;
@@ -807,22 +723,10 @@ clearRaceCmd = (message) => {
 
 // !me
 meCmd = (message) => {
-    // Parse game name
-    game = message.content.replace("!me", "").trim();
-    if (game === null || game === "") {
-        message.channel.send("Usage: `!me <game name>` (e.g. `!me LBP1`)");
-        return;
-    }
-    game = categories.normalizeGameName(game);
-    if (game === null) {
-        message.channel.send("The game you specified isn't an LBP game.");
-        return;
-    }
-
     // Show stats
-    stats = client.getUserStatsForGame.all(message.author.id, game);
+    stats = client.getUserStats.all(message.author.id);
     if (stats.length > 0) {
-        title = "**" + game + "**";
+        title = "**Dreams**";
         meString = "";
         ilString = "";
         var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
@@ -851,7 +755,7 @@ meCmd = (message) => {
         });
         message.channel.send(title + ilString + meString);
     } else {
-        message.channel.send("No stats found; you haven't done any races in " + game + " yet.");
+        message.channel.send("No stats found; you haven't done any races yet.");
     }
 }
 
@@ -864,7 +768,7 @@ resultsCmd = (message) => {
     rows = client.getResults.all(raceNum);
     if (rows.length > 0) {
         // Header
-        messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "):";
+        messageString = "Results for race #" + raceNum + " (" + rows[0].category + "):";
 
         // First list people who finished, but keep track of the forfeits
         ffd = [];
@@ -917,31 +821,26 @@ ilResultsCmd = (message) => {
 
 // !leaderboard
 leaderboardCmd = (message) => {
-    params = message.content.replace("!leaderboard ", "").replace("!elo ", "").trim().split('/');
-    if (params.length !== 2) {
-        message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
+    category = message.content.replace("!leaderboard", "").trim();
+    if (category = "") {
+        message.channel.send("Usage: `!leaderboard <category name>` (e.g. `!leaderboard any%`)");
         return;
     }
 
-    game = categories.normalizeGameName(params[0].trim());
-    if (game === null) {
-        message.channel.send("Unrecognized game name: " + game);
-        return;
-    }
-    category = categories.normalizeCategory(game, params[1].trim());
+    category = categories.normalizeCategory(category);
     if (category === null) {
-        category = params[1].trim();
+        category = message.content.replace("!leaderboard", "").trim();
     }
 
-    rows = client.getLeaderboard.all(game, category, game, category);
+    rows = client.getLeaderboard.all(category, category);
     if (rows.length > 0) {
         msgs = [];
-        messageString = "**ELO Rankings for " + game + " / " + category + ":**\n";
+        messageString = "**ELO Rankings for " + category + ":**\n";
         rows.forEach((row, num) => {
             toAdd = "\t" + (num + 1) + ". (" + emotes.ppjSmug + " " + Math.floor(row.elo) + ") " + row.user_name + "\n";
             if (messageString.length + toAdd.length > 2000) {
                 msgs.push(messageString);
-                messageString = "**ELO Rankings for " + game + " / " + category + " (cont):**\n";
+                messageString = "**ELO Rankings for " + category + " (cont):**\n";
             }
             messageString += toAdd;
         });
@@ -951,7 +850,7 @@ leaderboardCmd = (message) => {
         });
 
     } else {
-        message.channel.send("No rankings found for " + game + " / " + category + ".");
+        message.channel.send("No rankings found for " + category + ".");
     }
 }
 
@@ -1006,12 +905,12 @@ recordResults = () => {
     // Record race
     raceState.doneEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: `${entrant.doneTime}`, ff: 0, dq: 0 };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${username(entrant.message)}`, category: `${categoryName}`, time: `${entrant.doneTime}`, ff: 0, dq: 0 };
         client.addResult.run(result);
     });
     raceState.ffEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: -1, ff: 1, dq: `${entrant.disqualified ? 1 : 0}` };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${username(entrant.message)}`, category: `${categoryName}`, time: -1, ff: 1, dq: `${entrant.disqualified ? 1 : 0}` };
         client.addResult.run(result);
     });
 
@@ -1020,9 +919,9 @@ recordResults = () => {
     newElos = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
     raceRankings.forEach((id, i) => {
-        statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
+        statObj = client.getUserStatsForCategory.get(id, categoryName);
         if (!statObj) {
-            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
+            statObj = { user_id: `${id}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
         }
         newElos.set(id, statObj.elo);
 
