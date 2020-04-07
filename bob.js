@@ -821,9 +821,9 @@ ilResultsCmd = (message) => {
     }
 }
 
-// !leaderboard
+// !leaderboard/!elo
 leaderboardCmd = (message) => {
-    category = message.content.replace("!leaderboard", "").trim();
+    category = message.content.replace("!leaderboard ", "").replace("!elo ", "").trim();
     if (category = "") {
         message.channel.send("Usage: `!leaderboard <category name>` (e.g. `!leaderboard any%`)");
         return;
@@ -831,7 +831,7 @@ leaderboardCmd = (message) => {
 
     category = categories.normalizeCategory(category);
     if (category === null) {
-        category = message.content.replace("!leaderboard", "").trim();
+        category = message.content.replace("!leaderboard ", "").trim();
     }
 
     rows = client.getLeaderboard.all(category, category);
