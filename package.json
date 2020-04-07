@@ -1,0 +1,43 @@
+{
+  "name": "bingo-bot",
+  "version": "1.0.0",
+  "description": "Dreams speedrunning race bot for Discord",
+  "main": "bob.js",
+  "scripts": {
+    "start": "[ -f ./config.json ] && node ./bob.js || echo 'ERROR: Please create a file \"config.json\" with {\"token\":\"(your bot token)\"} in it'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KaDiWa4/bingo-bot.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "RbdJellyfish",
+    "url": "https://tadcordle.github.io/"
+  },
+  "contributors": [
+    {
+      "name": "KaDiWa"
+    }
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KaDiWa4/bingo-bot/issues"
+  },
+  "homepage": "https://github.com/KaDiWa4/bingo-bot/tree/dreams#readme",
+  "dependencies": {
+    "better-sqlite3": "^6.0.1",
+    "discord.js": "^12.1.1",
+    "html-entities": "^1.2.1",
+    "node-gyp": "^6.1.0"
+  },
+  "files": [
+    "bob.js",
+    "categories.js",
+    "elo_fix.js",
+    "emotes.json",
+    "fun.js",
+    "todo",
+    "update.bat"
+  ]
+}
