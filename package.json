@@ -4,7 +4,7 @@
   "description": "Dreams speedrunning race bot for Discord",
   "main": "bob.js",
   "scripts": {
-    "start": "[ -f ./config.json ] && node ./bob.js || echo 'ERROR: Please create a file \"config.json\" with {\"token\":\"(your bot token)\"} in it'"
+    "start": "[ -f ./config.json ] && node ./bob.js || printf '\\e[0;31mERROR:\\e[0m Please create a file \"config.json\" and write:\\n\\n{\\n    \"token\": \"discord auth token goes here\"\\n}\\n'"
   },
   "repository": {
     "type": "git",
