@@ -2,7 +2,5 @@
 node_modules/
 *.code-workspace
 config.json
-package.json
-package-lock.json
 *.sqlite*
 *.html
