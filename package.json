@@ -1,24 +1,17 @@
 {
   "name": "bingo-bot",
   "version": "1.0.0",
-  "description": "LittleBigPlanet speedrunning race bot for Discord",
-  "main": "bob.js",
+  "type": "module",
+  "description": "speedrunning race bot for Discord",
+  "main": "./src/bob.js",
   "scripts": {
-    "start": "node ./bob.js"
+    "start": "node ./src/bob.js > stdout.log 2> stderr.log &"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TadCordle/bingo-bot.git"
-  },
+  "repository": "github:TadCordle/bingo-bot",
   "keywords": [],
-  "author": {
-    "name": "RbdJellyfish",
-    "url": "https://tadcordle.github.io/"
-  },
+  "author": "RbdJellyfish (https://tadcordle.github.io/)",
   "contributors": [
-    {
-      "name": "KaDiWa"
-    }
+    "KaDiWa"
   ],
   "license": "ISC",
   "bugs": {
@@ -26,9 +19,13 @@
   },
   "homepage": "https://github.com/TadCordle/bingo-bot#readme",
   "dependencies": {
-    "better-sqlite3": "^6.0.1",
-    "bl": "^4.0.3",
+    "better-sqlite3": "^7.1.2",
+    "bl": "^4.1.0",
     "discord.js": "^12.5.1",
-    "node-gyp": "^6.1.0"
+    "semver": "^7.3.4"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14"
   }
 }

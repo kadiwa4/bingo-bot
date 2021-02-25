@@ -1,5 +1,8 @@
 .vs/
+.DS_STORE
 node_modules/
 *.code-workspace
-discord_auth.json
 data/
+*.log
+test*.*
+discord_auth.json
