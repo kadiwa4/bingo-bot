@@ -23,7 +23,7 @@ Create discord_auth.json in the bingo-bot folder with your auth token
 
 ```json
 {
-    "token": "discord auth token goes here"
+  "token": "discord auth token goes here"
 }
 ```
 
@@ -35,43 +35,41 @@ npm start
 
 ## Commands
 
-### ignore this list it's outdated
-
 **Pre-race commands**
-* `!race` - Starts a new full-game race, or joins the current open race if someone already started one.
-* `!game <game name>` - Sets the game (e.g. `!game LBP2`).
-* `!category <category name>` - Sets the category (e.g. `!category styrofoam%`).
-* `!exit` - Leave the race.
-* `!ready` - Indicate that you're ready to start.
-* `!unready` - Indicate that you're not actually ready.
+* `race`/`r` – Starts a new race, or joins the currently open race.
+* `quit`/`q` – Leaves the race.
+* `category [<game name> /] <category name>` – Sets the (game /) category.
+* `ready`/`r` – Indicates that you're ready to start.
+* `unready`/`ur` – Indicates that you're not actually ready.
 
 **Mid-race commands**
-* `!d` / `!done` - Indicate that you finished.
-* `!ud` / `!undone` - Get back in the race if you finished by accident.
-* `!f` / `!forfeit` - Drop out of the race.
-* `!uf` / `!unforfeit` - Rejoin the race if you forfeited by accident.
+* `done`/`d` – Indicates that you/your team finished.
+* `undone`/`ud` – Indicates that you didn't actually finish.
+* `forfeit`/`f` – Drops you/your team out of the race.
+* `unforfeit`/`uf` – Rejoins the race after you forfeited.
 
-**IL race commands**
-* `!ilrace` - Starts a new series of IL races.
-* `!level <level name>` - Sets the next level to race. Also accepts lbp.me links.
-* `!luckydip` - Sets the next level to race to a random lucky dip level.
-* `!ilresults` - Shows the ILs that have been played so far in a series, and the winner of each one.
+**Co-op-race commands**
+* `team [teamof] <@​entrant or user ID 1> […]` – Moves entrants/other teams into your team.
+* `teamname [<team name>]` – Changes/resets your team's name.
+* `unteam` – Leaves your current team.
+* `unteamall` – Disbands all current teams.
+* `randomteams [<team size>]` – Randomly assigns entrants to teams of the given size.
+
+**IL-race commands**
+* `ilresults` – Shows the ILs that have been raced so far in this series.
+* `level <level name>` – Sets the level.
 
 **Stat commands**
-* `!status` - Shows current race status/entrants.
-* `!results <race num>` - Shows results of the specified race number (e.g. `!results 2`).
-* `!me <game name>` - Shows your race statistics for the specified game (e.g. `!me LBP`).
-* `!elo <game name>/<category name>` - Shows the Elo leaderboard for the given game/category (e.g. `!elo lbp/die%`).
-* `!help` - Shows the bot commands.
+* `status`/`s` – Shows the current race status.
+* `result [<race ID>]` – Shows the results of the specified race ID or the last race.
+* `leaderboard <game name> / <category name>` – Shows the Elo leaderboard for the current/given game / category.
+* `me <game name>` – Shows your race stats for a game.
+* `runner <@​member or user ID> <game name>` – Shows a member's race stats.
 
 **Other commands**
-* `!roles <speedrun.com name>` - Updates your roles to match races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
-* `!removeroles` - Removes your runner roles.
+* `help [<command name>]` – Shows a list of commands or details on one command.
+* `server <server name or ID> <command>` – In DMs, calls a command on the specified server.
 
-**Admin/moderator only (mid-race)**
-* `!modhelp` - Shows mod-only commands.
-* `!kick <discord id>` - Kicks someone from the race (in case they're afk or something).
-* `!clearrace` - Resets the bot; forces ending the race without recording any results.
-* `!roles <speedrun.com name> <discord id>` - Updates someone else's roles.
-* `!removeroles <discord id>` - Remove someone else's roles.
-* `!reloadroles` - Refreshes all registered roles.
+**Moderator-only commands**
+* `clearrace` – Ends the race without recording any results.
+* `as <@​member or ID> <command>` – Calls a command as the specified user.

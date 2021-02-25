@@ -1,4 +1,4 @@
-.vs/
+.vs*/
 .DS_STORE
 node_modules/
 *.code-workspace

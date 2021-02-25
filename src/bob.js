@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import url from "url";
 
+// change current working dir to repo root
 process.chdir(path.dirname(path.dirname(url.fileURLToPath(import.meta.url))));
 
 import "./discord/Client.js";
