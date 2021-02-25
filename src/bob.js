@@ -2,6 +2,12 @@
 
 process.title = "bingo-bot";
 
+import fs from "fs";
+import path from "path";
+import url from "url";
+
+process.chdir(path.dirname(path.dirname(url.fileURLToPath(import.meta.url))));
+
 import "./discord/Client.js";
 import "./discord/Guild.js";
 import "./discord/GuildMember.js";
@@ -10,8 +16,6 @@ import "./discord/User.js";
 
 import { assert, log, logError } from "./misc.js";
 import Race from "./Race.js";
-
-import fs from "fs";
 
 import Discord from "discord.js";
 import semverMajor from "semver/functions/major.js";
@@ -115,7 +119,7 @@ process.on("exit", function onExit() {
 });
 
 process.on("uncaughtException", function onUncaughtException(error) {
-    console.log(error);
+    logError(error);
     process.exit(1);
 });
 

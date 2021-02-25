@@ -51,7 +51,7 @@ export const defaultConfig = {
         forfeited: "❌"
     }
 };
-//@ts-ignore
+
 /**
  * @param {Discord.Guild} guild
  * @param {GuildInput} guildInput
@@ -591,7 +591,7 @@ export const commands = {
     },
     raceForfeit: {
         names: [ "forfeit", "f" ],
-        aliases: [ "ff" ],
+        aliases: [ "ff", "fuck", "yeet" ],
         description: "Drops you/your team out of the race",
         category: HelpCategory.MID_RACE,
         raceChannelOnly: true,
