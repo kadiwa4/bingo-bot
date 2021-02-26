@@ -53,8 +53,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             input = spacesAroundMentions(message.content).trim();
         }
 
-        const start = "(.?\\W)?";
-        const inputMatch = input.match(RegExp(`^${start}[\\s\\uFFEF\\xA0\\W]*(\\w+)\\W*(${WHITESPACE}+(.*))?$`));
+        const inputMatch = input.match(RegExp(`^(.?\\W)[\\s\\uFFEF\\xA0\\W]*(\\w+)\\W*(${WHITESPACE}+(.*))?$`));
         if (!inputMatch) {
             return false;
         }
@@ -72,7 +71,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
 
         if (command.guildDependent) {
             if (!guild) {
-                message.inlineReply(`The command ${command} is server-dependent and your message is a DM. Use \`server <server name> <command...>\` to run your command on a server.`);
+                message.inlineReply(`The command ${command} is server-dependent and your message is a DM. Use \`server <server name> <command…>\` to run your command on a server.`);
                 return true;
             }
 

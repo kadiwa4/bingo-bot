@@ -49,7 +49,7 @@ export const commands = {
     roles: {
         names: [ "roles" ],
         usage: "[<speedrun.com name>]",
-        description: "Updates your roles to match races finished + speedrun.com PBs (you need to link your Discord account on sr.c) or deletes roles if nothing is specified",
+        description: "Updates your roles to match races finished + speedrun.com PBs or deletes roles if nothing is specified",
         onUse: async function roles(onError, message, member, args) {
             const { guild } = member;
 

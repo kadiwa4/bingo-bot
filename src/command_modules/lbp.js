@@ -6,6 +6,7 @@ export const id = "lbp";
 export const commands = {
     lbpLenny: {
         aliases: [ "lenny" ],
+        description: "Responds with ( ͡° ͜ʖ ͡°)",
         guildDependent: false,
         onUse: function lbpLenny(onError, message) {
             message.channel.send("( ͡° ͜ʖ ͡°)");
@@ -13,6 +14,7 @@ export const commands = {
     },
     lbpNewRunner: {
         aliases: [ "newrunner", "nr" ],
+        description: "Combines 2 LBP speedrunner names",
         onUse: function lbpNewRunner(onError, message) {
             message.inlineReply(`${randomRunners[Math.floor(Math.random() * randomRunners.length)][0]}${randomRunners[Math.floor(Math.random() * randomRunners.length)][1]}`);
         }

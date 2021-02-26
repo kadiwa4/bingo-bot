@@ -127,13 +127,29 @@ export default class Command {
     }
 
     /**
+     * Returns the first alias
+     * @param {Discord.Guild} guild
+     */
+    getFirstAlias(guild) {
+        return `\`${guild?.commandPrefix ?? ""}${this.aliases[0]}\``;
+    }
+
+    /**
+     * Returns the help string
+     * @param {Discord.Guild} [guild]
+     */
+    getHelp(guild) {
+        return `${this.getUsage(guild) ?? this.getFirstAlias(guild)}\n${this.description}${this.getExample(guild) ?? ""}`;
+    }
+
+    /**
      * Returns the command names in markdown inline-code blocks
      * (including the outer backticks), separated by slashes,
      * or the first alias in inline-code if no name exists
      * @param {Discord.Guild} [guild]
      */
     toString(guild) {
-        return this.names ? `\`${this.getDisplayNames(guild)}\`` : `\`${guild?.commandPrefix ?? ""}${this.aliases[0]}\``;
+        return this.names ? `\`${this.getDisplayNames(guild)}\`` : this.getFirstAlias(guild);
     }
 };
 

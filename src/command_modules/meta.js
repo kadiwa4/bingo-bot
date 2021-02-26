@@ -14,13 +14,31 @@ export const commands = {
         usage: "[<command name>]",
         description: "Shows a list of commands or details on one command",
         onUse: function metaHelp(onError, message, member, args) {
+            /** @type {Discord.TextChannel} */
+            const { client, guild } = message.channel;
+
             if (!args) {
-                const iterator = member.guild.helpMessages.values();
+                const iterator = guild.helpMessages.values();
                 message.inlineReply(iterator.next().value);
                 for (let helpMessage of iterator) {
                     message.channel.send(helpMessage);
                 }
             }
+
+            const inputMatch = args.match(RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)$`));
+            if (!inputMatch) {
+                this.showUsage(...arguments);
+                return;
+            }
+
+            /** @type {Command} */
+            const command = client.commands[inputMatch[2].toLowerCase()];
+            if (!command || (guild && !guild.moduleIDs.has(command.module.id))) {
+                message.inlineReply("Command not found.");
+                return;
+            }
+
+            message.inlineReply(command.getHelp(guild));
         }
     },
     metaServer: {
