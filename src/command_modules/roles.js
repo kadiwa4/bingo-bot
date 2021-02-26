@@ -2,8 +2,6 @@ import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
 import { assert, clean, createSQLiteTable, decodeHTML, httpsGet, log, logError, setTimeoutPromise } from "../misc.js";
 
-import http from "http";
-
 import Discord from "discord.js";
 
 export const id = "roles";
@@ -20,13 +18,13 @@ export function init(guild, guildInput) {
 
     // setup tables for keeping track of speedrun.com user IDs
     createSQLiteTable(database, "src_users",
-        `discord_id TEXT PRIMARY KEY
+        `discord_id TEXT PRIMARY KEY,
         src_id TEXT NOT NULL`);
 
     Object.assign(guild.sqlite, {
-        getSrcUsers: sql.prepare("SELECT * FROM src_users;"),
-        addSrcUser: sql.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
-        deleteSrcUser: sql.prepare("DELETE FROM src_runners WHERE discord_id = ?;")
+        getSrcUsers: database.prepare("SELECT * FROM src_users;"),
+        addSrcUser: database.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
+        deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;")
     });
 
     /** @param {string} roleID */
@@ -42,6 +40,8 @@ export function init(guild, guildInput) {
         srcAPIFilter: guildInput.roles.srcAPIFilter ?? "",
         unicodeNameFix: guildInput.roles.unicodeNameFix ?? false
     });
+
+    setUpdateAllRolesTimeout(guild);
 }
 
 /** @type {NodeJS.Dict<Command>} */
@@ -55,7 +55,7 @@ export const commands = {
 
             if (!args) {
                 guild.sqlite.deleteSrcUser.run(member.id);
-                updateRoles(onError, message, member, null);
+                await updateRoles(onError, message, member, null).catch(onError);
                 return;
             }
 
@@ -65,11 +65,19 @@ export const commands = {
             }
 
             if (message.member.isMod) {
-                updateRoles(...arguments);
+                await updateRoles(...arguments).catch(onError);
                 return;
             }
 
-            const response = await callSRC(onError, `/user/${args}`);
+            function onErrorCatch404(error) {
+                if (error.message.endsWith("'404 Not Found'")) {
+                    message.inlineReply("speedrun.com user not found.");
+                } else {
+                    onError(error);
+                }
+            }
+
+            const response = (await callSRC(onErrorCatch404, `/user/${args}`))?.content;
             if (!response) {
                 return;
             }
@@ -80,7 +88,8 @@ export const commands = {
                 return;
             }
 
-            const tagMatch = response.slice(45000).match(/data-original-title="Discord: ([^#]+#\d{4})"/);
+            const tagMatch = response.slice(20000).match(/data-original-title="Discord: ([^#]+#\d{4})"/);
+            console.log(tagMatch.index);
             if (!tagMatch) {
                 message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${member.user.cleanTag}\`) at https://www.speedrun.com/editprofile.`);
                 return;
@@ -90,7 +99,7 @@ export const commands = {
             const discordTag = member.user.tag;
             const srcTag = decodeHTML(tagMatch[1]);
             if (srcTag === discordTag) {
-                updateRoles(...arguments);
+                await updateRoles(...arguments).catch(onError);
                 return;
             }
 
@@ -106,7 +115,7 @@ export const commands = {
                 }
 
                 if (tagsMatch) {
-                    updateRoles(...arguments);
+                    await updateRoles(...arguments).catch(onError);
                     return;
                 }
             }
@@ -121,8 +130,9 @@ export const commands = {
         description: "Reloads all registered roles",
         category: HelpCategory.MOD,
         modOnly: true,
-        onUse: function rolesUpdate(onError, message, member) {
-            updateAllRoles(onError, member.guild);
+        onUse: async function rolesUpdate(onError, message, member) {
+            await updateAllRoles(onError, member.guild).catch(onError);
+            message.acknowledge();
         }
     }
 };
@@ -140,13 +150,17 @@ async function updateAllRoles(onError, guild) {
     setUpdateAllRolesTimeout(guild);
 
     for (let { discord_id: discordID, src_id: srcID } of guild.sqlite.getSrcUsers.all()) {
-        const member = await guild.members.fetch(discordID).catch(() => {
+        let member;
+
+        try {
+            member = await guild.members.fetch(discordID);
+        } catch {
             log(`sr.c role update: ${discordID} is not a member of the guild; removing them`, guild);
             guild.sqlite.deleteSrcUser.run(discordID);
             continue;
-        });
+        }
 
-        await updateRoles(onError, null, member, srcID);
+        await updateRoles(onError, null, member, srcID).catch(onError);
     }
 }
 
@@ -162,11 +176,11 @@ async function updateRoles(onError, message, member, srcID) {
     /** @type {Set<Discord.Role>} */
     let newRoles;
     if (srcID) {
-        const { content, incomingMessage } = await callSRC(onError ?? logError, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
+        const { content, path } = await callSRC(onError ?? logError, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
         const srcResponse = JSON.parse(content);
         if ("status" in srcResponse) {
             if (message) {
-                message.inlineReply("Speedrun.com user not found.");
+                message.inlineReply("speedrun.com user not found.");
             } else {
                 log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c anymore (previous ID: ${srcID}); removing them`, guild);
             }
@@ -183,7 +197,7 @@ async function updateRoles(onError, message, member, srcID) {
                 guild.sqlite.deleteSrcUser(member.id);
             }
         } else {
-            guild.sqlite.addSrcUser({ discord_id: member.id, src_id: incomingMessage.url.match(/s\/(\w+)\/p/)[1] });
+            guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/(\w+)\/p/)[1] });
         }
 
         newRoles = guild.getSRRoles(member, srcResponse.data);
@@ -192,16 +206,17 @@ async function updateRoles(onError, message, member, srcID) {
         newRoles = new Set();
     }
 
-    const roleChanges = { add: [], remove: [] };
+    const allRoles = new Set(member.roles.cache.values());
 
     for (let role of guild.allSRRoles) {
-        if (newRoles.has(role) !== member.roles.cache.has(role)) {
-            roleChanges[newRoles.has(role) ? "add" : "remove"].push(role);
+        const shouldHave = newRoles.has(role);
+        if (shouldHave !== allRoles.has(role)) {
+            allRoles[shouldHave ? "add" : "delete"](role);
         }
     }
 
-    member.roles.add(roleChanges.add);
-    member.roles.remove(roleChanges.remove);
+    await member.roles.set([...allRoles]);
+    message?.acknowledge();
 }
 
 let srcCallTimestamp = 0;
@@ -210,13 +225,13 @@ let srcCallTimestamp = 0;
  * Gets a speedrun.com page over HTTPS
  * @param {(error) => void} onError Function that gets called to catch an error
  * @param {string} path The path, starting with '/'
- * @returns {Promise<{ content: string; incomingMessage: http.IncomingMessage; }>}
+ * @returns {Promise<{ content: string; path: string; }>}
  */
 async function callSRC(onError, path) {
     // - delay after API call: 1 sec
-    // - delay after downloading any other sr.c page: 10 sec
+    // - delay after downloading any other sr.c page: 5 sec
     // API: https://github.com/speedruncomorg/api/tree/master/version1
-    let apiPauseLength = path.startsWith('/api') ? 1000 : 10000;
+    let apiPauseLength = path.startsWith('/api') ? 1000 : 5000;
     if (srcCallTimestamp < Date.now()) {
         srcCallTimestamp = Date.now() + apiPauseLength;
     } else {

@@ -120,7 +120,7 @@ process.on("exit", function onExit() {
 });
 
 process.on("uncaughtException", function onUncaughtException(error) {
-    logError(error);
+    logError(error?.stack ?? error);
     process.exit(1);
 });
 

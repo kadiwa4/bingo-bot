@@ -200,7 +200,7 @@ export default class Race {
 
     /**
      * Ends the race, creates timeouts for recording results
-     * (for full-game races anyway, otherwise records results directly)
+     * (for full-game races at least, otherwise records results directly)
      * and returns the message to be sent
      */
     end() {
@@ -281,6 +281,7 @@ export default class Race {
             level: levelName
         });
 
+        const results = [];
         for (let team of this.teams) {
             let teamID;
             if (!team.previousTeamID) {
@@ -339,6 +340,7 @@ export default class Race {
             }
         }
 
+        this.guild.emit("raceRecorded", this);
         this.id++;
         if (isIL) {
             this.newIL();
@@ -388,18 +390,11 @@ export default class Race {
 
     /**
      * Performs the specified action for each race entrant
-     * @param {(entrant: Discord.GuildMember, teamIndex: number, entrantIndex: number) => void} callback Function to be called for entrant
+     * @returns {Generator<Discord.GuildMember, void, undefined>}
      */
-    forEachEntrant(callback) {
-        let teamIndex = 0;
+    *entrantIterator() {
         for (let team of this.teams) {
-            let entrantIndex = 0;
-            for (let entrant of team) {
-                callback(entrant, teamIndex, entrantIndex);
-                entrantIndex++;
-            }
-
-            teamIndex++;
+            yield* team;
         }
     }
 
@@ -479,7 +474,9 @@ export default class Race {
      * Resets all race entrants
      */
     resetEntrants() {
-        this.forEachEntrant(bind(this, "resetEntrant"));
+        for (let entrant of this.entrantIterator()) {
+            this.resetEntrant(entrant);
+        }
     }
 
     /**
@@ -497,7 +494,7 @@ export default class Race {
 
     /**
      * Array of all entrants.
-     * To loop through all entrants, use `forEachEntrant` instead
+     * To loop through all entrants, use `entrantIterator` instead
      * @readonly
      */
     get entrants() {
@@ -531,12 +528,12 @@ export default class Race {
         // set this to any entrant
         let currentEntrant = this.teams[0].leader;
 
-        this.forEachEntrant((entrant) => {
+        for (let entrant of this.entrantIterator()) {
             if (entrant.ilChoiceCount < currentEntrant.ilChoiceCount) {
                 // this entrant has chosen less levels
                 currentEntrant = entrant;
             }
-        });
+        }
 
         this.entrantWhoChoosesNextLevel = currentEntrant;
     }

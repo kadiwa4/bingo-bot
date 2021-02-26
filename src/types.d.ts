@@ -115,7 +115,7 @@ declare global {
             init?(guild: Discord.Guild, role: (id: string) => Discord.Role): Set<Discord.Role>;
 
             /** Function that returns an array of roles that the guild member should have */
-            getRoles(member: Discord.GuildMember, srcData: object[]): Set<Discord.Role>;
+            getRoles(member: Discord.GuildMember, srcData: any[]): Set<Discord.Role>;
 
             /**
              * URL query that filters users' personal-best lists. Either `?game=` or `?series=`, followed by a speedrun.com game/series ID

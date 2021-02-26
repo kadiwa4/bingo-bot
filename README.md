@@ -7,7 +7,7 @@ LittleBigPlanet speedrunning race bot for Discord
 
 [Set up a Discord bot](https://discord.com/developers/applications). Enable Application > Bot > Server Members Intent.
 
-Install Node.js (latest version to avoid issues)
+Install [Node.js](https://nodejs.org/en/) (latest or LTS version)
 
 Get build tools
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
@@ -38,7 +38,7 @@ npm start
 **Pre-race commands**
 * `race`/`r` – Starts a new race, or joins the currently open race.
 * `quit`/`q` – Leaves the race.
-* `category [<game name> /] <category name>` – Sets the (game /) category.
+* `category [<game name> /] <category name>` – Sets the (game and) category.
 * `ready`/`r` – Indicates that you're ready to start.
 * `unready`/`ur` – Indicates that you're not actually ready.
 

@@ -38,7 +38,7 @@ export default class Category {
      * @readonly
      */
     get multiGame() {
-        return !!this.games;
+        return this.games !== null;
     }
 
     /**

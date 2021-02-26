@@ -311,7 +311,7 @@ export const commands = {
     },
     raceCategory: {
         names: [ "category" ],
-        description: "Sets the (game /) category",
+        description: "Sets the (game and) category",
         usage: "[<game name> /] <category name>",
         category: HelpCategory.PRE_RACE,
         raceChannelOnly: true,

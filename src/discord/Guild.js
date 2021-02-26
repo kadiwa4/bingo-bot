@@ -62,14 +62,14 @@ Guild.prototype.init = async function(guildInput) {
     }
 
     let message = "";
-    function add(toAdd) {
+    const add = function(toAdd) {
         if (message.length + toAdd.length > 2000) {
             this.helpMessages.push(message);
             message = "";
         }
 
         message += toAdd;
-    }
+    }.bind(this);
 
     for (let categoryKey in HelpCategory) {
         const category = HelpCategory[categoryKey];

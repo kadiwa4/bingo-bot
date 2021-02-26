@@ -1,7 +1,6 @@
 ﻿import nodeAssert from "assert";
 import http from "http";
 import https from "https";
-import { URL } from "url";
 import util from "util";
 
 import BetterSqlite3 from "better-sqlite3";
@@ -119,7 +118,7 @@ export function getUserID(input) {
  * Gets a web page over HTTPS
  * @param {string} hostname The hostname
  * @param {string} path The path, starting with '/'
- * @returns {Promise<{ content: string; incomingMessage: http.IncomingMessage; }>}
+ * @returns {Promise<{ content: string; path: string; }>}
  */
 export function httpsGet(hostname, path) {
     return new Promise((resolve, reject) => {
@@ -132,8 +131,7 @@ export function httpsGet(hostname, path) {
             const bufferList = new BufferList();
             const { statusCode, statusMessage } = message;
             if ([ 301, 302, 307, 308 ].includes(statusCode)) {
-                const actualUrl = new URL(message.headers.location);
-                resolve(httpsGet(actualUrl.hostname, `${actualUrl.path}${actualUrl.search}`));
+                resolve(httpsGet(hostname, message.headers.location));
                 return;
             }
 
@@ -144,7 +142,7 @@ export function httpsGet(hostname, path) {
 
             message.on("data", bind(bufferList, "append"));
             message.on("end", function onEnd() {
-                resolve({ content: bufferList.toString("utf-8"), incomingMessage: message });
+                resolve({ content: bufferList.toString("utf-8"), path });
             });
         }).on("error", reject);
     });

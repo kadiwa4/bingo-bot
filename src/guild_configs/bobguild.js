@@ -1,7 +1,10 @@
 /// <reference path="../types.d.ts" />
-//@ts-check
 
+import Category from "../Category.js";
 import { MULTI_GAME } from "../misc.js";
+import Race from "../Race.js";
+
+import Discord from "discord.js";
 
 const emotes = {
     ppjE: "<:ppjE:795059062403760129>", // "<:ppjE:230442929859198977>" REPLACE
@@ -12,7 +15,7 @@ const emotes = {
 const ilAliases = [ "il", "ils" ];
 
 /** I won't recode this until LBP.me is back up
-function lbpCommunityLevels(guild, message, member, args) {
+function bobCommunityLevels(guild, message, member, args) {
     return false;
 }*/
 
@@ -20,7 +23,7 @@ function lbpCommunityLevels(guild, message, member, args) {
  * @param {string} input
  * @returns {{ name: string; coop: boolean; }}
  */
-function lbpCleanUpCategory(input) {
+function bobCleanUpCategory(input) {
     const name = input.toLowerCase().replace(/\W/g, "");
     return {
         name: name,
@@ -32,7 +35,7 @@ function lbpCleanUpCategory(input) {
  * @param {string} input
  * @returns {string}
  */
-function lbpCleanUpLevelName(input) {
+function bobCleanUpLevelName(input) {
     return input.toLowerCase()
         .replace(/&/g, "and")
         .replace(/\W|^the/g, "")
@@ -42,6 +45,46 @@ function lbpCleanUpLevelName(input) {
 let gameRoles;
 let wrRoles;
 let ilWRRoles;
+
+/** Maps from sr.c IDs to the game names */
+const gameNameFromID = {
+    "369pp31l": "LittleBigPlanet",
+    "pd0n821e": "LittleBigPlanet (PSP)",
+    "4d704r17": "Sackboy's Prehistoric Moves",
+    "pdvzzk6w": "LittleBigPlanet 2",
+    "369vz81l": "LittleBigPlanet PS Vita",
+    "pd0n531e": "LittleBigPlanet Karting",
+    "k6qw8z6g": "LittleBigPlanet 3",
+    "j1nevzx1": "Sackboy: A Big Adventure",
+    "j1llxz71": "DLC"
+    //"4d79me31": MULTI_GAME
+};
+
+/**
+ * Maps from sr.c IDs to the categories
+ * @type {NodeJS.Dict<Category>}
+ */
+let multiCategoryFromID;
+
+const shortFullGameCategories = new Set([
+    "824xr8md", // LBP1 Styrofoam%
+    "9d8pgl6k", // LBP1 Die%
+    "7dg8qml2"  // LBP3 Profile Corruption%
+]);
+
+/**
+ * @param {Race} race
+ */
+function bobOnRaceRecorded(race) {
+    /** @type {Discord.Role | Discord.Role[]} */
+    const roles = race.category.games
+        ? race.category.games.map((game) => gameRoles[game.name])
+        : gameRoles[race.game.name];
+
+    for (let entrant of race.entrantIterator()) {
+        entrant.roles.add(roles);
+    }
+}
 
 /** @type {GuildInput} */
 const lbp = {
@@ -54,14 +97,14 @@ const lbp = {
         "485215306990747649", // Moderator
         "146643995307540480"  // Admin
     ] REPLACE */
-    moduleIDs: [ "lbp", "race_control" ],
+    moduleIDs: [ "lbp", "race_control", "roles" ],
     commonCategories: {
         "Individual Levels": {
             aliases: ilAliases,
             il: true
         }
     },
-    cleanUpGameName: function lbpCleanUpGameName(input) {
+    cleanUpGameName: function bobCleanUpGameName(input) {
         return input.toLowerCase()
             .replace(/\W/g, "")
             .replace("littlebigplanet", "lbp")
@@ -648,7 +691,7 @@ const lbp = {
             },
             config: {
                 cleanUpLevelName: function lbpdlcCleanUpLevelName(input) {
-                    return lbpCleanUpLevelName(input).replace(/(level|move)?(pack|kit)/g, "");
+                    return bobCleanUpLevelName(input).replace(/(level|move)?(pack|kit)/g, "");
                 }
             }
         }
@@ -675,8 +718,7 @@ const lbp = {
         raceLeaderboard: "elo 1/no"
     },
     roles: {
-        init: function lbpRolesInit(guild, role) {
-            //@ts-ignore
+        init: function bobRolesInit(guild, role) {
             guild.sqlite.getUserGamesRan = guild.database.prepare("SELECT DISTINCT game, category FROM user_stats WHERE user_id = ?;");
             gameRoles = {
                 "LittleBigPlanet": role("797952946150440960"), // role("716015233256390696") REPLACE
@@ -721,29 +763,70 @@ const lbp = {
                 100: role("814211678270652419") // role("800566271573229659") REPLACE // 100+
             };
 
+            const multiCategories = guild.games[MULTI_GAME].categories;
+            multiCategoryFromID = {
+                "wkp3v8v2": multiCategories["an3"],
+                "7dg69w4k": multiCategories["7ny"]
+            };
+
+            guild.on("raceRecorded", bobOnRaceRecorded);
+
             const allRoles = Object.values(gameRoles);
             allRoles.push(...wrRoles, ...Object.values(ilWRRoles));
             return new Set(allRoles);
         },
-        getRoles: function lbpGetRoles(member, srcData) {
+        getRoles: function bobGetRoles(member, srcData) {
+            const { guild } = member;
+
+            /** @type {Set<Discord.Role>} */
             const newRoles = new Set();
+            const wrCounts = { fullGame: 0, il: 0 };
+            for (let run of srcData) {
+                if (run.place === 1) {
+                    wrCounts[(!run.run.level || shortFullGameCategories.has(run.run.category))
+                        ? "fullGame" : "il"]++;
+                }
+
+                newRoles.add(gameRoles[gameNameFromID[run.run.game]]
+                    ?? multiCategoryFromID[run.run.category].games.map((game) => gameRoles[game.name]));
+            }
+
+            if (wrCounts.fullGame > 0) {
+                newRoles.add(wrRoles[(wrCounts.fullGame >= 10) ? 9 : wrCounts.fullGame - 1]);
+            }
+
+            if (wrCounts.il > 0) {
+                if (wrCounts.il < 10) {
+                    newRoles.add(ilWRRoles[(wrCounts.il >= 5) ? 5 : wrCounts.il]);
+                } else {
+                    newRoles.add(ilWRRoles[(wrCounts.il >= 100)
+                        ? 100 : 10 * Math.floor(wrCounts.il / 10)])
+                }
+            }
+
+            const multiCategories = guild.games[MULTI_GAME].categories;
+            for (let stat of guild.sqlite.getUserGamesRan.all(member.id)) {
+                newRoles.add((stat.game === MULTI_GAME)
+                    ? multiCategories[stat.game].games.map((game) => gameRoles[game.name])
+                    : gameRoles[stat.game]);
+            }
 
             return newRoles;
         },
-        srcAPIFilter: "series=v7emqr49",
+        srcAPIFilter: "?series=v7emqr49",
         unicodeNameFix: false
     },
     config: {
         race: {
             maxTeamSize: 4,
             elo: {
-                calculateTeamElo: function lbpCalculateTeamElo(elos) {
+                calculateTeamElo: function bobCalculateTeamElo(elos) {
                     return (Math.max(...elos) * (elos.length - 1) + elos.reduce((elo1, elo2) => elo1 + elo2)) / (2 * elos.length - 1);
                 }
             }
         },
-        cleanUpCategory: lbpCleanUpCategory,
-        cleanUpLevelName: lbpCleanUpLevelName,
+        cleanUpCategory: bobCleanUpCategory,
+        cleanUpLevelName: bobCleanUpLevelName,
         emotes: {
             acknowledge: "795059101402791936", // "394255134340677634" REPLACE // :rbdBingo:
             elo: emotes.ppjSmug,
