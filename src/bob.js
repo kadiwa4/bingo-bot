@@ -24,7 +24,7 @@ import semverMajor from "semver/functions/major.js";
 log("started");
 
 const DISCORD_AUTH = "./discord_auth.json";
-const TOKEN_HERE = "<discord auth token here>";
+const TOKEN_HERE = "discord auth token here";
 
 if (semverMajor(process.version) < 14) {
     logError("upgrade your node.js https://nodejs.org/en/");
@@ -96,8 +96,6 @@ client.on(Events.MESSAGE_CREATE, function onMessage(message) {
     }
 });
 
-// TODO test this
-// I think this needs the Server Members Intent (https://discord.com/developers/docs/topics/gateway#gateway-intents)
 client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
     if (member.team) {
         /** @type {{ race: Race; }} */

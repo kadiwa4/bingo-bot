@@ -23,6 +23,8 @@ export const commands = {
                 for (let helpMessage of iterator) {
                     message.channel.send(helpMessage);
                 }
+
+                return;
             }
 
             const inputMatch = args.match(RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)$`));

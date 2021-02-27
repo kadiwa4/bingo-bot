@@ -3,7 +3,7 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { assert, clean, formatTime, FROZEN_ARRAY, getUserID, log, MULTI_GAME, toTable, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+import { assert, calculateEloMatchup, clean, formatTime, FROZEN_ARRAY, getUserID, log, MULTI_GAME, toTable, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
 
 import Discord from "discord.js";
 
@@ -116,13 +116,13 @@ export const commands = {
             /** @returns {Promise<string>} */
             async function userOrTeamName(result) {
                 return result.team
-                    ? `**${sqlite.getTeamName.get(parseInt(result.user_or_team_id))}**`
+                    ? `**${result.team_name}**`
                     : await guild.getUserName(result.user_or_team_id);
             }
 
             async function teamMembers(result) {
                 return result.team
-                    ? `\t${sqlite.getTeamUserIDs.all((await Promise.all(parseInt(result.user_or_team_id))
+                    ? `\t${(await Promise.all(sqlite.getTeamUserIDs.all(parseInt(result.user_or_team_id))
                         .map((userID) => guild.getUserName(userID))))
                         .join("\n\t")}\n`
                     : "";
@@ -261,6 +261,109 @@ export const commands = {
                     return `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`;
                 });
             });
+        }
+    },
+    raceFixElo: {
+        names: [ "fixelo" ],
+        description: "Recalculates the Elo leaderboards",
+        category: HelpCategory.MOD,
+        modOnly: true,
+        onUse: function raceFixElo(onError, message, member) {
+            /** @type {Discord.GuildMember} */
+            const { guild } = member;
+            const { sqlite } = guild;
+
+            if (Date.now() < guild.fixEloTimestamp) {
+                message.inlineReply(`${this.toString(guild)} has a 10 minute cooldown.`);
+                return;
+            }
+
+            guild.fixEloTimestamp = Date.now() + 600000;
+
+            // reset all Elo points
+            for (let gameName of sqlite.getGames.all()) {
+                sqlite.updateAllGameElos.run({
+                    game: gameName,
+                    elo: guild.getGame(gameName).config.race.elo.start
+                });
+            }
+
+            /** @type {Config.Elo} */
+            let eloConfig;
+            let raceID = 0;
+            let teams;
+            let previousGameName;
+            let previousCategoryName;
+
+            function recordRace() {
+                const updateEloObject = {
+                    game: previousGameName,
+                    category: previousCategoryName
+                };
+
+                for (let team of teams) {
+                    updateEloObject.elo = team.newElo;
+
+                    function updateElo(userID) {
+                        updateEloObject.user_id = userID;
+                        sqlite.updateElo.run(updateEloObject);
+                    }
+
+                    if (Array.isArray(team.userIDOrIDs)) {
+                        for (let userID of team.userIDOrIDs) {
+                            updateElo(userID);
+                        }
+                    } else {
+                        updateElo(team.userIDOrIDs);
+                    }
+                }
+            }
+
+            for (let row of sqlite.getAllResults.all()) {
+                if (row.race_id !== raceID) {
+                    if (previousGameName) {
+                        recordRace(row);
+                    }
+
+                    eloConfig = guild.getGame(row.game).config.race.elo;
+                    raceID = row.race_id;
+                    teams = [];
+                    previousGameName = row.game;
+                    previousCategoryName = row.category;
+                }
+
+                const userIDOrIDs = row.coop
+                    ? sqlite.getTeamUserIDs.all(parseInt(row.user_or_team_id))
+                    : row.user_or_team_id;
+
+                const oldElo = row.coop
+                    ? eloConfig.calculateTeamElo(userIDOrIDs.map((userID) => sqlite.getUserEloForCategory.get(userID, row.game, row.category)))
+                    : sqlite.getUserEloForCategory.get(userIDOrIDs, row.game, row.category);
+
+                let newElo = oldElo;
+
+                const state = row.forfeited ? TeamState.FORFEITED : TeamState.DONE;
+
+                for (let team2 of teams) {
+                    const eloChange = calculateEloMatchup(oldElo, state, row.time, team2.oldElo, team2.state, team2.state, eloConfig);
+
+                    newElo += eloChange;
+                    team2.newElo -= eloChange;
+                }
+
+                teams.push({
+                    userIDOrIDs,
+                    coop: row.coop,
+                    oldElo,
+                    newElo,
+                    time: row.time,
+                    state
+                });
+            }
+
+            recordRace();
+
+            message.acknowledge();
         }
     },
     raceMe: {

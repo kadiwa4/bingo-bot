@@ -23,7 +23,7 @@ Create discord_auth.json in the bingo-bot folder with your auth token
 
 ```json
 {
-  "token": "discord auth token goes here"
+  "token": "discord auth token here"
 }
 ```
 

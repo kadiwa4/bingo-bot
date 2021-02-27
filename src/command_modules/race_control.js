@@ -118,11 +118,6 @@ export function init(guild, guildInput) {
         category TEXT NOT NULL,
         level TEXT`);
 
-    // setup tables for keeping track of team names
-    createSQLiteTable(database, "teams",
-        `team_id INT PRIMARY KEY,
-        team_name TEXT NOT NULL`);
-
     // setup tables for keeping track of team members
     createSQLiteTable(database, "team_members",
         `team_member_id INT PRIMARY KEY,
@@ -132,9 +127,10 @@ export function init(guild, guildInput) {
     // setup tables for keeping track of race results
     createSQLiteTable(database, "results",
         `result_id INT PRIMARY KEY,
-        race_id INT NOT NULL,
+        race_id REFERENCES races(race_id) NOT NULL,
         user_or_team_id TEXT NOT NULL,
         coop INT NOT NULL,
+        team_name TEXT,
         time INT,
         forfeited INT NOT NULL`,
         "idx_results_race", "race_id, user_or_team_id, coop");
@@ -158,29 +154,29 @@ export function init(guild, guildInput) {
     Object.assign(guild.sqlite, {
         // setup SQL queries for setting/retrieving race information
         getRace: database.prepare("SELECT * FROM races WHERE race_id = ?;"),
+        getMaxRaceID: database.prepare("SELECT MAX(race_id) FROM races;").pluck(),
+        getGames: database.prepare("SELECT DISTINCT game FROM races;").pluck(),
         addRace: database.prepare("INSERT OR REPLACE INTO races (race_id, game, category, level) VALUES (@race_id, @game, @category, @level);"),
 
-        // setup SQL queries for setting/retrieving team info
-        getMaxTeamID: database.prepare("SELECT MAX(team_id) FROM teams;").pluck(),
-        getTeamName: database.prepare("SELECT team_name FROM teams WHERE team_id = ?;").pluck(),
-        addTeam: database.prepare("INSERT OR REPLACE INTO teams (team_id, team_name) VALUES (@team_id, @team_name);"),
-
         // setup SQL queries for setting/retrieving team members
+        getMaxTeamID: database.prepare("SELECT MAX(team_id) FROM team_members;").pluck(),
         getTeamUserIDs: database.prepare("SELECT user_id FROM team_members WHERE team_id = ? ORDER BY team_member_id ASC;").pluck(),
         addTeamMember: database.prepare("INSERT OR REPLACE INTO team_members (team_id, user_id) VALUES (@team_id, @user_id);"),
 
         // setup SQL queries for setting/retrieving results
-        getMaxRaceID: database.prepare("SELECT MAX(race_id) FROM races;").pluck(),
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
+        getAllResults: database.prepare("SELECT races.race_id AS race_id, results.user_or_team_id AS user_or_team_id, races.game AS game, races.category AS category, results.time AS time, results.forfeited AS forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
         addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, coop, time, forfeited) VALUES (@race_id, @user_or_team_id, @coop, @time, @forfeited);"),
 
         // setup SQL queries for setting/retrieving user stats
         getUserStatsForGame: database.prepare("SELECT category, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb FROM user_stats WHERE user_id = ? AND game = ? ORDER BY category ASC;"),
         getUserStatsForCategory: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
         getUserEloForCategory: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
+        getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;"),
         addUserStat: database.prepare("INSERT OR REPLACE INTO user_stats (user_id, game, category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb) "
             + "VALUES (@user_id, @game, @category, @il, @race_count, @first_place_count, @second_place_count, @third_place_count, @forfeit_count, @elo, @pb);"),
-        getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;")
+        updateElo: database.prepare("UPDATE user_stats SET elo = @elo WHERE user_id = @user_id AND game = @game AND category = @category;"),
+        updateAllGameElos: database.prepare("UPDATE user_stats SET elo = @elo WHERE game = @game;")
     });
 
     guild.raceID = guild.sqlite.getMaxRaceID.get() + 1;
@@ -192,6 +188,8 @@ export function init(guild, guildInput) {
         guild.raceChannels.push(channel);
         channel.race = new Race(channel);
     }
+
+    guild.fixEloTimestamp = 0;
 }
 
 /** @type {NodeJS.Dict<Command>} */
@@ -758,7 +756,6 @@ export const commands = {
             // get rid of multiple consecutive whitespace characters (including e.g. line feeds) and clean up
             const teamName = clean(args?.replace(WHITESPACE_PLUS, " ") ?? "", message);
             if (teamName.length === 0) {
-                team.previousTeamID = null;
                 team.teamName = null;
                 message.acknowledge();
                 return;
@@ -775,7 +772,6 @@ export const commands = {
                 return;
             }
 
-            team.previousTeamID = null;
             team.teamName = teamName;
             message.acknowledge();
         }

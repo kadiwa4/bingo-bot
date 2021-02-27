@@ -3,7 +3,6 @@
 import EntrantTeam from "./EntrantTeam.js";
 import { RaceState, TeamState } from "./enums.js";
 import Game from "./Game.js";
-import { bind } from "./misc.js";
 
 import Discord from "discord.js";
 
@@ -73,7 +72,7 @@ export default class Race {
     endTimeout = null;
 
     /**
-     * The time in seconds since 1970-01-01 when the race started
+     * The unix time in seconds when the race started
      * or null if no race is happening
      * @type {?number}
      */
@@ -281,15 +280,12 @@ export default class Race {
             level: levelName
         });
 
-        const results = [];
         for (let team of this.teams) {
             let teamID;
             if (!team.previousTeamID) {
                 // the team has either changed or not raced yet.
                 // get next available team ID
                 teamID = sqlite.getMaxTeamID.get() + 1;
-                // add team ID and name to table teams
-                sqlite.addTeam.run({ team_id: teamID, team_name: team.name });
                 team.previousTeamID = teamID;
             }
 
@@ -300,6 +296,7 @@ export default class Race {
                 race_id: this.id,
                 user_or_team_id: userOrTeamID,
                 coop: +team.isCoop,
+                team_name: team.isCoop ? team.name : null,
                 time: team.doneTime,
                 forfeited: 1 - isDone
             });

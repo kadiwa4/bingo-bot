@@ -1,9 +1,7 @@
 comments
-roles.js
-elo_fix.js
 database porting script
 test banning/kicking
 a file explaining roughly how the code works
-!help <command>
 test races
 update README
+update run.sh and update.bat

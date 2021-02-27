@@ -9,7 +9,7 @@ Message.prototype.acknowledge = function() {
 
 /** Crosses out the message */
 Message.prototype.crossOut = function() {
-    this.edit(`~~${this}~~`);
+    this.edit(`~~${this}~~`).catch(noop);
 };
 
 /**

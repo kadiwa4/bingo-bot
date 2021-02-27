@@ -1,5 +1,6 @@
-﻿import nodeAssert from "assert";
-import http from "http";
+﻿import { TeamState } from "./enums.js";
+
+import nodeAssert from "assert";
 import https from "https";
 import util from "util";
 
@@ -17,7 +18,7 @@ export const WHITESPACE_PLUS = RegExp(`${WHITESPACE}+`, "g");
 export function noop() {}
 
 /**
- * Node.js' assert function with output messages from logFormat
+ * Node.js assert function with output messages from logFormat
  * @param {any} value The value to check
  * @param {string | Error} [message] The message to send on assertion error
  * @param {Discord.Guild} [guild] The guild that is the cause
@@ -39,6 +40,47 @@ export function bind(object, functionKey, ...args) {
 }
 
 /**
+ * @param {number} team1Elo
+ * @param {TeamState} team1State
+ * @param {number} team1Time
+ * @param {number} team2Elo
+ * @param {TeamState} team2State
+ * @param {number} team2Time
+ * @param {Config.Elo} eloConfig
+ * @param {boolean} [team2EloFunction]
+ */
+export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, team2State, team2Time, eloConfig, team2EloFunction = false) {
+    // the score is a number between 0 and 1:
+    //   0: loss
+    // 0.5: tie
+    //   1: win
+    // it's then multiplied by the max Elo increase
+
+    if (team1State === TeamState.FORFEITED && team2State === TeamState.FORFEITED) {
+        // both teams forfeited, those two teams don't affect each other's scores
+        return 0;
+    }
+
+    if (team2EloFunction) {
+        team2Elo = team2Elo();
+    }
+
+    // the expected score is an approximation of the score (anywhere between
+    // 0 and 1) that is calculated by comparing the previous Elos.
+    // the better the team (judging by the current Elos), the higher the expectations
+    const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team1Elo - team2Elo) / eloConfig.dividend));
+
+    if (team1State === team2State) {
+        // both teams finished
+        // calculate who was faster/if the teams tied
+        return eloConfig.maxEloGain * (1 + Math.sign(team2Time - team1Time)) / 2 - expectedScore;
+    }
+
+    // else determine who finished
+    return (team1State === TeamState.DONE) - expectedScore;
+}
+
+/**
  * Escapes any Discord-flavour markdown and mentions in a string
  * @param {string} text The string to escape
  * @param {Discord.Message} message The message containing that string
@@ -56,7 +98,7 @@ export function clean(text, message) {
  * @param {string} [indexColumns] The UNIQUE INDEX' columns
  */
 export function createSQLiteTable(database, tableName, tableColumns, indexName, indexColumns) {
-    if (database.prepare(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?`).pluck().get(tableName)) {
+    if (database.prepare(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;`).pluck().get(tableName)) {
         return;
     }
 
@@ -66,8 +108,9 @@ export function createSQLiteTable(database, tableName, tableColumns, indexName, 
         database.prepare(`CREATE UNIQUE INDEX ${indexName} ON ${tableName} (${indexColumns});`).run();
     }
 
-    database.pragma("synchronous = 1");
-    database.pragma("journal_mode = wal");
+    database.pragma("synchronous = NORMAL;");
+    database.pragma("journal_mode = WAL;");
+    database.pragme("foreign_keys = ON;")
 }
 
 const entities = Object.assign(Object.create(null), {

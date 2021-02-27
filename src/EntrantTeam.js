@@ -1,6 +1,7 @@
 /// <reference path="./types.d.ts" />
 
 import { TeamState } from "./enums.js";
+import { bind, calculateEloMatchup } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -189,39 +190,20 @@ export default class EntrantTeam extends Array {
 
     /**
      * Gets the team Elo
-     * @param {string} [gameName] The game name
-     * @param {string} [categoryName] The category name
      * @return {number}
      */
-    getElo(gameName, categoryName) {
+    getElo() {
         const { sqlite } = this.guild;
         const eloConfig = this.race.game.config.race.elo;
 
-        if (!gameName) {
-            gameName = this.race.game.name;
-            categoryName = this.race.category.name;
-        }
-
-        const elos = [];
-
-        for (let entrant of this) {
-            const entrantStats = sqlite.getUserEloForCategory.get(entrant.id, gameName, categoryName);
-            elos.push(entrantStats ? entrantStats.elo : eloConfig.start);
-        }
+        const gameName = this.race.game.name;
+        const categoryName = this.race.category.name;
 
         // calculate team Elo as specified in the config
         // if the team has more than one member
-        return this.isCoop ? eloConfig.calculateTeamElo(elos) : elos[0];
-    }
-
-    /**
-     * Gets the team Elo as a string with the Elo emote
-     * @param {string} [gameName] The game name
-     * @param {string} [categoryName] The category name
-     */
-    eloString(gameName, categoryName) {
-        // \xA0 is a non-breaking space
-        return `${this.getElo(gameName, categoryName).toFixed()}\xA0${this.race.game.config.emotes.elo}`;
+        return this.isCoop
+            ? eloConfig.calculateTeamElo(this.map((member) => sqlite.getUserEloForCategory.get(member.id, gameName, categoryName) ?? eloConfig.start))
+            : sqlite.getUserEloForCategory.get(this.leader.id, gameName, categoryName);
     }
 
     /**
@@ -236,47 +218,15 @@ export default class EntrantTeam extends Array {
     /**
      * Calculates Elo difference by treating each other team as being in a 1v1 matchup against this team.
      * See https://en.wikipedia.org/wiki/Elo_rating_system
-     * @param {string} [gameName] The game name
-     * @param {string} [categoryName] The category name
-     * @param {EntrantTeam[]} [teams] Array of teams
-     * @param {EloConfig} [eloConfig] The Elo calculation config
      */
-    calculateEloDifference(gameName, categoryName, teams = this.race.teams, eloConfig = this.race.game.config.race.elo) {
+    calculateEloDifference() {
         let eloDifference = 0;
-        const elo = this.getElo(gameName, categoryName);
-        for (let team of teams) {
-            if (this === team) {
-                // don't compare Elo with this team
-                continue;
+        const elo = this.getElo();
+        for (let team2 of this.race.teams) {
+            if (this !== team2) {
+                eloDifference += calculateEloMatchup(elo, this.state, this.doneTime,
+                    bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true);;
             }
-
-            // the score is a number between 0 and 1:
-            //   0: loss
-            // 0.5: tie
-            //   1: win
-            // it's then multiplied by the max Elo increase
-            let actualScore = 0;
-
-            // the expected score is an approximation of this score (anywhere between
-            // 0 and 1) that is calculated by comparing the previous Elos.
-            // the better the team (judging by the current Elos), the higher the expectations
-            const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((elo - team.getElo(gameName, categoryName)) / eloConfig.dividend));
-
-            if (this.state === TeamState.DONE) {
-                if (team.state === TeamState.DONE) {
-                    // calculate who was faster/if the teams tied
-                    actualScore = eloConfig.maxEloGain * (1 + Math.sign(team.doneTime - this.doneTime)) / 2;
-                } else {
-                    // ahead of opponent (they're still going), count as win
-                    actualScore = eloConfig.maxEloGain;
-                }
-            } else if (team.state === TeamState.FORFEITED) {
-                // both teams forfeited, those two teams don't affect each other's scores
-                continue;
-            }
-
-            // else forfeiting gives 0 points
-            eloDifference += actualScore - expectedScore;
         }
 
         this.eloDifference = eloDifference;
