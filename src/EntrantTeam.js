@@ -122,7 +122,7 @@ export default class EntrantTeam extends Array {
      * @readonly
      */
     get names() {
-        return this.map((entrant) => entrant.cleanName);
+        return this.map((member) => member.cleanName);
     }
 
     /**

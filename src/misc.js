@@ -110,7 +110,6 @@ export function createSQLiteTable(database, tableName, tableColumns, indexName, 
 
     database.pragma("synchronous = NORMAL;");
     database.pragma("journal_mode = WAL;");
-    database.pragme("foreign_keys = ON;")
 }
 
 const entities = Object.assign(Object.create(null), {

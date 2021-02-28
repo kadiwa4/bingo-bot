@@ -16,7 +16,7 @@ export function init(guild, guildInput) {
 
     const { database } = guild;
 
-    // setup tables for keeping track of speedrun.com user IDs
+    // set up tables for keeping track of speedrun.com user IDs
     createSQLiteTable(database, "src_users",
         `discord_id TEXT PRIMARY KEY,
         src_id TEXT NOT NULL`);
@@ -197,7 +197,7 @@ async function updateRoles(onError, message, member, srcID) {
                 guild.sqlite.deleteSrcUser(member.id);
             }
         } else {
-            guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/(\w+)\/p/)[1] });
+            guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/([^/]+)\/p/)[1] });
         }
 
         newRoles = guild.getSRRoles(member, srcResponse.data);

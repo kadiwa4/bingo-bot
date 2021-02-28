@@ -295,7 +295,6 @@ export default class Race {
             sqlite.addResult.run({
                 race_id: this.id,
                 user_or_team_id: userOrTeamID,
-                coop: +team.isCoop,
                 team_name: team.isCoop ? team.name : null,
                 time: team.doneTime,
                 forfeited: 1 - isDone
@@ -309,7 +308,7 @@ export default class Race {
                 }
 
                 // gather already existing member stats
-                const userStats = sqlite.getUserStatsForCategory.get(teamMember.id, gameName, categoryName);
+                const userStats = sqlite.getUserStatForCategory.get(teamMember.id, gameName, categoryName);
                 let pb = null;
                 if (!isIL) {
                     if (!userStats || (teamMember.doneTime || Number.MAX_VALUE) < userStats.pb) {

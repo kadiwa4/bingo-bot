@@ -53,7 +53,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             input = spacesAroundMentions(message.content).trim();
         }
 
-        const inputMatch = input.match(RegExp(`^(.?\\W)[\\s\\uFFEF\\xA0\\W]*(\\w+)\\W*(${WHITESPACE}+(.*))?$`));
+        const inputMatch = input.match(RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)\\W*(${WHITESPACE}+(.*))?$`));
         if (!inputMatch) {
             return false;
         }

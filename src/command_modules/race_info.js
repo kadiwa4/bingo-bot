@@ -332,11 +332,11 @@ export const commands = {
                     previousCategoryName = row.category;
                 }
 
-                const userIDOrIDs = row.coop
+                const userIDOrIDs = row.team_name
                     ? sqlite.getTeamUserIDs.all(parseInt(row.user_or_team_id))
                     : row.user_or_team_id;
 
-                const oldElo = row.coop
+                const oldElo = row.team_name
                     ? eloConfig.calculateTeamElo(userIDOrIDs.map((userID) => sqlite.getUserEloForCategory.get(userID, row.game, row.category)))
                     : sqlite.getUserEloForCategory.get(userIDOrIDs, row.game, row.category);
 
@@ -353,7 +353,7 @@ export const commands = {
 
                 teams.push({
                     userIDOrIDs,
-                    coop: row.coop,
+                    coop: row.team_name !== null,
                     oldElo,
                     newElo,
                     time: row.time,

@@ -111,34 +111,30 @@ export function init(guild, guildInput) {
 
     const { database } = guild;
 
-    // setup tables for keeping track of race information
+    // set up tables for keeping track of race information
     createSQLiteTable(database, "races",
         `race_id INT PRIMARY KEY,
         game TEXT NOT NULL,
         category TEXT NOT NULL,
         level TEXT`);
 
-    // setup tables for keeping track of team members
+    // set up tables for keeping track of team members
     createSQLiteTable(database, "team_members",
-        `team_member_id INT PRIMARY KEY,
-        team_id INT NOT NULL,
+        `team_id INT NOT NULL,
         user_id TEXT NOT NULL`);
 
-    // setup tables for keeping track of race results
+    // set up tables for keeping track of race results
     createSQLiteTable(database, "results",
-        `result_id INT PRIMARY KEY,
-        race_id REFERENCES races(race_id) NOT NULL,
+        `race_id INT NOT NULL,
         user_or_team_id TEXT NOT NULL,
-        coop INT NOT NULL,
         team_name TEXT,
         time INT,
         forfeited INT NOT NULL`,
-        "idx_results_race", "race_id, user_or_team_id, coop");
+        "idx_results_race", "race_id, user_or_team_id, team_name");
 
-    // setup tables for keeping track of user stats
+    // set up tables for keeping track of user stats
     createSQLiteTable(database, "user_stats",
-        `user_stat_id INT PRIMARY KEY,
-        user_id TEXT NOT NULL,
+        `user_id TEXT NOT NULL,
         game TEXT NOT NULL,
         category TEXT NOT NULL,
         il INT NOT NULL,
@@ -160,17 +156,17 @@ export function init(guild, guildInput) {
 
         // setup SQL queries for setting/retrieving team members
         getMaxTeamID: database.prepare("SELECT MAX(team_id) FROM team_members;").pluck(),
-        getTeamUserIDs: database.prepare("SELECT user_id FROM team_members WHERE team_id = ? ORDER BY team_member_id ASC;").pluck(),
+        getTeamUserIDs: database.prepare("SELECT user_id FROM team_members WHERE team_id = ?;").pluck(),
         addTeamMember: database.prepare("INSERT OR REPLACE INTO team_members (team_id, user_id) VALUES (@team_id, @user_id);"),
 
         // setup SQL queries for setting/retrieving results
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
         getAllResults: database.prepare("SELECT races.race_id AS race_id, results.user_or_team_id AS user_or_team_id, races.game AS game, races.category AS category, results.time AS time, results.forfeited AS forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
-        addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, coop, time, forfeited) VALUES (@race_id, @user_or_team_id, @coop, @time, @forfeited);"),
+        addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @forfeited);"),
 
         // setup SQL queries for setting/retrieving user stats
         getUserStatsForGame: database.prepare("SELECT category, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb FROM user_stats WHERE user_id = ? AND game = ? ORDER BY category ASC;"),
-        getUserStatsForCategory: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
+        getUserStatForCategory: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
         getUserEloForCategory: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
         getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;"),
         addUserStat: database.prepare("INSERT OR REPLACE INTO user_stats (user_id, game, category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb) "
@@ -728,7 +724,9 @@ export const commands = {
             }
 
             race.checkCategoryCoop();
-            message.inlineReply(`${team}'s members were updated to:\n  ${team.names.join("\n  ")}${race.checkNotCountingDown()}`, { split: true });
+
+            const members = team.map((member) => `${member.readyEmote} ${member.cleanName}`).join("\n  ");
+            message.inlineReply(`${team}'s members were updated to:\n  ${members}${race.checkNotCountingDown()}`, { split: true });
         }
     },
     raceTeamname: {
@@ -851,18 +849,18 @@ export const commands = {
             const entrants = race.entrants;
             entrants.shuffle();
 
-            let currentTeam = new EntrantTeam(race);
-            race.teams = [ currentTeam ];
+            /** @type {EntrantTeam} */
+            let currentTeam;
+            race.teams = [];
             let index = 0;
             for (let entrant of entrants) {
-                currentTeam.push(entrant);
-
-                // if index is divisible by team size and this isn't the last team, make new team
-                if (index % teamSize === 0 && index + 1 < entrants.length) {
+                // if index is divisible by team size, make new team
+                if (index % teamSize === 0) {
                     currentTeam = new EntrantTeam(race);
                     race.teams.push(currentTeam);
                 }
 
+                currentTeam.push(entrant);
                 index++;
             }
 
