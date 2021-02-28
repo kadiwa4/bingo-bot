@@ -43,9 +43,11 @@ Guild.prototype.init = async function(guildInput) {
     });
 
     // load command modules
-    for (let moduleName of guildInput.moduleIDs.concat("meta")) {
+    const moduleIDs = [ "meta" ];
+    moduleIDs.push(...guildInput.moduleIDs);
+    for (let moduleID of moduleIDs) {
         // wait so that loadedModules gets updated in time
-        await this.loadModule(guildInput, moduleName);
+        await this.loadModule(guildInput, moduleID);
     }
 
     // create/set up guild config

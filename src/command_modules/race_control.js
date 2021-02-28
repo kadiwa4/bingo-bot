@@ -165,7 +165,7 @@ export function init(guild, guildInput) {
         addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @forfeited);"),
 
         // setup SQL queries for setting/retrieving user stats
-        getUserStatsForGame: database.prepare("SELECT category, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb FROM user_stats WHERE user_id = ? AND game = ? ORDER BY category ASC;"),
+        getUserStatsForGame: database.prepare("SELECT category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb FROM user_stats WHERE user_id = ? AND game = ? ORDER BY category ASC;"),
         getUserStatForCategory: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
         getUserEloForCategory: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
         getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;"),

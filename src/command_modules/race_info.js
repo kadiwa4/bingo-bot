@@ -438,26 +438,24 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
         return;
     }
 
-    const ilStats = [];
-    let index = 0;
+    let fullGameIndex = 0;
+    const stats2 = [];
     for (let stat of stats) {
         if (stat.il) {
-            ilStats.push(stats.splice(index, 1)[0]);
+            stats2.push(stat);
+        } else {
+            stats2.splice(fullGameIndex, 0, stat);
+            fullGameIndex++;
         }
-
-        index++;
     }
 
-    /**
-     * @param {object[]} stats
-     * @returns {any[]}
-     */
-    function table(stats) {
-        if (stats.length === 0) {
-            return FROZEN_ARRAY;
+    const messageStart = `**${fromMeCmd ? "Your" : `${userName}'s`} ${game} stats`;
+    message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, function*() {
+        if (stats2.length === 0) {
+            return;
         }
 
-        return toTable(stats, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], (stat) =>
+        yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], (stat) =>
             // \xA0 is a non-breaking space
             `  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
             }\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count
@@ -466,11 +464,5 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
             }\`   ${emotes.forfeited}\xA0\`${stat.forfeit_count
             }\`   ${emotes.elo}\xA0\`${Math.floor(stat.elo).toString().padStart(4)
             }\`   ${emotes.racing}\xA0\`${formatTime(stat.pb, false)}\`\n`);
-    }
-
-    const messageStart = `**${fromMeCmd ? "Your" : `${userName}'s`} ${game} stats`;
-    message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, function*() {
-        yield* table(stats);
-        yield* table(ilStats);
     });
 }

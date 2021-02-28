@@ -66,10 +66,11 @@ const gameNameFromID = {
  */
 let multiCategoryFromID;
 
-const shortFullGameCategories = new Set([
-    "824xr8md", // LBP1 Styrofoam%
-    "9d8pgl6k", // LBP1 Die%
-    "7dg8qml2"  // LBP3 Profile Corruption%
+const ilFullGameCategories = new Set([
+    "824xr8md", // LBP1 - Styrofoam%
+    "9d8pgl6k", // LBP1 - Die%
+    "7dg8qml2", // LBP3 - Profile Corruption%
+    "5dw60re2"  // SABA - Trial 16
 ]);
 
 /**
@@ -783,7 +784,7 @@ const lbp = {
             const wrCounts = { fullGame: 0, il: 0 };
             for (let run of srcData) {
                 if (run.place === 1) {
-                    wrCounts[(!run.run.level || shortFullGameCategories.has(run.run.category))
+                    wrCounts[(!run.run.level || ilFullGameCategories.has(run.run.category))
                         ? "fullGame" : "il"]++;
                 }
 
