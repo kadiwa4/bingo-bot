@@ -18,13 +18,15 @@ export const WHITESPACE_PLUS = RegExp(`${WHITESPACE}+`, "g");
 export function noop() {}
 
 /**
- * Node.js assert function with output messages from logFormat
- * @param {any} value The value to check
+ * Node.js assert function with output messages from logFormat. Returns the input
+ * @template T
+ * @param {T} value The value to check
  * @param {string | Error} [message] The message to send on assertion error
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function assert(value, message, guild) {
     nodeAssert(value, message ? logFormat(message, guild) : null);
+    return value;
 }
 
 /**
@@ -78,7 +80,7 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
     }
 
     // else determine who finished
-    return (team1State === TeamState.DONE) - expectedScore;
+    return eloConfig.maxEloGain * (team1State === TeamState.DONE) - expectedScore;
 }
 
 /**
@@ -221,21 +223,23 @@ export function logFormat(text, guild) {
 }
 
 /**
- * Writes a string and the current time to stdout
+ * Writes a string and the current time to stdout. Returns the input
  * @param {string} text The string to write
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function log(text, guild) {
     console.log(logFormat(text, guild));
+    return text;
 }
 
 /**
- * Writes a string and the current time to stderr
+ * Writes a string and the current time to stderr. Returns the input
  * @param {string} text The string to write
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function logError(text, guild) {
     console.error(logFormat(text, guild));
+    return text;
 }
 
 /** Returns a promise that resolves after the specified time */

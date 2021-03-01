@@ -2,6 +2,7 @@ import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
 import { assert, clean, createSQLiteTable, decodeHTML, httpsGet, log, logError, setTimeoutPromise } from "../misc.js";
 
+import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
 
 export const id = "roles";
@@ -14,6 +15,7 @@ export const id = "roles";
 export function init(guild, guildInput) {
     assert(guildInput.roles, "no config for command module roles", guild);
 
+    /** @type {{ database: BetterSqlite3.Database; }} */
     const { database } = guild;
 
     // set up tables for keeping track of speedrun.com user IDs

@@ -224,7 +224,7 @@ export default class EntrantTeam extends Array {
         const elo = this.getElo();
         for (let team2 of this.race.teams) {
             if (this !== team2) {
-                eloDifference += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true);
+                eloDifference += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true) * Math.max(this.length, team2.length) / this.length;
             }
         }
 

@@ -8,6 +8,7 @@ import Game from "../Game.js";
 import Race from "../Race.js";
 import { assert, bind, clean, createSQLiteTable, formatTime, getUserID, invertObject, logFormat, MULTI_GAME, noop, spacesAroundMentions, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
 
+import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
 
 export const id = "race_control";
@@ -109,6 +110,7 @@ export function init(guild, guildInput) {
         guild.games[MULTI_GAME] = game;
     }
 
+    /** @type {{ database: BetterSqlite3.Database; }} */
     const { database } = guild;
 
     // set up tables for keeping track of race information
@@ -157,11 +159,12 @@ export function init(guild, guildInput) {
         // setup SQL queries for setting/retrieving team members
         getMaxTeamID: database.prepare("SELECT MAX(team_id) FROM team_members;").pluck(),
         getTeamUserIDs: database.prepare("SELECT user_id FROM team_members WHERE team_id = ?;").pluck(),
+        getTeamUserIDsAndElo: database.prepare("SELECT user_stats.user_id AS user_id, elo FROM team_members JOIN user_stats ON team_members.user_id = user_stats.user_id WHERE team_id = ? AND game = ? AND category = ?;"),
         addTeamMember: database.prepare("INSERT OR REPLACE INTO team_members (team_id, user_id) VALUES (@team_id, @user_id);"),
 
         // setup SQL queries for setting/retrieving results
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
-        getAllResults: database.prepare("SELECT races.race_id AS race_id, results.user_or_team_id AS user_or_team_id, results.team_name AS team_name, races.game AS game, races.category AS category, results.time AS time, results.forfeited AS forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
+        getAllResults: database.prepare("SELECT races.race_id AS race_id, user_or_team_id, team_name, game, category, time, forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
         addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @forfeited);"),
 
         // setup SQL queries for setting/retrieving user stats
@@ -535,16 +538,18 @@ export const commands = {
                 // else the team is tied and the place isn't increased
             }
 
+            const raceEndMessage = race.checkIfStillGoing(); // update race.state
+
             const splitContent = [
                 `${team} has finished in `,
                 team.place.toOrdinal(),
                 " place (",
                 team.eloDifferenceString,
-                `) with a time of ${formatTime(team.doneTime)} (use \`${guild.commandPrefix}undone\` if this was a mistake)!`
+                `) with a time of ${formatTime(team.doneTime)}${(raceEndMessage && race.category.isIL) ? "" : ` (use \`${guild.commandPrefix}undone\` if this was a mistake)`}!`
             ];
 
             team.splitDoneMessageContent = splitContent;
-            team.endMessage = message.inlineReply(`${splitContent.join("")}${race.checkIfStillGoing()}`); // update race.state
+            team.endMessage = message.inlineReply(`${splitContent.join("")}${raceEndMessage}`);
         }
     },
     raceUndone: {
