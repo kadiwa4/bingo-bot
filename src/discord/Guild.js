@@ -114,7 +114,7 @@ Guild.prototype.getUserName = async function(id) {
     }
 
     const user = await this.client.users.fetch(id).catch(noop);
-    return user ? Discord.Util.escapeMarkdown(user.username) : "Deleted User";
+    return Discord.Util.escapeMarkdown(user.username);
 };
 
 /**

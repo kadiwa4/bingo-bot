@@ -65,7 +65,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
         }
 
         if (command.raceChannelOnly && !message.channel.race) {
-            message.inlineReply(`The command ${command} can only be used in a race channel.`);
+            message.inlineReply(`The command ${command.toString(guild)} can only be used in a race channel.`);
             return true;
         }
 

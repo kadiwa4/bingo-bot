@@ -104,8 +104,13 @@ client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
     }
 });
 
-process.on("unhandledRejection", function onUnhandledRejection(error) {
+process.on("unhandledRejection", async function onUnhandledRejection(error) {
     logError(`unhandled promise rejection: ${error.stack ?? error}`);
+
+    try {
+        await client.user.setStatus("invisible");
+    } catch {}
+
     process.exit(1);
 });
 
@@ -117,11 +122,20 @@ process.on("exit", function onExit() {
     log("exited");
 });
 
-process.on("uncaughtException", function onUncaughtException(error) {
+process.on("uncaughtException", async function onUncaughtException(error) {
     logError(error?.stack ?? error);
+
+    try {
+        await client.user.setStatus("invisible");
+    } catch {}
+
     process.exit(1);
 });
 
-process.on("SIGINT", process.exit.bind(null, 0));
+process.on("SIGINT", async function onKeyboardInterrupt() {
+    await client.user.setStatus("invisible");
+
+    process.exit();
+});
 
 log("ready");

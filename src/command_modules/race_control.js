@@ -161,7 +161,7 @@ export function init(guild, guildInput) {
 
         // setup SQL queries for setting/retrieving results
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
-        getAllResults: database.prepare("SELECT races.race_id AS race_id, results.user_or_team_id AS user_or_team_id, races.game AS game, races.category AS category, results.time AS time, results.forfeited AS forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
+        getAllResults: database.prepare("SELECT races.race_id AS race_id, results.user_or_team_id AS user_or_team_id, results.team_name AS team_name, races.game AS game, races.category AS category, results.time AS time, results.forfeited AS forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
         addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @forfeited);"),
 
         // setup SQL queries for setting/retrieving user stats
@@ -478,12 +478,13 @@ export const commands = {
             }
 
             member.isReady = false;
-            message.acknowledge();
 
             if (race.state === RaceState.COUNTDOWN) {
                 // if someone unreadied during countdown
                 race.stopCountdown();
                 message.inlineReply(`${member.cleanName} isn't ready; stopping countdown.`);
+            } else {
+                message.acknowledge();
             }
         }
     },

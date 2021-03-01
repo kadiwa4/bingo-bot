@@ -41,7 +41,7 @@ export const commands = {
                 case RaceState.DONE:
                     /** @param {EntrantTeam} team */
                     function teamMembers(team) {
-                        return team.isCoop ? `\n\t${team.names.join("\n\t")}` : "";
+                        return team.isCoop ? `\n  \t${team.names.join("\n  \t")}` : "";
                     }
 
                     /** @type {EntrantTeam[]} */
@@ -65,16 +65,15 @@ export const commands = {
                             `**${race.gameCategoryLevel} race (cont):**\n`, function*() {
                         // list done entrants
                         yield* doneTeams.sort((team1, team2) => team1.doneTime - team2.doneTime)
-                            .map((team) => `  \`${formatTime(team.doneTime, false)}\` – ${race.game.placeEmote(team.place)
-                            } ${team} (${team.eloDifferenceString})${teamMembers(team)}\n`);
+                            .map((team) => `  ${race.game.placeEmote(team.place)} \`${formatTime(team.doneTime, false)}\` – ${team} (${team.eloDifferenceString})${teamMembers(team)}\n`);
 
                         // list racers still going
-                        yield* racingTeams.map((team) => `  ${emotes.racing} ${team}${teamMembers(team)}\n`);
+                        yield* racingTeams.map((team) => `  ${emotes.racing} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
 
                         // list forfeited entrants
                         yield* forfeitedTeams.map((team) => (race.state === RaceState.DONE)
-                            ? `  ${emotes.forfeited} ${team} (${team.eloDifferenceString})${teamMembers(team)}\n`
-                            : `  ${emotes.forfeited} ${team}${teamMembers(team)}\n`);
+                            ? `  ${emotes.forfeited} \`--:--:--.--\` – ${team} (${team.eloDifferenceString})${teamMembers(team)}\n`
+                            : `  ${emotes.forfeited} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
                     });
             }
         }
@@ -115,13 +114,13 @@ export const commands = {
 
             /** @returns {Promise<string>} */
             async function userOrTeamName(result) {
-                return result.team
+                return result.team_name
                     ? `**${result.team_name}**`
                     : await guild.getUserName(result.user_or_team_id);
             }
 
             async function teamMembers(result) {
-                return result.team
+                return result.team_name
                     ? `\t${(await Promise.all(sqlite.getTeamUserIDs.all(parseInt(result.user_or_team_id))
                         .map((userID) => guild.getUserName(userID))))
                         .join("\n\t")}\n`
@@ -256,10 +255,9 @@ export const commands = {
 
             const messageStart = `**Elo Rankings for ${game} / ${categoryName}`;
             message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, async function*() {
-                yield* toTable(memberStats, [ "place" ], async (stat, index) => {
+                yield* toTable(memberStats, [ "place" ], async (stat, index) =>
                     // \xA0 is a non-breaking space
-                    return `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`;
-                });
+                    `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo.toFixed()}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`);
             });
         }
     },
@@ -322,7 +320,7 @@ export const commands = {
             for (let row of sqlite.getAllResults.all()) {
                 if (row.race_id !== raceID) {
                     if (previousGameName) {
-                        recordRace(row);
+                        recordRace();
                     }
 
                     eloConfig = guild.getGame(row.game).config.race.elo;
@@ -345,7 +343,7 @@ export const commands = {
                 const state = row.forfeited ? TeamState.FORFEITED : TeamState.DONE;
 
                 for (let team2 of teams) {
-                    const eloChange = calculateEloMatchup(oldElo, state, row.time, team2.oldElo, team2.state, team2.state, eloConfig);
+                    const eloChange = calculateEloMatchup(oldElo, state, row.time, team2.oldElo, team2.state, team2.time, eloConfig);
 
                     newElo += eloChange;
                     team2.newElo -= eloChange;

@@ -43,7 +43,7 @@ export function bind(object, functionKey, ...args) {
  * @param {number} team1Elo
  * @param {TeamState} team1State
  * @param {number} team1Time
- * @param {number} team2Elo
+ * @param {number | () => number} team2Elo
  * @param {TeamState} team2State
  * @param {number} team2Time
  * @param {Config.Elo} eloConfig
@@ -68,12 +68,13 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
     // the expected score is an approximation of the score (anywhere between
     // 0 and 1) that is calculated by comparing the previous Elos.
     // the better the team (judging by the current Elos), the higher the expectations
-    const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team1Elo - team2Elo) / eloConfig.dividend));
+    // it's then multiplied by the max Elo increase
+    const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team2Elo - team1Elo) / eloConfig.dividend));
 
     if (team1State === team2State) {
         // both teams finished
         // calculate who was faster/if the teams tied
-        return eloConfig.maxEloGain * (1 + Math.sign(team2Time - team1Time)) / 2 - expectedScore;
+        return (eloConfig.maxEloGain / 2) * (1 + Math.sign(team2Time - team1Time)) - expectedScore;
     }
 
     // else determine who finished

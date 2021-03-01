@@ -71,5 +71,6 @@ npm start
 * `server <server name or ID> <command>` – In DMs, calls a command on the specified server.
 
 **Moderator-only commands**
-* `clearrace` – Ends the race without recording any results.
 * `as <@​member or ID> <command>` – Calls a command as the specified user.
+* `fixelo` – Recalculates the Elo leaderboards.
+* `clearrace` – Ends the race without recording any results.

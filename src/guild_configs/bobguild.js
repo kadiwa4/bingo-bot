@@ -19,6 +19,8 @@ function bobCommunityLevels(guild, message, member, args) {
     return false;
 }*/
 
+const COOP_REGEX = /coop|[2-5]p(layers?)?/;
+
 /**
  * @param {string} input
  * @returns {{ name: string; coop: boolean; }}
@@ -26,8 +28,8 @@ function bobCommunityLevels(guild, message, member, args) {
 function bobCleanUpCategory(input) {
     const name = input.toLowerCase().replace(/\W/g, "");
     return {
-        name: name,
-        coop: /coop|[2-5]p(layers?)?/.test(name)
+        name: name.replace(COOP_REGEX, ""),
+        coop: COOP_REGEX.test(name)
     };
 }
 
@@ -93,7 +95,10 @@ const lbp = {
     name: "bob testing", // "LittleBigPlanet" REPLACE // LBP Speedrunning
     aliases: [ "bob" ], // [ "lbp", "lbpsr" ] REPLACE
     abbreviation: "bob", // "LBP" REPLACE
-    raceChannelIDs: [ "794629930667343918" ], // [ "551242726251954185" ] REPLACE // #racing
+    raceChannelIDs: [
+        "794629930667343918",
+        "814156861221634089"
+    ], // [ "551242726251954185" ] REPLACE // #racing
     modRoleIDs: [ "795064134609666118" ], /*[
         "485215306990747649", // Moderator
         "146643995307540480"  // Admin

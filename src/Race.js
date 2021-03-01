@@ -140,10 +140,8 @@ export default class Race {
         const { emotes, race } = this.game.config;
 
         this.state = RaceState.COUNTDOWN;
-        raceChannel.startTyping();
         this.countdownTimeouts = [
             setTimeout(() => {
-                raceChannel.stopTyping();
                 raceChannel.send(`${emotes.raceStart} **Go!**`);
                 this.state = RaceState.ACTIVE;
                 this.startTime = Date.now() / 1000;
@@ -158,7 +156,6 @@ export default class Race {
         this.countdownTimeouts.push(...race.countdown.map((number) =>
             setTimeout(() => {
                 raceChannel.send(`${emotes.countdown} ${number}…`);
-                raceChannel.startTyping();
             }, 1000 * (race.countdownLength - number))));
 
         return `\nEveryone is ready, gl;hf! ${emotes.countdownStart} Starting race in 10 seconds…`;
@@ -167,7 +164,6 @@ export default class Race {
     /** Stops the race countdown */
     stopCountdown() {
         this.state = RaceState.JOINING;
-        this.channel.stopTyping();
         for (let timeout of this.countdownTimeouts) {
             clearTimeout(timeout);
         }
@@ -281,37 +277,36 @@ export default class Race {
         });
 
         for (let team of this.teams) {
-            let teamID;
-            if (!team.previousTeamID) {
+            let newTeamID;
+            if (team.isCoop && !team.previousTeamID) {
                 // the team has either changed or not raced yet.
                 // get next available team ID
-                teamID = sqlite.getMaxTeamID.get() + 1;
-                team.previousTeamID = teamID;
+                newTeamID = sqlite.getMaxTeamID.get() + 1;
+                team.previousTeamID = newTeamID;
             }
 
-            const userOrTeamID = (team.isCoop ? team.previousTeamID : team.leader.id).toString();
-            const isDone = team.state === TeamState.DONE;
+            const userOrTeamID = (team.isCoop ? team.previousTeamID.toString() : team.leader.id);
             // add result information to table results
             sqlite.addResult.run({
                 race_id: this.id,
                 user_or_team_id: userOrTeamID,
                 team_name: team.isCoop ? team.name : null,
                 time: team.doneTime,
-                forfeited: 1 - isDone
+                forfeited: +(team.state === TeamState.FORFEITED)
             });
 
             for (let teamMember of team) {
-                if (teamID) {
+                if (newTeamID) {
                     // a new team was added to the teams table.
                     // add team ID and user ID to table team_members
-                    sqlite.addTeamMember.run({ team_id: teamID, user_id: teamMember.id });
+                    sqlite.addTeamMember.run({ team_id: newTeamID, user_id: teamMember.id });
                 }
 
                 // gather already existing member stats
                 const userStats = sqlite.getUserStatForCategory.get(teamMember.id, gameName, categoryName);
                 let pb = null;
                 if (!isIL) {
-                    if (!userStats || (teamMember.doneTime || Number.MAX_VALUE) < userStats.pb) {
+                    if (!userStats || (teamMember.doneTime ?? Number.MAX_VALUE) < userStats.pb) {
                         // PB was beaten
                         pb = teamMember.doneTime;
                     } else {
@@ -339,6 +334,18 @@ export default class Race {
         this.guild.emit("raceRecorded", this);
         this.id++;
         if (isIL) {
+            for (let team of this.teams) {
+                if (team.state === TeamState.FORFEITED) {
+                    // teams that forfeited don't get any points
+                    continue;
+                }
+
+                const pointGain = this.teams.length - team.place + 1;
+                for (let member of team) {
+                    member.ilScore += pointGain;
+                }
+            }
+
             this.newIL();
         } else {
             this.channel.race = new Race(this.channel, this.game);
@@ -547,8 +554,8 @@ export default class Race {
 
             // show IL race status
             /** @param {Discord.GuildMember} entrant */
-            function entrantString(entrant) {
-                return `  \`${entrant.ilScore.toString().padStart(ilScoreWidth)}\` – ${entrant.readyEmote} ${entrant.cleanName}\n`;
+            function entrantString(entrant, fiveSpaces) {
+                return `  \`${entrant.ilScore.toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
             }
 
             message.multiReply(onError, firstHeading, otherHeading, function*() {
@@ -558,10 +565,10 @@ export default class Race {
                     yield team.isCoop
                         // \xA0 is a non-breaking space
                         // sort team entrants and loop through them
-                        ? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n\t${team.slice()
+                        ? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice()
                             .sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore)
-                            .map(entrantString).join("\t")}`
-                        : entrantString(team.leader);
+                            .map(entrantString).join("")}`
+                        : entrantString(team.leader, false);
                 }
             }.bind(this));
         } else {
@@ -576,7 +583,7 @@ export default class Race {
             message.multiReply(onError, firstHeading, otherHeading, function*() {
                 for (let team of this.teams) {
                     if (team.isCoop) {
-                        yield `  ${team}\n\t${team.map(entrantString).join("\t")}\n`;
+                        yield `  ${team}\n\t${team.map(entrantString).join("\t")}`;
                     } else {
                         soloEntrants.push(team.leader);
                     }
