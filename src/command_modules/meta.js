@@ -43,63 +43,6 @@ export const commands = {
             message.inlineReply(command.getHelp(guild));
         }
     },
-    metaServer: {
-        names: [ "server" ],
-        aliases: [ "guild" ],
-        description: "In DMs, calls a command on the specified server",
-        usage: "<server name or ID> <command>",
-        guildDependent: false,
-        onUse: async function metaServer(onError, message, userOrMember, args) {
-            const { client } = message;
-
-            if (userOrMember.guild) {
-                message.inlineReply("`server` is DM-only.");
-                return;
-            }
-
-            const splitArgs = (args ?? "").split(WHITESPACE_PLUS);
-            if (splitArgs.length < 2) {
-                this.showUsage(...arguments);
-                return;
-            }
-
-            // the guild name might contain spaces and in that case this should still work
-            // it's not known where exactly the guild name ends and the command starts so we have to test
-            /** @type {Discord.Guild} */
-            let guild;
-            /** @type {number} */
-            let guildInputLength;
-            const idMatch = splitArgs[0].match(/^\d{17,19}$/);
-            if (idMatch) {
-                guildInputLength = idMatch.index + idMatch[0].length;
-                guild = client.guilds.cache.get(idMatch[0]);
-            } else {
-                for (let index = 1; index < splitArgs.length; index++) {
-                    const input = splitArgs.slice(0, index).join("");
-                    guild = client.getGuild(input);
-                    if (guild) {
-                        guildInputLength = input.length + args.match(WHITESPACE_PLUS).slice(0, index - 1).join("").length;
-                        break;
-                    }
-                }
-            }
-
-            if (!guild) {
-                message.inlineReply("Server not found.");
-                return;
-            }
-
-            const member = await guild.members.fetch(userOrMember.id).catch(noop);
-            if (!member) {
-                message.inlineReply(`You're not a server member of ${guild}.`);
-                return;
-            }
-
-            if (!await client.useCommand(message, member, args.slice(guildInputLength).trim())) {
-                message.inlineReply("Command not found.");
-            }
-        }
-    },
     metaAs: {
         names: [ "as" ],
         description: "Calls a command as the specified user",

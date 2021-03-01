@@ -43,6 +43,11 @@ Guild.prototype.init = async function(guildInput) {
         sqlite: {}
     });
 
+    // guild command
+    const guildCommand = new Command(null, guildInput.guildCommand);
+    guildCommand.guildCommand = this;
+    this.client.commands[guildInput.guildCommand] = guildCommand;
+
     // load command modules
     const moduleIDs = [ "meta" ];
     moduleIDs.push(...guildInput.moduleIDs);

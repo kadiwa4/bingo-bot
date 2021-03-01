@@ -7,17 +7,19 @@ import Discord from "discord.js";
 export default class Command {
     /**
      * Creates a new command object
-     * @param {CommandModule} module The command module the command belongs to
+     * @param {?CommandModule} module The command module the command belongs to
      * @param {string} id The (normally alphanumeric) command ID
      */
     constructor(module, id) {
-        const commandInput = module.commands[id];
-        Object.assign(this, commandInput);
+        if (module) {
+            const commandInput = module.commands[id];
+            Object.assign(this, commandInput);
 
-        assert((this.names || this.aliases.length > 0)
-            && (!this.raceChannelOnly || this.guildDependent)
-            && (!this.modOnly || this.guildDependent)
-            && this.onUse !== Command.prototype.onUse);
+            assert((this.names || this.aliases.length > 0)
+                && (!this.raceChannelOnly || this.guildDependent)
+                && (!this.modOnly || this.guildDependent)
+                && this.onUse !== Command.prototype.onUse);
+        }
 
         /** The (normally alphanumeric) command ID */
         this.id = id;
@@ -186,6 +188,12 @@ Command.prototype.example = null;
  * @type {?NodeJS.Dict<string>}
  */
 Command.prototype.examples = null;
+
+/**
+ * If this is a guild command, the guild, otherwise null
+ * @type {?Discord.Guild}
+ */
+Command.prototype.guildCommand = null;
 
 /**
  * Whether or not the command needs to know which guild it is called in.

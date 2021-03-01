@@ -21,7 +21,8 @@ Client.prototype.getGuild = function(input) {
 };
 
 /**
- * Uses the command that was given to the function
+ * Uses the command that was given to the function.
+ * Returns whether or not the command was found
  * @param {Discord.Message} message
  * @param {Discord.User | Discord.GuildMember} userOrMember
  * @param {string} [input]
@@ -62,8 +63,35 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             return false;
         }
 
+        const commandName = inputMatch[2].toLowerCase();
+
         /** @type {Command} */
-        const command = this.commands[inputMatch[2].toLowerCase()];
+        const command = this.commands[commandName];
+
+        if (command.guildCommand) {
+            if (userOrMember.guild) {
+                message.inlineReply(`\`${commandName}\` is DM-only.`);
+                return true;
+            }
+
+            if (!inputMatch[3]) {
+                message.inlineReply(`Usage: \`${commandName} <command>\``);
+                return true;
+            }
+
+            const member = await command.guildCommand.members.fetch(userOrMember.id);
+            if (!member) {
+                message.inlineReply(`You're not a server member of ${command.guildCommand.srName}.`);
+                return true;
+            }
+
+            if (!await this.useCommand(message, member, inputMatch[3])) {
+                message.inlineReply("Command not found.");
+            }
+
+            return true;
+        }
+
         if (!command || (guild && !guild.moduleIDs.has(command.module.id))) {
             return false;
         }
@@ -75,7 +103,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
 
         if (command.guildDependent) {
             if (!guild) {
-                message.inlineReply(`The command ${command} is server-dependent and your message is a DM. Use \`server <server name> <command…>\` to run your command on a server.`);
+                message.inlineReply(`The command ${command} is server-dependent and your message is a DM. Use \`<server abbreviation> <command…>\` to run your command on a server.`);
                 return true;
             }
 

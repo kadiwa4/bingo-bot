@@ -17,6 +17,9 @@ declare global {
         /** Other names for the guild as `client.cleanUpGuildName` would output them. Can include "sr" but not "speedrun(ning)", "server" or "guild" */
         aliases?: string[];
 
+        /** Command name that runs the command after that on the guild */
+        guildCommand: string;
+
         /** Discord channel IDs of channels where races should take place */
         raceChannelIDs: string[];
 

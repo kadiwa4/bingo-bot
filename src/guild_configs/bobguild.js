@@ -95,6 +95,7 @@ const lbp = {
     name: "bob testing", // "LittleBigPlanet" REPLACE // LBP Speedrunning
     aliases: [ "bob" ], // [ "lbp", "lbpsr" ] REPLACE
     abbreviation: "bob", // "LBP" REPLACE
+    guildCommand: "bob", // "lbp" REPLACE
     raceChannelIDs: [
         "794629930667343918",
         "814156861221634089"
