@@ -5,6 +5,7 @@ import { RaceState, TeamState } from "./enums.js";
 import Game from "./Game.js";
 
 import Discord from "discord.js";
+import { bind } from "./misc.js";
 
 /** Keeps track of the current stage of racing in a race channel */
 export default class Race {
@@ -201,11 +202,11 @@ export default class Race {
     end() {
         const { everyoneForfeited } = this;
         // \xA0 is a non-breaking space
-        const messageStart = everyoneForfeited ? "Everyone forfeited; race not counted. "
+        let messageStart = everyoneForfeited ? "\nEveryone forfeited; race not counted. "
             : `\nRace complete (ID\xA0\`${this.id}\`)! `;
 
         this.state = RaceState.DONE;
-        // calculate the forfeited team's Elos
+        // calculate the forfeited teams' Elos
         for (let team of this.teams) {
             if (team.state === TeamState.FORFEITED) {
                 team.calculateEloDifference();
@@ -213,7 +214,7 @@ export default class Race {
         }
 
         if (!this.category.isIL) {
-            this.endTimeout = setTimeout(this.clean, 60000, !everyoneForfeited);
+            this.endTimeout = setTimeout(bind(this, "clean"), 60000, !everyoneForfeited);
             return `${messageStart}${everyoneForfeited ? "C" : "Recording results/c"}learing race in 1 minute.`;
         }
 
@@ -234,7 +235,7 @@ export default class Race {
             this.checkCategoryCoop();
             messageStart += (leavingEntrants.length > 0)
                 ? `${leavingEntrants.join(", ")} and ${lastLeavingEntrant} have left the race. `
-                : messageStart += `${lastLeavingEntrant} has left the race. `;
+                : `${lastLeavingEntrant} has left the race. `;
         }
 
         this.checkWhoChoosesNextLevel();
@@ -334,10 +335,15 @@ export default class Race {
         this.guild.emit("raceRecorded", this);
         this.id++;
         if (isIL) {
+            let winnerTeam;
             for (let team of this.teams) {
                 if (team.state === TeamState.FORFEITED) {
                     // teams that forfeited don't get any points
                     continue;
+                }
+
+                if (team.place === 1) {
+                    winnerTeam = team;
                 }
 
                 const pointGain = this.teams.length - team.place + 1;
@@ -345,6 +351,13 @@ export default class Race {
                     member.ilScore += pointGain;
                 }
             }
+
+            this.ilResults.push({
+                id: this.id - 1,
+                game: this.game,
+                level: this.level,
+                winnerTeamName: winnerTeam.boldName
+            })
 
             this.newIL();
         } else {

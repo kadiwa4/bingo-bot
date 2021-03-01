@@ -538,15 +538,17 @@ export const commands = {
                 // else the team is tied and the place isn't increased
             }
 
-            const raceEndMessage = race.checkIfStillGoing(); // update race.state
-
             const splitContent = [
                 `${team} has finished in `,
                 team.place.toOrdinal(),
                 " place (",
                 team.eloDifferenceString,
-                `) with a time of ${formatTime(team.doneTime)}${(raceEndMessage && race.category.isIL) ? "" : ` (use \`${guild.commandPrefix}undone\` if this was a mistake)`}!`
+                `) with a time of ${formatTime(team.doneTime)}`
             ];
+
+            const raceEndMessage = race.checkIfStillGoing(); // update race.state
+
+            splitContent[4] += `${(raceEndMessage && race.category.isIL) ? "" : ` (use \`${guild.commandPrefix}undone\` if this was a mistake)`}!`;
 
             team.splitDoneMessageContent = splitContent;
             team.endMessage = message.inlineReply(`${splitContent.join("")}${raceEndMessage}`);
@@ -762,6 +764,7 @@ export const commands = {
             if (teamName.length === 0) {
                 team.teamName = null;
                 message.acknowledge();
+                console.log(args);
                 return;
             }
 

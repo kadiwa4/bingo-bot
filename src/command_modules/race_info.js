@@ -165,7 +165,7 @@ export const commands = {
             /** @type {{ race: Race; }} */
             const { race } = message.channel;
 
-            if (!race.category.isIL || (race.state !== RaceState.JOINING || race.state !== RaceState.ACTIVE)) {
+            if (!race.category.isIL || (race.state !== RaceState.JOINING && race.state !== RaceState.ACTIVE)) {
                 return;
             }
 
