@@ -15,7 +15,7 @@ import "./discord/GuildMember.js";
 import "./discord/Message.js";
 import "./discord/User.js";
 
-import { assert, log, logError } from "./misc.js";
+import { assert, log, logError, noop } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -26,10 +26,13 @@ log("started");
 const DISCORD_AUTH = "./discord_auth.json";
 const TOKEN_HERE = "discord auth token here";
 
+// check Node.js version
 if (semverMajor(process.version) < 14) {
     logError("upgrade your node.js https://nodejs.org/en/");
     process.exit(1);
 }
+
+// check for discord auth token
 
 /** @returns {never} */
 function discordAuthRequired() {
@@ -48,6 +51,7 @@ if (discordAuthToken === TOKEN_HERE || discordAuthToken.length === 0) {
     discordAuthRequired();
 }
 
+// initialize client
 const client = new Discord.Client({
     disableMentions: "everyone",
     messageEditHistoryMaxSize: 0,
@@ -73,6 +77,7 @@ if (client.owner instanceof Discord.Team) {
 
 client.owner.createDM();
 
+// load all guild configs in `src/guild_configs`
 for (let file of fs.readdirSync("./src/guild_configs")) {
     assert(file.toLowerCase().endsWith(".js"), `'src/guild_configs/${file}' is not a JavaScript file`);
 
@@ -88,14 +93,18 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
     await guild.init(guildInput);
 }
 
+// event handlers
+
 const { Events } = Discord.Constants;
 
+// new incoming Discord message
 client.on(Events.MESSAGE_CREATE, function onMessage(message) {
     if (!message.author.bot && (!message.guild || message.content.startsWith(message.guild.commandPrefix))) {
         client.useCommand(message, message.member ?? message.author);
     }
 });
 
+// guild member left or was kicked/banned
 client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
     if (member.team) {
         /** @type {{ race: Race; }} */
@@ -104,16 +113,16 @@ client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
     }
 });
 
+// unhandled promise rejection
 process.on("unhandledRejection", async function onUnhandledRejection(error) {
     logError(`unhandled promise rejection: ${error.stack ?? error}`);
 
-    try {
-        await client.user.setStatus("invisible");
-    } catch {}
+    await client.user.setStatus("invisible").catch(noop);
 
     process.exit(1);
 });
 
+// process exit
 process.on("exit", function onExit() {
     for (let database of client.databases) {
         database.close();
@@ -122,17 +131,19 @@ process.on("exit", function onExit() {
     log("exited");
 });
 
+// uncaught JS exception
 process.on("uncaughtException", async function onUncaughtException(error) {
     logError(error?.stack ?? error);
 
-    try {
-        await client.user.setStatus("invisible");
-    } catch {}
+    await client.user.setStatus("invisible").catch(noop);
 
     process.exit(1);
 });
 
+// keyboard interrupt
 process.on("SIGINT", async function onKeyboardInterrupt() {
+    log("keyboard interrupt")
+
     await client.user.setStatus("invisible");
 
     process.exit();

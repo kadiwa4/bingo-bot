@@ -3,6 +3,10 @@ import { log, logError, spacesAroundMentions, WHITESPACE } from "../misc.js";
 
 import Discord, { Client } from "discord.js";
 
+/**
+ * Takes a user-input string and cleans it up so that it can then be used as a key in an object
+ * @param {string} input
+ */
 Client.prototype.cleanUpGuildName = function(input) {
     return input.toLowerCase().replace(/\W/, "").replace(/speedrun(ning)?|server|guild/, "");
 }

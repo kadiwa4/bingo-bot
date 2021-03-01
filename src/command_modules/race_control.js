@@ -459,11 +459,12 @@ export const commands = {
 
             // mark as ready
             member.isReady = true;
-            message.acknowledge();
 
             if (race.isEveryoneReady) {
                 // start countdown if everyone is ready
                 race.channel.send(race.startCountdown(message));
+            } else {
+                message.acknowledge();
             }
         }
     },

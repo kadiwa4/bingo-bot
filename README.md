@@ -1,13 +1,16 @@
 # Bingo Bot
 
-LittleBigPlanet speedrunning race bot for Discord
-(no bingo functionality)
+Bingo Bot is a speedrunning race bot for Discord, originally developed for LittleBigPlanet (no bingo functionality)
+
+To get an overview of how the code works and where to start, see [`code_structure.md`](/code_structure.md)
 
 ## Setup
 
-[Set up a Discord bot](https://discord.com/developers/applications). Enable Application > Bot > Server Members Intent.
+[Set up a Discord bot](https://discord.com/developers/applications)
 
-Install [Node.js](https://nodejs.org/en/) (latest or LTS version)
+Enable Application > Bot > Server Members Intent
+
+Install [Node.js](https://nodejs.org/en/) (latest or LTS version).
 
 Get build tools
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
@@ -19,7 +22,7 @@ Get dependencies
 npm i
 ```
 
-Create discord_auth.json in the bingo-bot folder with your auth token
+Create `discord_auth.json` in the bingo-bot folder with your auth token
 
 ```json
 {
@@ -27,7 +30,9 @@ Create discord_auth.json in the bingo-bot folder with your auth token
 }
 ```
 
-Run bot.
+Create a configuration file for your speedrunning server and put it into `src/guild_configs`
+
+Run bot
 
 ```
 npm start

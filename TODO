@@ -1,7 +1,4 @@
-comments
 test banning/kicking
-a file explaining roughly how the code works
-test races
-update README
 update run.sh and update.bat
 name cache
+get rid of `server` command

@@ -26,7 +26,7 @@ declare global {
         /** Command module IDs of all modules from `command_modules` that can be used in the guild */
         moduleIDs: string[];
 
-        /** Function that takes a user-input string and cleans it up so that it can then be used as a key in an object */
+        /** Takes a user-input string and cleans it up so that it can then be used as a key in an object */
         cleanUpGameName(input: string): string;
 
         /** Object that maps from category names common across all games to category input objects */
@@ -111,10 +111,10 @@ declare global {
 
         /** Type of `roles`, which contains configuration for the `roles` command module */
         interface Roles {
-            /** Function that gets run on startup */
+            /** Gets called on startup */
             init?(guild: Discord.Guild, role: (id: string) => Discord.Role): Set<Discord.Role>;
 
-            /** Function that returns an array of roles that the guild member should have */
+            /** Returns an array of roles that the guild member should have */
             getRoles(member: Discord.GuildMember, srcData: any[]): Set<Discord.Role>;
 
             /**
@@ -143,12 +143,12 @@ declare global {
         emotes?: Config.Emotes;
 
         /**
-         * Function that takes a user-input string and cleans it up so that it can then be used as a key in an object.
+         * Takes a user-input string and cleans it up so that it can then be used as a key in an object.
          * Additionally determines whether or not the category is a co-op category
          */
         cleanUpCategory?(input: string): { name: string; coop: boolean; };
 
-        /** Function that takes a user-input string and cleans it up so that it can then be used as a key in an object */
+        /** Takes a user-input string and cleans it up so that it can then be used as a key in an object */
         cleanUpLevelName?(input: string): string;
     }
 
@@ -179,7 +179,7 @@ declare global {
              */
             sayWhoChoosesNextIL?: boolean;
 
-            /** Function that chooses community levels. If it returns `true`, that means a community level was chosen */
+            /** Chooses community levels. If it returns `true`, that means a community level was chosen */
             communityLevels?(onError: (error: any) => void, message: Discord.Message, member: Discord.GuildMember, args: string, cleanArgs: string):  boolean | void;
 
             /** Game-specific configuration for elo */
@@ -189,7 +189,7 @@ declare global {
         /** Type of `config.race.elo`, which contains game-specific configuration for elo */
         interface Elo {
             /**
-             * Maximum amount of Elo points that can be gained by beating a player
+             * Maximum amount of Elo that can be gained by beating one player
              * @default 32
              */
             maxEloGain?: number;
@@ -207,12 +207,12 @@ declare global {
             dividend?: number;
 
             /**
-             * Amount of Elo points that a player starts with
+             * Amount of Elo that a player starts with
              * @default 1500
              */
             start?: number;
 
-            /** Function that calculates the team's Elo point count. By default, this is the average of the team members' point count */
+            /** Calculates the team's Elo. By default, this is the average of the team members' Elos */
             calculateTeamElo?(elos: number[]): number;
         }
 

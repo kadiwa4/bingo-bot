@@ -12,6 +12,7 @@ import fs from "fs";
 import BetterSqlite3 from "better-sqlite3";
 import Discord, { Guild } from "discord.js";
 
+// make EventEmitter functions available on guild objects
 Object.assign(Guild.prototype, EventEmitter.prototype);
 
 /**

@@ -405,7 +405,7 @@ export default class Race {
     }
 
     /**
-     * Performs the specified action for each race entrant
+     * Returns a generator that yields each race entrant
      * @returns {Generator<Discord.GuildMember, void, undefined>}
      */
     *entrantIterator() {

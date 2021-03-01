@@ -8,8 +8,6 @@ import BetterSqlite3 from "better-sqlite3";
 import { BufferList } from "bl";
 import Discord from "discord.js";
 
-//const { BufferList } = BufferListStream;
-
 export const FROZEN_ARRAY = Object.freeze([]);
 export const MULTI_GAME = "Multiple Games";
 export const WHITESPACE = `[\\s\\uFEFF\\xA0]`; // to stay consistent with how String.trim() behaves
@@ -42,14 +40,15 @@ export function bind(object, functionKey, ...args) {
 }
 
 /**
- * @param {number} team1Elo
- * @param {TeamState} team1State
- * @param {number} team1Time
- * @param {number | () => number} team2Elo
- * @param {TeamState} team2State
- * @param {number} team2Time
- * @param {Config.Elo} eloConfig
- * @param {boolean} [team2EloFunction]
+ * Calculates the Elo difference for a 1v1 matchup between two entrant teams
+ * @param {number} team1Elo Team 1's Elo before the race
+ * @param {TeamState} team1State Team 1's current TeamState
+ * @param {number} team1Time Team 1's time in seconds
+ * @param {number | () => number} team2Elo Team 2's Elo before the race or a function returning it
+ * @param {TeamState} team2State Team 2's current TeamState
+ * @param {number} team2Time Team 2's time in seconds
+ * @param {Config.Elo} eloConfig The Elo calculation configuration
+ * @param {boolean} [team2EloFunction] Whether or not `team2Elo` is a function
  */
 export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, team2State, team2Time, eloConfig, team2EloFunction = false) {
     // the score is a number between 0 and 1:
@@ -115,6 +114,7 @@ export function createSQLiteTable(database, tableName, tableColumns, indexName, 
     database.pragma("journal_mode = WAL;");
 }
 
+/** HTML codes for the function `decodeHTML` */
 const entities = Object.assign(Object.create(null), {
     amp: "&",
     apos: "'",
@@ -151,7 +151,7 @@ export function formatTime(time, canHideHours = true) {
 
 /**
  * Gets the user ID from the user's input or null
- * @param {string} input
+ * @param {string} input The user input
  * @returns {?string}
  */
 export function getUserID(input) {
@@ -201,10 +201,10 @@ export function httpsGet(hostname, path) {
  * invertObject(myCleanUpFn("LittleBigPlanet"), [ "lbp1", "1" ], allMyGames, lbp1Game);
  * // allMyGames afterwards: { "lbp": lbp1Game, "lbp1": lbp1Game, "1": lbp1Game }
  * @template T
- * @param {string} cleanedUpName
- * @param {string[]} [aliases]
- * @param {NodeJS.Dict<T>} object
- * @param {T} outputValue
+ * @param {string} cleanedUpName Name to be appended to `aliases`
+ * @param {string[]} [aliases] The keys to be set in the output object
+ * @param {NodeJS.Dict<T>} object The object to be changed
+ * @param {T} outputValue The value to be set in the output object
  */
 export function invertObject(cleanedUpName, aliases = [], object, outputValue) {
     aliases.push(cleanedUpName);
@@ -248,7 +248,7 @@ export const setTimeoutPromise = util.promisify(setTimeout);
 /**
  * Places spaces around all user mentions that don't have spaces around them.
  * As a user, it's easy to miss that you didn't use spaces before/after
- * a mention because disord places a small gap there
+ * a mention because Discord shows a small gap there
  * @param {string} text The string to put spaces in
  * @returns {string}
  */
@@ -276,7 +276,7 @@ export function spacesAroundMentions(text) {
  * Helps output an array of objects as a table
  * @param {object[]} array The array to output
  * @param {string[]} consistentWidthProperties Array of property names whose values should be paded with spaces on the left to ensure the same width in every row
- * @param {(item: object, index: number) => void} lineString The function that gets executed for every row
+ * @param {(item: object, index: number) => void} lineString Function that gets executed for every row
  */
 export function toTable(array, consistentWidthProperties, lineString) {
     if (array.length < 1) {
@@ -378,7 +378,8 @@ Object.defineProperties(Object.prototype, {
     withPrototypeRecursive: {
         /**
          * Returns an object (might be a deep copy) that uses the specified prototype and
-         * whose "simple" subobjects (simple dicts with curly brackets; e.g. `{ e: 3 }`) also have that prototype
+         * whose "simple" subobjects (simple dicts with curly brackets; e.g. `{ e: 3 }`) also have that prototype.
+         * Used for game-specific configuration in the guild config.
          * @param {object} prototype The prototype the output object should use
          */
         value: function withPrototypeRecursive(prototype) {
