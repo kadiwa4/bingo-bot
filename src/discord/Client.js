@@ -115,7 +115,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
 
                 // log that the command was used
                 // "userOrMember" isn't used here so that the person
-                // who actually sent the command is always blamed (even with the 'as' command)
+                // who actually sent the command is always blamed (even with the `as` command)
                 log(`${message.author.id} (${message.author.tag}) wrote: '${message.content}'`, guild);
             }
         }

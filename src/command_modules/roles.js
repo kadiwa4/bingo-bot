@@ -79,7 +79,7 @@ export const commands = {
                 }
             }
 
-            const response = (await callSRC(onErrorCatch404, `/user/${args}`))?.content;
+            const response = (await callSRC(onErrorCatch404, guild, `/user/${args}`))?.content;
             if (!response) {
                 return;
             }
@@ -178,7 +178,7 @@ async function updateRoles(onError, message, member, srcID) {
     /** @type {Set<Discord.Role>} */
     let newRoles;
     if (srcID) {
-        const { content, path } = await callSRC(onError ?? logError, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
+        const { content, path } = await callSRC(onError ?? logError, guild, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
         const srcResponse = JSON.parse(content);
         if ("status" in srcResponse) {
             if (message) {
@@ -226,10 +226,11 @@ let srcCallTimestamp = 0;
 /**
  * Gets a speedrun.com page over HTTPS
  * @param {(error) => void} onError Function that gets called to catch an error
+ * @param {Discord.Guild} guild The guild
  * @param {string} path The path, starting with '/'
  * @returns {Promise<{ content: string; path: string; }>}
  */
-async function callSRC(onError, path) {
+async function callSRC(onError, guild, path) {
     // - delay after API call: 1 sec
     // - delay after downloading any other sr.c page: 5 sec
     // API: https://github.com/speedruncomorg/api/tree/master/version1
@@ -242,5 +243,6 @@ async function callSRC(onError, path) {
         await setTimeoutPromise(prevApiCallTimestamp - Date.now());
     }
 
+    log(`sr.c request: ${path}`, guild);
     return httpsGet("www.speedrun.com", path).catch(onError);
 }

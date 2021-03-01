@@ -811,11 +811,16 @@ const lbp = {
                 }
             }
 
-            const multiCategories = guild.games[MULTI_GAME].categories;
+            const multiGame = guild.games[MULTI_GAME];
             for (let stat of guild.sqlite.getUserGamesRan.all(member.id)) {
-                newRoles.add((stat.game === MULTI_GAME)
-                    ? multiCategories[stat.game].games.map((game) => gameRoles[game.name])
-                    : gameRoles[stat.game]);
+                if (stat.game === MULTI_GAME) {
+                    const category = multiGame.getCategory(stat.category);
+                    if (category) {
+                        newRoles.add(category.games.map((game) => gameRoles[game.name]));
+                    }
+                } else {
+                    newRoles.add(gameRoles[stat.game]);
+                }
             }
 
             return newRoles;

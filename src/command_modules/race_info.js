@@ -263,6 +263,7 @@ export const commands = {
     },
     raceFixElo: {
         names: [ "fixelo" ],
+        aliases: [ "elofix" ],
         description: "Recalculates the Elo leaderboards",
         category: HelpCategory.MOD,
         modOnly: true,

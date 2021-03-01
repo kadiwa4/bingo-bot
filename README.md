@@ -73,7 +73,6 @@ npm start
 
 **Other commands**
 * `help [<command name>]` – Shows a list of commands or details on one command.
-* `server <server name or ID> <command>` – In DMs, calls a command on the specified server.
 
 **Moderator-only commands**
 * `as <@​member or ID> <command>` – Calls a command as the specified user.
