@@ -214,6 +214,21 @@ export function invertObject(cleanedUpName, aliases = [], object, outputValue) {
 }
 
 /**
+ * Determines whether or not the member is a mod/an admin in the guild
+ * @param {Discord.Message} message
+ * @param {Discord.GuildMember} member
+ * @returns {boolean}
+ */
+export function isMod(message, member) {
+    let authorMember = message.member;
+    if (!authorMember) {
+        authorMember = member.guild.members.cache.get(message.author.id);
+    }
+
+    return member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
+}
+
+/**
  * Formats text for functions log and logError
  * @param {string} text The string to write
  * @param {Discord.Guild} [guild] The guild that is the cause

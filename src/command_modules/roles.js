@@ -1,6 +1,6 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { assert, clean, createSQLiteTable, decodeHTML, httpsGet, log, logError, setTimeoutPromise } from "../misc.js";
+import { assert, clean, createSQLiteTable, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -66,7 +66,7 @@ export const commands = {
                 return;
             }
 
-            if (message.member.isMod) {
+            if (isMod(message, member)) {
                 await updateRoles(...arguments).catch(onError);
                 return;
             }
@@ -91,7 +91,6 @@ export const commands = {
             }
 
             const tagMatch = response.slice(20000).match(/data-original-title="Discord: ([^#]+#\d{4})"/);
-            console.log(tagMatch.index);
             if (!tagMatch) {
                 message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${member.user.cleanTag}\`) at https://www.speedrun.com/editprofile.`);
                 return;
@@ -134,7 +133,7 @@ export const commands = {
         modOnly: true,
         onUse: async function rolesUpdate(onError, message, member) {
             await updateAllRoles(onError, member.guild).catch(onError);
-            message.acknowledge();
+            message.acknowledge(member);
         }
     }
 };
@@ -218,7 +217,7 @@ async function updateRoles(onError, message, member, srcID) {
     }
 
     await member.roles.set([...allRoles]);
-    message?.acknowledge();
+    message?.acknowledge(member);
 }
 
 let srcCallTimestamp = 0;

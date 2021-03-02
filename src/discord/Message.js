@@ -1,10 +1,13 @@
-import { bind, log, noop } from "../misc.js";
+import { bind, noop } from "../misc.js";
 
 import Discord, { Message } from "discord.js";
 
-/** Reacts with an emote that shows that the message was understood */
-Message.prototype.acknowledge = function() {
-    this.react((this.channel.race?.game ?? this.guild).config.emotes.acknowledge);
+/**
+ * Reacts with an emote that shows that the message was understood
+ * @param {Discord.GuildMember} member
+ */
+Message.prototype.acknowledge = function(member) {
+    this.react((this.channel.race?.game ?? member.guild).config.emotes.acknowledge);
 };
 
 /** Crosses out the message */

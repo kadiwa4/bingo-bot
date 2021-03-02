@@ -208,7 +208,7 @@ export const commands = {
                 // entrant wanted to leave after IL but changed their mind now
                 race.leaveWhenDone.delete(member);
 
-                message.acknowledge();
+                message.acknowledge(member);
                 (await member.leaveWhenDoneMessage.catch(onError))?.crossOut?.();
                 return;
             }
@@ -250,7 +250,7 @@ export const commands = {
                 case RaceState.JOINING:
                     // join existing race
                     if (race.addEntrant(member)) {
-                        message.acknowledge();
+                        message.acknowledge(member);
                         if (race.state === RaceState.COUNTDOWN) {
                             message.inlineReply(`${member.cleanName} joined; stopping countdown.`);
                         }
@@ -464,7 +464,7 @@ export const commands = {
                 // start countdown if everyone is ready
                 race.channel.send(race.startCountdown(message));
             } else {
-                message.acknowledge();
+                message.acknowledge(member);
             }
         }
     },
@@ -488,7 +488,7 @@ export const commands = {
                 race.stopCountdown();
                 message.inlineReply(`${member.cleanName} isn't ready; stopping countdown.`);
             } else {
-                message.acknowledge();
+                message.acknowledge(member);
             }
         }
     },
@@ -587,7 +587,7 @@ export const commands = {
             });
 
             race.checkResume();
-            message.acknowledge();
+            message.acknowledge(member);
             (await team.endMessage.catch(onError))?.crossOut?.();
             team.endMessage = null;
         }
@@ -631,7 +631,7 @@ export const commands = {
 
             team.state = TeamState.NOT_DONE;
             race.checkResume();
-            message.acknowledge();
+            message.acknowledge(member);
             (await team.endMessage.catch(onError))?.crossOut?.();
             team.endMessage = null;
         }
@@ -764,8 +764,7 @@ export const commands = {
             const teamName = clean(args?.replace(WHITESPACE_PLUS, " ") ?? "", message);
             if (teamName.length === 0) {
                 team.teamName = null;
-                message.acknowledge();
-                console.log(args);
+                message.acknowledge(member);
                 return;
             }
 
@@ -781,7 +780,7 @@ export const commands = {
             }
 
             team.teamName = teamName;
-            message.acknowledge();
+            message.acknowledge(member);
         }
     },
     raceUnteam: {
@@ -809,7 +808,7 @@ export const commands = {
             team.remove(member);
             race.teams.push(new EntrantTeam(race, member));
             race.checkCategoryCoop();
-            message.acknowledge();
+            message.acknowledge(member);
         }
     },
     raceUnteamall: {
@@ -829,7 +828,7 @@ export const commands = {
 
             race.teams = race.entrants.map((entrant) => new EntrantTeam(race, entrant));
             race.category = race.category.forCoop(false);
-            message.acknowledge();
+            message.acknowledge(member);
         }
     },
     raceRandomteams: {
@@ -907,7 +906,7 @@ export const commands = {
                     race.clean(!race.everyoneForfeited);
             }
 
-            message.acknowledge();
+            message.acknowledge(member);
         }
     }
 };

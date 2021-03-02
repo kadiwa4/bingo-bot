@@ -23,16 +23,6 @@ Object.defineProperties(GuildMember.prototype, {
             return Discord.Util.escapeMarkdown(this.displayName.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
         }
     },
-    isMod: {
-        /**
-         * Determines whether or not the member is a mod/an admin in the guild
-         * @this GuildMember
-         * @returns {boolean}
-         */
-        get: function isMod() {
-            return this.guild.modRoles.some((role) => this.roles.cache.has(role.id));
-        }
-    },
     readyEmote: {
         /**
          * Either emotes.ready or emotes.notReady

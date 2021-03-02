@@ -77,19 +77,5 @@ export const commands = {
                 message.inlineReply("Command not found.");
             }
         }
-    },
-    metaB: {
-        aliases: [ "b" ], // TODO remove this
-        modOnly: true,
-        onUse: function metaB(onError, message, member, args) {
-            member.client.commands.as.onUse(onError, message, member, `667788080215883786 ${args}`).catch(onError);
-        }
-    },
-    metaJ: {
-        aliases: [ "j" ], // TODO remove this
-        modOnly: true,
-        onUse: function metaJ(onError, message, member, args) {
-            member.client.commands.as.onUse(onError, message, member, `81612266826379264 ${args}`).catch(onError);
-        }
     }
 };

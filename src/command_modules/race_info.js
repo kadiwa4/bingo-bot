@@ -367,7 +367,7 @@ export const commands = {
 
             recordRace();
 
-            message.acknowledge();
+            message.acknowledge(member);
         }
     },
     raceMe: {

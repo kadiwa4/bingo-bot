@@ -1,5 +1,5 @@
 import Command from "../Command.js";
-import { log, logError, spacesAroundMentions, WHITESPACE } from "../misc.js";
+import { log, logError, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
 
 import Discord, { Client } from "discord.js";
 
@@ -68,6 +68,10 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
         /** @type {Command} */
         const command = this.commands[commandName];
 
+        if (!command) {
+            return false;
+        }
+
         if (command.guildCommand) {
             if (userOrMember.guild) {
                 message.inlineReply(`\`${commandName}\` is DM-only.`);
@@ -92,7 +96,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             return true;
         }
 
-        if (!command || (guild && !guild.moduleIDs.has(command.module.id))) {
+        if (guild && !guild.moduleIDs.has(command.module.id)) {
             return false;
         }
 
@@ -108,7 +112,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             }
 
             if (command.modOnly) {
-                if (!message.member.isMod) {
+                if (!isMod(message, userOrMember)) {
                     message.inlineReply(`The command ${command} is only available to moderators and you're not moderating the server.`);
                     return true;
                 }
