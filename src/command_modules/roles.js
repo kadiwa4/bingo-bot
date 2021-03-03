@@ -24,7 +24,8 @@ export function init(guild, guildInput) {
         src_id TEXT NOT NULL`);
 
     Object.assign(guild.sqlite, {
-        getSrcUsers: database.prepare("SELECT * FROM src_users;"),
+        getAllSrcUsers: database.prepare("SELECT * FROM src_users;"),
+        getSrcID: database.prepare("SELECT src_id FROM src_users WHERE discord_id = ?;").pluck(),
         addSrcUser: database.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
         deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;")
     });
@@ -51,13 +52,18 @@ export const commands = {
     roles: {
         names: [ "roles" ],
         usage: "[<speedrun.com name>]",
-        description: "Updates your roles to match races finished + speedrun.com PBs or deletes roles if nothing is specified",
+        description: "Sets your roles to match races finished + speedrun.com PBs or updates roles",
         onUse: async function roles(onError, message, member, args) {
             const { guild } = member;
 
             if (!args) {
-                guild.sqlite.deleteSrcUser.run(member.id);
-                await updateRoles(onError, message, member, null).catch(onError);
+                const srcID = guild.sqlite.getSrcID.get(member.id);
+                if (!srcID) {
+                    message.inlineReply("Please specify your speedrun.com name.");
+                    return;
+                }
+
+                updateRoles(onError, message, member, srcID).catch(onError);
                 return;
             }
 
@@ -67,7 +73,7 @@ export const commands = {
             }
 
             if (isMod(message, member)) {
-                await updateRoles(...arguments).catch(onError);
+                updateRoles(onError, message, member, args, true).catch(onError);
                 return;
             }
 
@@ -100,7 +106,7 @@ export const commands = {
             const discordTag = member.user.tag;
             const srcTag = decodeHTML(tagMatch[1]);
             if (srcTag === discordTag) {
-                await updateRoles(...arguments).catch(onError);
+                updateRoles(onError, message, member, args, true).catch(onError);
                 return;
             }
 
@@ -116,13 +122,24 @@ export const commands = {
                 }
 
                 if (tagsMatch) {
-                    await updateRoles(...arguments).catch(onError);
+                    updateRoles(onError, message, member, args, true).catch(onError);
                     return;
                 }
             }
 
             message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${member.user.cleanTag}). You can update it at https://www.speedrun.com/editprofile. If you have issues with this, contact a moderator.`);
             return;
+        }
+    },
+    rolesRemove: {
+        names: [ "removeroles" ],
+        aliases: [ "rolesremove", "clearroles", "rolesclear", "unroles" ],
+        description: "Removes your speedrun roles",
+        onUse: function rolesRemove(onError, message, member) {
+            const { guild } = member;
+
+            guild.sqlite.deleteSrcUser.run(member.id);
+            updateRoles(onError, message, member, null).catch(onError);
         }
     },
     rolesUpdate: {
@@ -150,7 +167,7 @@ function setUpdateAllRolesTimeout(guild) {
 async function updateAllRoles(onError, guild) {
     setUpdateAllRolesTimeout(guild);
 
-    for (let { discord_id: discordID, src_id: srcID } of guild.sqlite.getSrcUsers.all()) {
+    for (let { discord_id: discordID, src_id: srcID } of guild.sqlite.getAllSrcUsers.all()) {
         let member;
 
         try {
@@ -170,8 +187,9 @@ async function updateAllRoles(onError, guild) {
  * @param {?Discord.Message} message
  * @param {Discord.GuildMember} member
  * @param {string} srcID
+ * @param {boolean} [addToDB]
  */
-async function updateRoles(onError, message, member, srcID) {
+async function updateRoles(onError, message, member, srcID, addToDB = false) {
     const { guild } = member;
 
     /** @type {Set<Discord.Role>} */
@@ -197,7 +215,7 @@ async function updateRoles(onError, message, member, srcID) {
                 log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
                 guild.sqlite.deleteSrcUser(member.id);
             }
-        } else {
+        } else if (addToDB) {
             guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/([^/]+)\/p/)[1] });
         }
 
