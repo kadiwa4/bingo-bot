@@ -355,11 +355,8 @@ export const commands = {
                 for (let team2 of teams) {
                     const eloChange = calculateEloMatchup(team1.oldElo, team1.state, team1.time, team2.oldElo, team2.state, team2.time, eloConfig);
 
-                    const team2Length = team2.members?.length ?? 1;
-                    const maxLength = Math.max(team1Length, team2Length);
-
-                    team1.eloChange += eloChange * maxLength / team1Length;
-                    team2.eloChange -= eloChange * maxLength / team2Length;
+                    team1.eloChange += eloChange * (team2.members?.length ?? 1);
+                    team2.eloChange -= eloChange * team1Length;
                 }
 
                 teams.push(team1);

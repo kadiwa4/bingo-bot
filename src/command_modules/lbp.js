@@ -16,7 +16,10 @@ export const commands = {
         aliases: [ "newrunner", "nr" ],
         description: "Combines 2 LBP speedrunner names",
         onUse: function lbpNewRunner(onError, message) {
-            message.inlineReply(`${randomRunners[Math.floor(Math.random() * randomRunners.length)][0]}${randomRunners[Math.floor(Math.random() * randomRunners.length)][1]}`);
+            const index1 = Math.floor(Math.random() * randomRunners.length);
+            let index2 = Math.floor(Math.random() * (randomRunners.length - 1));
+            index2 += index1 <= index2;
+            message.inlineReply(`${randomRunners[index1][0]}${randomRunners[index2][1]}`);
         }
     }
 };
