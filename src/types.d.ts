@@ -33,7 +33,7 @@ declare global {
         cleanUpGameName(input: string): string;
 
         /** Object that maps from category names common across all games to category input objects */
-        commonCategories: NodeJS.Dict<GuildInput.CommonCategory>;
+        commonCategories?: NodeJS.Dict<GuildInput.CommonCategory>;
 
         /** Object that maps from game names to game input objects */
         games: NodeJS.Dict<GuildInput.Game>;
@@ -169,6 +169,12 @@ declare global {
              * @default [ 3, 2, 1 ]
              */
             countdown?: number[];
+
+            /**
+             * Time in seconds that a race starts at, usually this is a negative number
+             * @default 0
+             */
+            timerOffset?: number;
 
             /**
              * How many members can be in a team

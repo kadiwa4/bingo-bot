@@ -144,9 +144,10 @@ export function decodeHTML(text) {
  * @returns {string}
  */
 export function formatTime(time, canHideHours = true) {
-    return !time ? `${canHideHours ? "" : "--:"}--:--.--`
-        : new Date(1000 * time).toISOString().slice(
-            (canHideHours && time < 3600) ? -10 : -13, -2);
+    return !time
+        ? `${canHideHours ? "" : "--:"}--:--.--`
+        : `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice(
+            (canHideHours && time < 3600) ? -10 : -13, -2)}`;
 }
 
 /**
@@ -223,9 +224,10 @@ export function isMod(message, member) {
     let authorMember = message.member;
     if (!authorMember) {
         authorMember = member.guild.members.cache.get(message.author.id);
+        assert(authorMember);
     }
 
-    return member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
+    return member.guild.owner === authorMember || member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
 }
 
 /**

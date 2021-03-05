@@ -49,7 +49,7 @@ export default class EntrantTeam extends Array {
      * (or when forfeited while others are still going)
      * @type {?number}
      */
-    eloDifference = null;
+    eloChange = null;
 
     /**
      * Promise for the message that says that the team is done/has forfeited
@@ -202,34 +202,34 @@ export default class EntrantTeam extends Array {
         // calculate team Elo as specified in the config
         // if the team has more than one member
         return this.isCoop
-            ? eloConfig.calculateTeamElo(this.map((member) => (sqlite.getUserEloForCategory.get(member.id, gameName, categoryName) ?? eloConfig.start)))
-            : (sqlite.getUserEloForCategory.get(this.leader.id, gameName, categoryName) ?? eloConfig.start);
+            ? eloConfig.calculateTeamElo(this.map((member) => (sqlite.getUserElo.get(member.id, gameName, categoryName) ?? eloConfig.start)))
+            : (sqlite.getUserElo.get(this.leader.id, gameName, categoryName) ?? eloConfig.start);
     }
 
     /**
      * Gets the team Elo difference as a string with the Elo emote
      * @readonly
      */
-    get eloDifferenceString() {
+    get eloChangeString() {
         // \xA0 is a non-breaking space
-        return `${(Math.round(100 * this.eloDifference) / 100).toDifference()}\xA0${this.race.game.config.emotes.elo}`;
+        return `${(Math.round(100 * this.eloChange) / 100).toDifference()}\xA0${this.race.game.config.emotes.elo}`;
     }
 
     /**
      * Calculates Elo difference by treating each other team as being in a 1v1 matchup against this team.
      * See https://en.wikipedia.org/wiki/Elo_rating_system
      */
-    calculateEloDifference() {
-        let eloDifference = 0;
+    calculateEloChange() {
+        let eloChange = 0;
         const elo = this.getElo();
         for (let team2 of this.race.teams) {
             if (this !== team2) {
-                eloDifference += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true) * team2.length;
+                eloChange += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true) * team2.length;
             }
         }
 
-        this.eloDifference = eloDifference;
-        return eloDifference;
+        this.eloChange = eloChange;
+        return eloChange;
     }
 
     /**
@@ -237,7 +237,7 @@ export default class EntrantTeam extends Array {
      * @param {number} placeDifference The increase/decrease in the place number
      */
     async correctDoneMessage(placeDifference) {
-        this.calculateEloDifference();
+        this.calculateEloChange();
 
         this.place += placeDifference;
         const splitContent = this.splitDoneMessageContent;
@@ -245,7 +245,7 @@ export default class EntrantTeam extends Array {
             splitContent[0],
             this.place.toOrdinal(),
             splitContent[2],
-            this.eloDifferenceString,
+            this.eloChangeString,
             splitContent[4]
         ];
 

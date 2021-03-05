@@ -79,6 +79,10 @@ client.owner.createDM();
 
 // load all guild configs in `src/guild_configs`
 for (let file of fs.readdirSync("./src/guild_configs")) {
+    if (file.toLowerCase().includes("ignore")) {
+        continue;
+    }
+
     assert(file.toLowerCase().endsWith(".js"), `'src/guild_configs/${file}' is not a JavaScript file`);
 
     /** @type {GuildInput} */

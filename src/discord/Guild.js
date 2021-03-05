@@ -139,7 +139,7 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
     /** @type {CommandModule} */
     let module;
     if (clientModules[moduleID]) {
-        module = clientModules[moduleInput.id];
+        module = clientModules[moduleID];
     } else {
         /** @type {CommandModule} */
         let moduleInput = await import(`../command_modules/${moduleID}.js`);
@@ -155,7 +155,7 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
     await module.loadDependencies(guildInput, this);
     for (let commandID in module.commands) {
         const command = new Command(module, commandID);
-        const example = guildInput.commandExamples[commandID];
+        const example = guildInput.commandExamples?.[commandID];
         if (example) {
             if (!command.examples) {
                 command.examples = Object.create(null);

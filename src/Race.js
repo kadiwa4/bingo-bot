@@ -145,7 +145,7 @@ export default class Race {
             setTimeout(() => {
                 raceChannel.send(`${emotes.raceStart} **Go!**`);
                 this.state = RaceState.ACTIVE;
-                this.startTime = Date.now() / 1000;
+                this.startTime = Date.now() / 1000 + (this.game.config.race.timerOffset ?? 0);
 
                 if (this.entrantWhoChoseIL) {
                     this.entrantWhoChoseIL.ilChoiceCount++;
@@ -209,7 +209,7 @@ export default class Race {
         // calculate the forfeited teams' Elos
         for (let team of this.teams) {
             if (team.state === TeamState.FORFEITED) {
-                team.calculateEloDifference();
+                team.calculateEloChange();
             }
         }
 
@@ -293,6 +293,7 @@ export default class Race {
                 user_or_team_id: userOrTeamID,
                 team_name: team.isCoop ? team.name : null,
                 time: team.doneTime,
+                elo_change: team.eloChange,
                 forfeited: +(team.state === TeamState.FORFEITED)
             });
 
@@ -304,7 +305,7 @@ export default class Race {
                 }
 
                 // gather already existing member stats
-                const userStats = sqlite.getUserStatForCategory.get(teamMember.id, gameName, categoryName);
+                const userStats = sqlite.getUserStat.get(teamMember.id, gameName, categoryName);
                 let pb = null;
                 if (!isIL) {
                     if (!userStats || (teamMember.doneTime ?? Number.MAX_VALUE) < userStats.pb) {
@@ -326,7 +327,7 @@ export default class Race {
                     second_place_count: (userStats?.second_place_count ?? 0) + (team.place === 2),
                     third_place_count: (userStats?.third_place_count ?? 0) + (team.place === 3),
                     forfeit_count: (userStats?.forfeit_count ?? 0) + (team.state === TeamState.FORFEITED),
-                    elo: (userStats?.elo ?? this.game.config.race.elo.start) + team.eloDifference,
+                    elo: (userStats?.elo ?? this.game.config.race.elo.start) + team.eloChange,
                     pb: pb
                 });
             }
@@ -380,7 +381,7 @@ export default class Race {
         // that are still going will finish or forfeit as well
         for (let team of this.teams) {
             if (team.state === TeamState.FORFEITED) {
-                team.eloDifference = null;
+                team.eloChange = null;
             }
         }
 
@@ -395,7 +396,7 @@ export default class Race {
             team.state = TeamState.NOT_DONE;
             team.doneTime = null;
             team.place = null;
-            team.eloDifference = null;
+            team.eloChange = null;
             team.endMessage = null;
             team.splitDoneMessageContent = null;
             for (let teamMember of team) {

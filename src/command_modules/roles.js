@@ -133,7 +133,7 @@ export const commands = {
     },
     rolesRemove: {
         names: [ "removeroles" ],
-        aliases: [ "rolesremove", "clearroles", "rolesclear", "unroles" ],
+        aliases: [ "clearroles", "deleteroles", "unroles" ],
         description: "Removes your speedrun roles",
         onUse: function rolesRemove(onError, message, member) {
             const { guild } = member;

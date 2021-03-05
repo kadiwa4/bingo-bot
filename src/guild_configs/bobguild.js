@@ -843,19 +843,9 @@ const lbp = {
             acknowledge: "795059101402791936", // "394255134340677634" REPLACE // :rbdBingo:
             elo: emotes.ppjSmug,
 
-            notReady: "🔸",
-            ready: "✅",
-
             countdownStart: emotes.ppjWink,
             countdown: emotes.ppjE,
-            raceStart: emotes.ppjSmug,
-
-            firstPlace: "🥇",
-            secondPlace: "🥈",
-            thirdPlace: "🥉",
-            done: "🏁",
-            racing: "⏱",
-            forfeited: "❌"
+            raceStart: emotes.ppjSmug
         }
     }
 };

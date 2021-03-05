@@ -40,7 +40,7 @@ export const defaultConfig = {
         notReady: "🔸",
         ready: "✅",
 
-        countdownStart: "™️",
+        countdownStart: "",
         countdown: "",
         raceStart: "",
 
@@ -65,7 +65,7 @@ export function init(guild, guildInput) {
 
     // set up object with categories common across all games
     guild.commonCategories = Object.create(null);
-    for (let categoryName in commonCategories) {
+    for (let categoryName in commonCategories ?? {}) {
         const categoryInput = commonCategories[categoryName];
 
         invertObject(guild.config.cleanUpCategory(categoryName).name, categoryInput.aliases, guild.commonCategories, new Category(categoryName, categoryInput));
@@ -131,6 +131,7 @@ export function init(guild, guildInput) {
         user_or_team_id TEXT NOT NULL,
         team_name TEXT,
         time INT,
+        elo_change REAL NOT NULL,
         forfeited INT NOT NULL`,
         "idx_results_race", "race_id, user_or_team_id, team_name");
 
@@ -155,26 +156,34 @@ export function init(guild, guildInput) {
         getMaxRaceID: database.prepare("SELECT MAX(race_id) FROM races;").pluck(),
         getGames: database.prepare("SELECT DISTINCT game FROM races;").pluck(),
         addRace: database.prepare("INSERT OR REPLACE INTO races (race_id, game, category, level) VALUES (@race_id, @game, @category, @level);"),
+        deleteRace: database.prepare("DELETE FROM races WHERE race_id = ?;"),
 
         // setup SQL queries for setting/retrieving team members
         getMaxTeamID: database.prepare("SELECT MAX(team_id) FROM team_members;").pluck(),
         getTeamUserIDs: database.prepare("SELECT user_id FROM team_members WHERE team_id = ?;").pluck(),
         getTeamUserIDsAndElo: database.prepare("SELECT user_stats.user_id AS user_id, elo FROM team_members JOIN user_stats ON team_members.user_id = user_stats.user_id WHERE team_id = ? AND game = ? AND category = ?;"),
         addTeamMember: database.prepare("INSERT OR REPLACE INTO team_members (team_id, user_id) VALUES (@team_id, @user_id);"),
+        deleteTeam: database.prepare("DELETE FROM team_members WHERE team_id = ?;"),
 
         // setup SQL queries for setting/retrieving results
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
-        getAllResults: database.prepare("SELECT races.race_id AS race_id, user_or_team_id, team_name, game, category, time, forfeited FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
-        addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @forfeited);"),
+        getAllResults: database.prepare("SELECT races.race_id AS race_id, game, category, user_or_team_id, team_name, time FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
+        getResultsSinceRace: database.prepare("SELECT races.race_id AS race_id, game, category, user_or_team_id, team_name, time, elo_change FROM races JOIN results ON races.race_id = results.race_id WHERE races.race_id >= ? AND game = ? AND category = ? ORDER BY races.race_id ASC;"),
+        getResultTeamIDs: database.prepare("SELECT user_or_team_id FROM results WHERE race_id = ? AND team_name != NULL;").pluck(),
+        getTeamRaceCount: database.prepare("SELECT COUNT(*) FROM results WHERE user_or_team_id = ? AND team_name != NULL;").pluck(),
+        getRaceTeamCount: database.prepare("SELECT COUNT(*) FROM results WHERE race_id = ?;").pluck(),
+        addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @elo_change, @forfeited);"),
+        updateEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name = ?;"),
+        deleteResults: database.prepare("DELETE FROM results WHERE race_id = ?;"),
 
         // setup SQL queries for setting/retrieving user stats
         getUserStatsForGame: database.prepare("SELECT category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb FROM user_stats WHERE user_id = ? AND game = ? ORDER BY category ASC;"),
-        getUserStatForCategory: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
-        getUserEloForCategory: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
+        getUserStat: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
+        getUserElo: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
         getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;"),
         addUserStat: database.prepare("INSERT OR REPLACE INTO user_stats (user_id, game, category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb) "
             + "VALUES (@user_id, @game, @category, @il, @race_count, @first_place_count, @second_place_count, @third_place_count, @forfeit_count, @elo, @pb);"),
-        updateElo: database.prepare("UPDATE user_stats SET elo = @elo WHERE user_id = @user_id AND game = @game AND category = @category;"),
+        updateUserElo: database.prepare("UPDATE user_stats SET elo = ? WHERE user_id = ? AND game = ? AND category = ?;"),
         updateAllGameElos: database.prepare("UPDATE user_stats SET elo = @elo WHERE game = @game;")
     });
 
@@ -519,9 +528,14 @@ export const commands = {
                 return;
             }
 
+            if (message.createdTimestamp / 1000 < race.startTime) {
+                message.inlineReply("You can't be done, the timer isn't even at 00:00.00 yet!");
+                return;
+            }
+
             team.state = TeamState.DONE;
             team.doneTime = message.createdTimestamp / 1000 - race.startTime;
-            team.calculateEloDifference();
+            team.calculateEloChange();
             team.place = 1;
             for (let team2 of race.teams) {
                 if (team === team2 || team2.state !== TeamState.DONE) {
@@ -543,7 +557,7 @@ export const commands = {
                 `${team} has finished in `,
                 team.place.toOrdinal(),
                 " place (",
-                team.eloDifferenceString,
+                team.eloChangeString,
                 `) with a time of ${formatTime(team.doneTime)}`
             ];
 
@@ -582,7 +596,7 @@ export const commands = {
             Object.assign(team, {
                 doneTime: null,
                 place: null,
-                eloDifference: null,
+                eloChange: null,
                 splitDoneMessageContent: null
             });
 
