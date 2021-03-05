@@ -195,6 +195,21 @@ export function httpsGet(hostname, path) {
 }
 
 /**
+ * Helper function for `result` and `removerace` commands to count places correctly
+ * @param {{ place: number; tie: number; previousTime?: number; }} placeObject
+ * @param {number} time
+ */
+export function increasePlace(placeObject, time) {
+    if (placeObject.previousTime === time) {
+        placeObject.tie++;
+    } else {
+        placeObject.previousTime = time;
+        placeObject.place += placeObject.tie;
+        placeObject.tie = 1;
+    }
+}
+
+/**
  * Adds properties to `object` where the value is always
  * set to `outputValue`. The property names to be added are
  * `cleanedUpName` and each name in `aliases`
@@ -370,12 +385,7 @@ Number.prototype.toDifference = function() {
 };
 
 /** Suffixes for function toOrdinal */
-const ordinalSuffixes = [
-    null,
-    "st",
-    "nd",
-    "rd"
-];
+const ordinalSuffixes = [ null, "st", "nd", "rd" ];
 
 /** Converts the integer number to an English ordinal number */
 Number.prototype.toOrdinal = function() {

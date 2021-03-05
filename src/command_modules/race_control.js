@@ -168,12 +168,13 @@ export function init(guild, guildInput) {
         // setup SQL queries for setting/retrieving results
         getResults: database.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY forfeited ASC, time ASC;"),
         getAllResults: database.prepare("SELECT races.race_id AS race_id, game, category, user_or_team_id, team_name, time FROM races JOIN results ON races.race_id = results.race_id ORDER BY races.race_id ASC;"),
-        getResultsSinceRace: database.prepare("SELECT races.race_id AS race_id, game, category, user_or_team_id, team_name, time, elo_change FROM races JOIN results ON races.race_id = results.race_id WHERE races.race_id >= ? AND game = ? AND category = ? ORDER BY races.race_id ASC;"),
-        getResultTeamIDs: database.prepare("SELECT user_or_team_id FROM results WHERE race_id = ? AND team_name != NULL;").pluck(),
-        getTeamRaceCount: database.prepare("SELECT COUNT(*) FROM results WHERE user_or_team_id = ? AND team_name != NULL;").pluck(),
+        getResultsSinceRace: database.prepare("SELECT races.race_id AS race_id, user_or_team_id, team_name, time, elo_change FROM races JOIN results ON races.race_id = results.race_id WHERE races.race_id >= ? AND game = ? AND category = ? ORDER BY races.race_id ASC, forfeited ASC, time ASC;"),
+        getResultTeamIDs: database.prepare("SELECT user_or_team_id FROM results WHERE race_id = ? AND team_name IS NOT NULL;").pluck(),
+        getTeamRaceCount: database.prepare("SELECT COUNT(*) FROM results WHERE user_or_team_id = ? AND team_name IS NOT NULL;").pluck(),
         getRaceTeamCount: database.prepare("SELECT COUNT(*) FROM results WHERE race_id = ?;").pluck(),
         addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @elo_change, @forfeited);"),
-        updateEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name = ?;"),
+        updateSoloEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NULL;"),
+        updateCoopEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NOT NULL;"),
         deleteResults: database.prepare("DELETE FROM results WHERE race_id = ?;"),
 
         // setup SQL queries for setting/retrieving user stats
@@ -181,10 +182,10 @@ export function init(guild, guildInput) {
         getUserStat: database.prepare("SELECT * FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
         getUserElo: database.prepare("SELECT elo FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;").pluck(),
         getLeaderboard: database.prepare("SELECT ROW_NUMBER() OVER (ORDER BY elo DESC) place, user_id, elo FROM user_stats WHERE game = ? AND category = ?;"),
-        addUserStat: database.prepare("INSERT OR REPLACE INTO user_stats (user_id, game, category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb) "
-            + "VALUES (@user_id, @game, @category, @il, @race_count, @first_place_count, @second_place_count, @third_place_count, @forfeit_count, @elo, @pb);"),
+        addUserStat: database.prepare("INSERT OR REPLACE INTO user_stats (user_id, game, category, il, race_count, first_place_count, second_place_count, third_place_count, forfeit_count, elo, pb) VALUES (@user_id, @game, @category, @il, @race_count, @first_place_count, @second_place_count, @third_place_count, @forfeit_count, @elo, @pb);"),
         updateUserElo: database.prepare("UPDATE user_stats SET elo = ? WHERE user_id = ? AND game = ? AND category = ?;"),
-        updateAllGameElos: database.prepare("UPDATE user_stats SET elo = @elo WHERE game = @game;")
+        updateAllGameElos: database.prepare("UPDATE user_stats SET elo = @elo WHERE game = @game;"),
+        deleteUserStat: database.prepare("DELETE FROM user_stats WHERE user_id = ? AND game = ? AND category = ?;"),
     });
 
     guild.raceID = guild.sqlite.getMaxRaceID.get() + 1;
