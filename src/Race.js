@@ -308,9 +308,9 @@ export default class Race {
                 const userStats = sqlite.getUserStat.get(teamMember.id, gameName, categoryName);
                 let pb = null;
                 if (!isIL) {
-                    if (!userStats || (teamMember.doneTime ?? Number.MAX_VALUE) < userStats.pb) {
+                    if (!userStats?.pb || (team.doneTime ?? Number.MAX_VALUE) < userStats.pb) {
                         // PB was beaten
-                        pb = teamMember.doneTime;
+                        pb = team.doneTime;
                     } else {
                         pb = userStats.pb;
                     }
@@ -328,7 +328,7 @@ export default class Race {
                     third_place_count: (userStats?.third_place_count ?? 0) + (team.place === 3),
                     forfeit_count: (userStats?.forfeit_count ?? 0) + (team.state === TeamState.FORFEITED),
                     elo: (userStats?.elo ?? this.game.config.race.elo.start) + team.eloChange,
-                    pb: pb
+                    pb
                 });
             }
         }

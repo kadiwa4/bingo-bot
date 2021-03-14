@@ -425,7 +425,10 @@ export const commands = {
                 recalculateElo(sqlite, eloConfig, row, teams, race.game, race.category);
             }
 
-            recordRaceElo(sqlite, teams, raceID, race.game, race.category);
+            if (resultsSinceRace.length > 0) {
+                recordRaceElo(sqlite, teams, raceID, race.game, race.category);
+            }
+
             message.acknowledge();
         }
     },

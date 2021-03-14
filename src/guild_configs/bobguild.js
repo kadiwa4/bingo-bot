@@ -14,11 +14,6 @@ const emotes = {
 
 const ilAliases = [ "il", "ils" ];
 
-/** I won't recode this until LBP.me is back up
-function bobCommunityLevels(guild, message, member, args) {
-    return false;
-}*/
-
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
 
 /**
@@ -197,10 +192,7 @@ const lbp = {
                 "Spline Rider": null,
                 "Rotor Tubes": null,
                 "Jetpack Tunnel": null
-            },
-            /*config: {
-                race: { communityLevels: lbpCommunityLevels }
-            }*/
+            }
         },
         "LittleBigPlanet (PSP)": {
             aliases: [ "psp", "lbpp", "p" ],
@@ -329,10 +321,7 @@ const lbp = {
                 "Rocket Funland": null,
                 "Ping Pang Pong": null,
                 "Space Pool": null
-            },
-            /*config: {
-                race: { communityLevels: lbpCommunityLevels }
-            }*/
+            }
         },
         "LittleBigPlanet PS Vita": {
             aliases: [ "vita", "lbpv", "v"],
@@ -385,10 +374,7 @@ const lbp = {
                 "Zombie Springtime": null,
                 "Eye Ball Maze": null,
                 "Sorting Panic": null
-            },
-            /*config: {
-                race: { communityLevels: lbpCommunityLevels }
-            }*/
+            }
         },
         "LittleBigPlanet Karting": {
             aliases: [ "karting", "lbpk", "k" ],
@@ -499,10 +485,7 @@ const lbp = {
                 "Even Bosses Wear Hats Sometimes": null,
                 "Battle Of The Airwaves": null,
                 "Joust In Time": null
-            },
-            /*config: {
-                race: { communityLevels: lbpCommunityLevels }
-            }*/
+            }
         },
         "Sackboy: A Big Adventure": {
             aliases: [ "saba", "sackboy", "s" ],
