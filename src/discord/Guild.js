@@ -4,7 +4,7 @@ import { HelpCategory } from "../enums.js";
 import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
 import Game from "../Game.js";
-import { assert, bind, invertObject, log, noop } from "../misc.js";
+import { addUserNames, assert, bind, createSQLiteTable, getUserID, invertObject, log, logFormat, noop } from "../misc.js";
 
 import EventEmitter from "events";
 import fs from "fs";
@@ -38,9 +38,7 @@ Guild.prototype.init = async function(guildInput) {
 
         helpStrings: Object.create(null),
         helpMessages: [],
-        modRoles: guildInput.modRoleIDs.map(bind(roleCache, "get")),
-
-        sqlite: {}
+        modRoles: guildInput.modRoleIDs.map(bind(roleCache, "get"))
     });
 
     // guild command
@@ -61,8 +59,20 @@ Guild.prototype.init = async function(guildInput) {
 
     fs.mkdirSync(this.dataFolder, { recursive: true });
 
-    this.database = new BetterSqlite3(`${this.dataFolder}/race.sqlite`);
-    client.databases.push(this.database);
+    const database = this.database = new BetterSqlite3(`${this.dataFolder}/db.sqlite`);
+    client.databases.push(database);
+
+    createSQLiteTable(database, "user_names",
+        `user_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        nickname TEXT`);
+
+    this.sqlite = {
+        getUserNames: database.prepare("SELECT name, nickname FROM user_names WHERE user_id = ?;"),
+        getUserIDFromName: database.prepare("SELECT user_id FROM user_names WHERE name = ? COLLATE NOCASE;").pluck(),
+        getUserIDFromNickname: database.prepare("SELECT user_id FROM user_names WHERE nickname = ? COLLATE NOCASE;").pluck(),
+        addUserNames: database.prepare("INSERT OR REPLACE INTO user_names (user_id, name, nickname) VALUES (@user_id, @name, @nickname);")
+    };
 
     // init command modules
     for (let moduleID of this.moduleIDs) {
@@ -70,7 +80,7 @@ Guild.prototype.init = async function(guildInput) {
     }
 
     let message = "";
-    const add = function(toAdd) {
+    const add = function add(toAdd) {
         if (message.length + toAdd.length > 2000) {
             this.helpMessages.push(message);
             message = "";
@@ -109,17 +119,51 @@ Guild.prototype.getGame = function(input) {
 }
 
 /**
+ * Gets the guild member that matches the input the closest
+ * @param {string} input
+ * @returns {?Game}
+ */
+Guild.prototype.getMember = async function(input) {
+    const { sqlite } = this;
+    input = input.trim();
+
+    const id = getUserID(input) ?? sqlite.getUserIDFromName.get(input) ?? sqlite.getUserIDFromNickname.get(input);
+    return id ? await this.members.fetch(id).catch(noop) ?? null : null;
+}
+
+/**
  * Gets the name of a user, even if they aren't a member anymore
  * @param {string} id
- * @returns {Promise<string>}
+ * @returns {Promise<?string>}
  */
 Guild.prototype.getUserName = async function(id) {
-    const member = await this.members.fetch(id).catch(noop);
+    let member = this.member(id);
     if (member) {
         return member.cleanName;
     }
 
+    const cache = this.sqlite.getUserNames.get(id);
+    if (cache) {
+        return cache.nickname ?? cache.name;
+    }
+
+    member = await this.members.fetch(id).catch(noop);
+    if (member) {
+        addUserNames(member);
+        return member.cleanName;
+    }
+
     const user = await this.client.users.fetch(id).catch(noop);
+    if (!user) {
+        return null;
+    }
+
+    this.sqlite.addUserNames.run({
+        user_id: user.id,
+        name: user.username,
+        nickname: null
+    });
+
     return Discord.Util.escapeMarkdown(user.username);
 };
 
@@ -133,28 +177,43 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
         return;
     }
 
-    /** @type {NodeJS.Dict<CommandModule>} */
-    const clientModules = this.client.modules;
+    const { client } = this;
 
     /** @type {CommandModule} */
     let module;
-    if (clientModules[moduleID]) {
-        module = clientModules[moduleID];
-    } else {
+    const constructModule = !client.modules[moduleID];
+    if (constructModule) {
         /** @type {CommandModule} */
         let moduleInput = await import(`../command_modules/${moduleID}.js`);
-        if (Object.keys(moduleInput).length === 1 && moduleInput.default) {
+        if (Object.keys(moduleInput).length === 1 && "default" in moduleInput) {
             moduleInput = moduleInput.default;
         }
 
         assert(moduleInput.id, `couldn't load module ${moduleID} or it doesn't have the property 'id'`, this);
-        module = clientModules[moduleInput.id] = new CommandModule(this.client, moduleInput);
+        module = client.modules[moduleInput.id] = new CommandModule(client, moduleInput);
+    } else {
+        module = client.modules[moduleID];
     }
 
     this.moduleIDs.add(module.id);
-    await module.loadDependencies(guildInput, this);
     for (let commandID in module.commands) {
-        const command = new Command(module, commandID);
+        /** @type {Command} */
+        let command;
+
+        if (constructModule) {
+            command = module.commands[commandID] = new Command(module, commandID);
+            for (let name of command.allNames) {
+                const conflictingCommand = client.commands[name];
+                if (conflictingCommand) {
+                    throw new Error(logFormat(`multiple commands named '${name}':\n\t'${conflictingCommand.id}' from module '${conflictingCommand.module.id}' and\n\t'${commandID}' from module '${module.id}'`));
+                }
+
+                client.commands[name] = command;
+            }
+        } else {
+            command = module.commands[commandID];
+        }
+
         const example = guildInput.commandExamples?.[commandID];
         if (example) {
             if (!command.examples) {
@@ -164,10 +223,6 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
             command.examples[this.id] = example;
         }
 
-        for (let name of command.allNames) {
-            this.client.commands[name] = command;
-        }
-
         if (command.names) {
             if (!this.helpStrings[command.category]) {
                 this.helpStrings[command.category] = [];
@@ -175,5 +230,9 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
 
             this.helpStrings[command.category].push(`${command.getUsage(this)} – ${command.description}${command.getExample(this) ?? ""}.\n`);
         }
+    }
+
+    if (constructModule) {
+        await module.loadDependencies(guildInput, this);
     }
 };

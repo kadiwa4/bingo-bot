@@ -449,8 +449,8 @@ export const commands = {
     },
     raceRunner: {
         names: [ "runner" ],
-        description: "Shows a member's race stats",
-        usage: "<@member or user ID> <game name>",
+        description: "Shows a user's race stats",
+        usage: "<user> / <game name>",
         category: HelpCategory.STATS,
         guildDependent: true,
         onUse: async function raceRunner(onError, message, member, args) {
@@ -462,15 +462,34 @@ export const commands = {
             /** @type {Discord.GuildMember} */
             const { guild } = member;
 
-            const splitArgs = args.split(WHITESPACE_PLUS);
-            const id = getUserID(splitArgs[0]);
-
-            if (!id) {
+            const splitArgs = args.split("/");
+            if (!splitArgs) {
                 this.showUsage(...arguments);
                 return;
             }
 
-            const userName = await guild.getUserName(id);
+            let id;
+            let userName;
+
+            const mentionedMember = await guild.getMember(splitArgs[0]);
+            if (mentionedMember) {
+                id = mentionedMember.id;
+                userName = mentionedMember.cleanName;
+            } else {
+                id = getUserID(splitArgs[0]);
+                if (!id) {
+                    message.inlineReply(`User “${splitArgs[0]}” not found.`);
+                    return;
+                }
+
+                userName = await guild.getUserName(id);
+
+                if (!userName) {
+                    message.inlineReply(`User ${id} not found.`);
+                    return;
+                }
+            }
+
             const gameInput = splitArgs.slice(1).join("");
             showUserStats(onError, guild, message, id, userName, gameInput, false);
         }

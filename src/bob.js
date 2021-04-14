@@ -19,7 +19,6 @@ import { assert, log, logError, noop } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
-import semverMajor from "semver/functions/major.js";
 
 log("started");
 
@@ -27,7 +26,7 @@ const DISCORD_AUTH = "./discord_auth.json";
 const TOKEN_HERE = "discord auth token here";
 
 // check Node.js version
-if (semverMajor(process.version) < 14) {
+if (parseInt(process.versions.modules) < 83) {
     logError("upgrade your node.js https://nodejs.org/en/");
     process.exit(1);
 }
@@ -86,7 +85,7 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
     assert(file.toLowerCase().endsWith(".js"), `'src/guild_configs/${file}' is not a JavaScript file`);
 
     /** @type {GuildInput} */
-    let guildInput = (await import(`./guild_configs/${file}`));
+    let guildInput = await import(`./guild_configs/${file}`);
     if (Object.keys(guildInput).length === 1 && guildInput.default) {
         guildInput = guildInput.default;
     }

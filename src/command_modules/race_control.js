@@ -6,7 +6,7 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { assert, bind, clean, createSQLiteTable, formatTime, getUserID, invertObject, logFormat, MULTI_GAME, noop, spacesAroundMentions, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+import { assert, clean, createSQLiteTable, formatTime, invertObject, MULTI_GAME, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -653,8 +653,8 @@ export const commands = {
     },
     raceTeam: {
         names: [ "team" ],
-        description: "Moves entrants/other teams into your team",
-        usage: "[teamof] <@entrant or user ID 1> […]",
+        description: "Moves the slash-separated entrants into your team",
+        usage: "<entrant 1> [/ <entrant 2>…]",
         category: HelpCategory.COOP_RACE,
         raceChannelOnly: true,
         onUse: async function raceTeam(onError, message, member, args) {
@@ -675,38 +675,24 @@ export const commands = {
             const { team } = member;
             const { maxTeamSize } = race.game.config.race;
 
-            const teamChanges = [];
+            const newTeamMembers = [];
 
             const teamMembers = new Set(team);
 
-            args = spacesAroundMentions(args);
+            // split args at slashes
+            const splitArgs = args.split("/");
 
-            // split args at whitespace characters/commas
-            const splitArgs = args.split(RegExp(`(${WHITESPACE}*,)?${WHITESPACE}+(and${WHITESPACE}+)?`));
-
-            let nextIsTeam = false;
             for (let index = 0; index < splitArgs.length; index++) {
                 let arg = splitArgs[index];
 
-                if (arg.toLowerCase() === "teamof") {
-                    if (nextIsTeam || index + 1 === splitArgs.length) {
-                        this.showUsage(...arguments);
-                        return;
-                    }
-
-                    nextIsTeam = true;
-                    continue;
-                }
-
-                const id = getUserID(arg);
-                if (!id) {
-                    this.showUsage(...arguments);
+                const mentionedMember = await guild.getMember(arg);
+                if (!mentionedMember) {
+                    message.inlineReply(`Entrant “${clean(arg, message)}” not found.`)
                     return;
                 }
 
-                const mentionedMember = await guild.members.fetch(id).catch(noop);
-                if (!mentionedMember || !race.hasEntrant(mentionedMember)) {
-                    message.inlineReply(`${await guild.getUserName(id)} isn't racing here.`);
+                if (!race.hasEntrant(mentionedMember)) {
+                    message.inlineReply(`${await guild.getUserName(mentionedMember)} isn't racing here.`);
                     return;
                 }
 
@@ -722,20 +708,12 @@ export const commands = {
                     return;
                 }
 
-                if (nextIsTeam ? mentionedTeam.some(bind(teamMembers, "has")) : teamMembers.has(mentionedMember)) {
-                    message.inlineReply(`You mentioned ${mentionedMember.cleanName} more than once.`);
+                if (teamMembers.has(mentionedMember)) {
+                    message.inlineReply(`You listed ${mentionedMember.cleanName} more than once.`);
                 }
 
-                if (nextIsTeam) {
-                    nextIsTeam = false;
-                    teamChanges.push(bind(team, "joinTeam", mentionedTeam));
-                    for (let teamMember in mentionedTeam) {
-                        teamMembers.add(teamMember);
-                    }
-                } else {
-                    teamChanges.push(bind(team, "affiliateEntrant", mentionedMember));
-                    teamMembers.add(mentionedMember);
-                }
+                newTeamMembers.push(mentionedMember);
+                teamMembers.add(mentionedMember);
 
                 if (teamMembers.size > maxTeamSize) {
                     message.inlineReply(`That would exceed the maximum team size of ${maxTeamSize}. Use \`${guild.commandPrefix}unteam\` first to part with your team.`);
@@ -743,8 +721,8 @@ export const commands = {
                 }
             }
 
-            for (let teamChange of teamChanges) {
-                teamChange();
+            for (let entrant of newTeamMembers) {
+                team.affiliateEntrant(entrant);
             }
 
             race.checkCategoryCoop();

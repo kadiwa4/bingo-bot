@@ -1,6 +1,6 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { getUserID, noop, spacesAroundMentions, WHITESPACE_PLUS } from "../misc.js";
+import { getUserID, noop, WHITESPACE_PLUS } from "../misc.js";
 
 import Discord from "discord.js";
 
@@ -52,9 +52,8 @@ export const commands = {
         onUse: async function metaAs(onError, message, member, args) {
             /** @type {Discord.GuildMember} */
             const { client, guild } = member;
-            args = spacesAroundMentions(args ?? "");
 
-            const splitArgs = args.split(WHITESPACE_PLUS);
+            const splitArgs = args?.split?.(WHITESPACE_PLUS) ?? "";
             if (splitArgs.length < 2) {
                 this.showUsage(...arguments);
                 return;

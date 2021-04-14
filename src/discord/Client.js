@@ -1,5 +1,5 @@
 import Command from "../Command.js";
-import { log, logError, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
+import { addUserNames, log, logError, logFormat, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
 
 import Discord, { Client } from "discord.js";
 
@@ -46,8 +46,7 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
 
             message.respondedError = true;
         } catch {
-            logError("couldn't send error messages on discord; giving up", guild);
-            process.exit(1);
+            throw new Error(logFormat("couldn't send error messages on discord; giving up", guild));
         }
     }
 
@@ -96,8 +95,12 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             return true;
         }
 
-        if (guild && !guild.moduleIDs.has(command.module.id)) {
-            return false;
+        if (guild) {
+            if (!guild.moduleIDs.has(command.module.id)) {
+                return false;
+            }
+
+            addUserNames(userOrMember);
         }
 
         if (command.raceChannelOnly && !message.channel.race) {

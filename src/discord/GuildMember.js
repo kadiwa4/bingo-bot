@@ -1,4 +1,6 @@
-import Discord, { GuildMember } from "discord.js";
+import { GuildMember } from "discord.js";
+
+import { cleanName } from "../misc.js";
 
 Object.defineProperties(GuildMember.prototype, {
     displayName: {
@@ -18,9 +20,9 @@ Object.defineProperties(GuildMember.prototype, {
          * Gets a member's displayName string with escaped markdown/mentions
          * @this GuildMember
          */
-        get: function cleanName() {
+        get: function cleanName_() {
             // \u200B is a zero-width space
-            return Discord.Util.escapeMarkdown(this.displayName.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
+            return cleanName(this.displayName);
         }
     },
     readyEmote: {

@@ -16,6 +16,25 @@ export const WHITESPACE_PLUS = RegExp(`${WHITESPACE}+`, "g");
 export function noop() {}
 
 /**
+ * Adds the member to the user_names table or updates it
+ * @param {Discord.GuildMember} member
+ */
+export function addUserNames(member) {
+    let nickname = null;
+    if (member.id === "159245797328814081") {
+        nickname = "bean";
+    } else if (member.nickname) {
+        nickname = member.cleanName;
+    }
+
+    member.guild.sqlite.addUserNames.run({
+        user_id: member.id,
+        name: member.user.username,
+        nickname
+    });
+}
+
+/**
  * Node.js assert function with output messages from logFormat. Returns the input
  * @template T
  * @param {T} value The value to check
@@ -89,6 +108,15 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
  */
 export function clean(text, message) {
     return Discord.Util.escapeMarkdown(Discord.Util.cleanContent(text, message));
+}
+
+/**
+ * Escapes any Discord-flavour markdown and mentions in a name
+ * @param {string} name The string to escape
+ */
+export function cleanName(name) {
+    // \u200B is a zero-width space
+    return Discord.Util.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
 }
 
 /**
@@ -238,7 +266,7 @@ export function invertObject(cleanedUpName, aliases = [], object, outputValue) {
 export function isMod(message, member) {
     let authorMember = message.member;
     if (!authorMember) {
-        authorMember = member.guild.members.cache.get(message.author.id);
+        authorMember = member.guild.member(message.author);
         assert(authorMember);
     }
 

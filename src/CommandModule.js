@@ -33,8 +33,8 @@ export default class CommandModule {
     init(guild, guildInput) {}
 
     /**
-     * Array of the command module's commands
-     * @type {Command[]}
+     * Dict with the command module's commands
+     * @type {NodeJS.Dict<Command>}
      */
     commands;
 

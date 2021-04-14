@@ -13,6 +13,7 @@ const emotes = {
 };
 
 const ilAliases = [ "il", "ils" ];
+const anyNCAliases = [ "anynooverlord", "nocreate", "nooverlord", "anync", "anyno", "nc", "no" ];
 
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
 
@@ -122,7 +123,7 @@ const lbp = {
                 "Any%": null,
                 "100%": null,
                 "Any% No Overlord": {
-                    aliases: [ "nooverlord", "anyno", "no" ],
+                    aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
                     default: true
                 },
                 "All Levels": { aliases: [ "al" ] }
@@ -259,8 +260,8 @@ const lbp = {
             categories: {
                 "Any%": null,
                 "100%": null,
-                "Any% No Overlord": {
-                    aliases: [ "nooverlord", "anyno", "no" ],
+                "Any% No Create": {
+                    aliases: anyNCAliases,
                     default: true
                 },
                 "All Levels": { aliases: [ "al" ] }
@@ -445,14 +446,14 @@ const lbp = {
                 "Any%": null,
                 "100%": null,
                 "Any% No Create": {
-                    aliases: [ "nocreate", "anync", "anyno", "nc", "no" ],
+                    aliases: anyNCAliases,
                     default: true
                 },
                 "All Main Quests": { aliases: [ "amq" ] },
                 "Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] }
             },
             levels: {
-                "Introduction": {default: true},
+                "Introduction": { default: true },
                 "Needlepoint Peaks": null,
                 "Newton's Airship": null,
                 "Stitchem Manor": null,

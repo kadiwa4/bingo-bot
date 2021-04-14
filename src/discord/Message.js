@@ -62,8 +62,8 @@ Message.prototype.multiReply = async function(onError, firstHeading, otherHeadin
 };
 
 // https://gist.github.com/Allvaa/0320f06ee793dc88e4e209d3ea9f6256
-// this is already in the source code (https://github.com/discordjs/discord.js/pull/4874)
-// but not yet in the latest discord.js release
+// this is already in #master (https://github.com/discordjs/discord.js/pull/4874)
+// but not in #stable, it'll be merged in version 13
 Message.prototype.inlineReply = async function(content, options) {
     if (this.channel.type === "dm") {
         this.channel.send(...arguments);

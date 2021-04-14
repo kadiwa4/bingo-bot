@@ -1,6 +1,6 @@
 {
   "name": "bingo-bot",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "speedrunning race bot for Discord",
   "main": "./src/bob.js",
@@ -21,8 +21,7 @@
   "dependencies": {
     "better-sqlite3": "^7.1.2",
     "bl": "^4.1.0",
-    "discord.js": "^12.5.1",
-    "semver": "^7.3.4"
+    "discord.js": "^12.5.3"
   },
   "devDependencies": {},
   "engines": {
