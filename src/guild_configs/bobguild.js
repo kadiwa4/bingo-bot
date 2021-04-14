@@ -703,9 +703,9 @@ const lbp = {
     commandExamples: {
         raceCategory: "category 2/il",
         raceLevel: "level first steps",
-        raceTeam: "team teamof 81612266826379264",
+        raceTeam: "team rbdjellyfish",
         raceMe: "me saba",
-        raceRunner: "runner 210450793705242624 lbp1",
+        raceRunner: "runner kadiwa/lbp1",
         raceLeaderboard: "elo 1/no"
     },
     roles: {

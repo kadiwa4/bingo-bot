@@ -1,6 +1,6 @@
 # Bingo Bot
 
-Bingo Bot is a speedrunning race bot for Discord, originally developed for LittleBigPlanet (no bingo functionality)
+Bingo Bot is a speedrunning race bot for Discord, [originally developed for LittleBigPlanet](https://github.com/TadCordle/bingo-bot) by RbdJellyfish (no bingo functionality)
 
 To get an overview of how the code works and where to start, see [`code_structure.md`](/code_structure.md)
 
@@ -54,7 +54,7 @@ npm start
 * `unforfeit`/`uf` – Rejoins the race after you forfeited.
 
 **Co-op-race commands**
-* `team [teamof] <@​entrant or user ID 1> […]` – Moves entrants/other teams into your team.
+* `team <entrant 1> [/ <entrant 2>…]` – Moves the slash-separated entrants into your team.
 * `teamname [<team name>]` – Changes/resets your team's name.
 * `unteam` – Leaves your current team.
 * `unteamall` – Disbands all current teams.
@@ -69,12 +69,12 @@ npm start
 * `result [<race ID>]` – Shows the results of the specified race ID or the last race.
 * `leaderboard <game name> / <category name>` – Shows the Elo leaderboard for the current/given game / category.
 * `me <game name>` – Shows your race stats for a game.
-* `runner <@​member or user ID> <game name>` – Shows a member's race stats.
+* `runner <user> / <game name>` – Shows a user's race stats.
 
 **Other commands**
 * `help [<command name>]` – Shows a list of commands or details on one command.
 
 **Moderator-only commands**
-* `as <@​member or ID> <command>` – Calls a command as the specified user.
+* `as <@user or ID> <command>` – Calls a command as the specified user.
 * `fixelo` – Recalculates the Elo leaderboards.
 * `clearrace` – Ends the race without recording any results.

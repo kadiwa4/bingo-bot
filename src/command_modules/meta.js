@@ -46,7 +46,7 @@ export const commands = {
     metaAs: {
         names: [ "as" ],
         description: "Calls a command as the specified user",
-        usage: "<@member or ID> <command>",
+        usage: "<@user or ID> <command>",
         category: HelpCategory.MOD,
         modOnly: true,
         onUse: async function metaAs(onError, message, member, args) {
