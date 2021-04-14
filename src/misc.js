@@ -184,6 +184,7 @@ export function formatTime(time, canHideHours = true) {
  * @returns {?string}
  */
 export function getUserID(input) {
+    input = input.trim();
     const match = input.match(/^<@!?(\d{17,19})>$/) ?? input.match(/^(\d{17,19})$/);
     return match?.[1] ?? null;
 }

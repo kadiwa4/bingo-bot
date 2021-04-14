@@ -15,7 +15,7 @@ export const commands = {
         description: "Shows a list of commands or details on one command",
         onUse: function metaHelp(onError, message, member, args) {
             /** @type {Discord.TextChannel} */
-            const { client, guild } = message.channel;
+            const { client, guild } = member;
 
             if (!args) {
                 const iterator = guild.helpMessages.values();

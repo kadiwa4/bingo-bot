@@ -49,8 +49,9 @@ Guild.prototype.init = async function(guildInput) {
     // load command modules
     const moduleIDs = [ "meta" ];
     moduleIDs.push(...guildInput.moduleIDs);
+
     for (let moduleID of moduleIDs) {
-        // wait so that loadedModules gets updated in time
+        // wait so that moduleIDs gets updated in time
         await this.loadModule(guildInput, moduleID);
     }
 
@@ -232,7 +233,5 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
         }
     }
 
-    if (constructModule) {
-        await module.loadDependencies(guildInput, this);
-    }
+    await module.loadDependencies(guildInput, this);
 };
