@@ -5,7 +5,7 @@
   "description": "speedrunning race bot for Discord",
   "main": "./src/bob.js",
   "scripts": {
-    "start": "node ./src/bob.js > stdout.log 2> stderr.log &"
+    "start": "node ./src/bob.js"
   },
   "repository": "github:TadCordle/bingo-bot",
   "keywords": [],

@@ -1,13 +1,27 @@
 /// <reference path="./types.d.ts" />
 
-process.title = "bingo-bot";
-
 import fs from "fs";
 import path from "path";
 import url from "url";
 
 // change current working dir to repo root
 process.chdir(path.dirname(path.dirname(url.fileURLToPath(import.meta.url))));
+
+// setup log file and stdout/stderr
+fs.mkdirSync("./logs", { recursive: true });
+const logFile = fs.createWriteStream(`./logs/${new Date().toISOString().replace(/[:.]/g, "_")}.log`);
+
+const nodeStdoutWrite = process.stdout.write;
+process.stdout.write = function stdoutWrite() {
+    logFile.write(...arguments);
+    nodeStdoutWrite.call(process.stdout, ...arguments);
+}
+
+const nodeStderrWrite = process.stderr.write;
+process.stderr.write = function stderrWrite() {
+    logFile.write(...arguments);
+    nodeStderrWrite.call(process.stderr, ...arguments);
+}
 
 import "./discord/Client.js";
 import "./discord/Guild.js";
@@ -149,7 +163,7 @@ process.on("SIGINT", async function onKeyboardInterrupt() {
 
     await client.user.setStatus("invisible");
 
-    process.exit();
+    process.exit(0);
 });
 
 log("ready");
