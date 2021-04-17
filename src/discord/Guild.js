@@ -78,7 +78,7 @@ Guild.prototype.init = async function(guildInput) {
         client.modules[moduleID].init(this, guildInput);
     }
 
-    let message = "";
+    let message = `In DMs, start your message with \`${guildInput.guildCommand}\` to use this server's commands.\n\n`;
     const add = function add(toAdd) {
         if (message.length + toAdd.length > 2000) {
             this.helpMessages.push(message);

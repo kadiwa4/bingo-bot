@@ -4,5 +4,5 @@ node_modules/
 *.code-workspace
 data/
 logs/
-test*.*
+*gitignore*
 discord_auth.json

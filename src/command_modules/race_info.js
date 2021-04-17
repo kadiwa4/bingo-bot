@@ -320,7 +320,7 @@ export const commands = {
     raceRemove: {
         names: [ "removerace" ],
         aliases: [ "deleterace" ],
-        description: "Deletes the specified/previous race",
+        description: "Deletes the given/last race",
         usage: "[<race ID>]",
         category: HelpCategory.MOD,
         modOnly: true,

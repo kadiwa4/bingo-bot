@@ -63,8 +63,8 @@ To run the bot on a server, I recommend [PM2](https://github.com/Unitech/pm2).
 * `randomteams [<team size>]` – Randomly assigns entrants to teams of the given size.
 
 **IL-race commands**
-* `ilresults` – Shows the ILs that have been raced so far in this series.
 * `level <level name>` – Sets the level.
+* `ilresults` – Shows the ILs that have been raced so far in this series.
 
 **Stat commands**
 * `status`/`s` – Shows the current race status.
@@ -78,5 +78,6 @@ To run the bot on a server, I recommend [PM2](https://github.com/Unitech/pm2).
 
 **Moderator-only commands**
 * `as <@user or ID> <command>` – Calls a command as the specified user.
-* `fixelo` – Recalculates the Elo leaderboards.
 * `clearrace` – Ends the race immediately.
+* `fixelo` – Recalculates the Elo leaderboards.
+* `removerace [<race ID>]` – Deletes the given/last race.
