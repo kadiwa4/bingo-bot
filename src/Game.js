@@ -1,7 +1,7 @@
 /// <reference path="./types.d.ts" />
 
 import Category from "./Category.js";
-import { assert, invertObject } from "./misc.js";
+import { assert, invertObject, newMap } from "./misc.js";
 
 import Discord from "discord.js";
 
@@ -32,7 +32,7 @@ export default class Game {
      * Object that maps from a user's category input to the category they meant
      * @type {NodeJS.Dict<Category>}
      */
-    categories = Object.create(null);
+    categories = newMap();
 
     /**
      * The default category for the game
@@ -44,7 +44,7 @@ export default class Game {
      * Object that maps from a user's level input to the level name they meant
      * @type {NodeJS.Dict<string>}
      */
-    levels = Object.create(null);
+    levels = newMap();
 
     /**
      * The default level name for the game

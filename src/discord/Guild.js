@@ -4,7 +4,7 @@ import { HelpCategory } from "../enums.js";
 import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
 import Game from "../Game.js";
-import { addUserNames, assert, bind, createSQLiteTable, getUserID, invertObject, log, logFormat, noop } from "../misc.js";
+import { addUserNames, assert, bind, createSQLiteTable, getUserID, invertObject, log, logFormat, newMap, noop } from "../misc.js";
 
 import EventEmitter from "events";
 import fs from "fs";
@@ -29,17 +29,15 @@ Guild.prototype.init = async function(guildInput) {
     this.roles.fetch();
     const roleCache = this.roles.cache;
 
-    Object.assign(this, {
-        srName: guildInput.name,
-        abbreviation: guildInput.abbreviation,
-        commandPrefix: guildInput.commandPrefix,
-        moduleIDs: new Set(),
-        dataFolder: `./data/${guildInput.abbreviation}`,
+    this.srName = guildInput.name;
+    this.abbreviation = guildInput.abbreviation;
+    this.commandPrefix = guildInput.commandPrefix;
+    this.moduleIDs = new Set();
+    this.dataFolder = `./data/${guildInput.abbreviation}`;
 
-        helpStrings: Object.create(null),
-        helpMessages: [],
-        modRoles: guildInput.modRoleIDs.map(bind(roleCache, "get"))
-    });
+    this.helpStrings = newMap();
+    this.helpMessages = [];
+    this.modRoles = guildInput.modRoleIDs.map(bind(roleCache, "get"));
 
     // guild command
     const guildCommand = new Command(null, guildInput.guildCommand);
@@ -218,7 +216,7 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
         const example = guildInput.commandExamples?.[commandID];
         if (example) {
             if (!command.examples) {
-                command.examples = Object.create(null);
+                command.examples = newMap();
             }
 
             command.examples[this.id] = example;

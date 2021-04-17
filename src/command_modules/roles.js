@@ -24,6 +24,7 @@ export function init(guild, guildInput) {
         src_id TEXT NOT NULL`);
 
     Object.assign(guild.sqlite, {
+        // set up SQLite queries for setting/retrieving speedrun.com user IDs
         getAllSrcUsers: database.prepare("SELECT * FROM src_users;"),
         getSrcID: database.prepare("SELECT src_id FROM src_users WHERE discord_id = ?;").pluck(),
         addSrcUser: database.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
@@ -37,12 +38,10 @@ export function init(guild, guildInput) {
         return role;
     }
 
-    Object.assign(guild, {
-        allSRRoles: guildInput.roles.init?.(guild, role),
-        getSRRoles: guildInput.roles.getRoles,
-        srcAPIFilter: guildInput.roles.srcAPIFilter ?? "",
-        unicodeNameFix: guildInput.roles.unicodeNameFix ?? false
-    });
+    guild.allSRRoles = guildInput.roles.init?.(guild, role);
+    guild.getSRRoles = guildInput.roles.getRoles;
+    guild.srcAPIFilter = guildInput.roles.srcAPIFilter ?? "";
+    guild.unicodeNameFix = guildInput.roles.unicodeNameFix ?? false;
 
     setUpdateAllRolesTimeout(guild);
 }

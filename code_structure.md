@@ -22,4 +22,4 @@ Each command module is a file in `src/command_modules` that contains commands. T
 
 ## Guild configurations
 
-A guild config is a JavaScript file containing guild-specific information like emotes, games, categories, levels and which commands should work on the guild. If you place it in `guild_configs`, it will automatically be loaded when the bot starts. To write your own guild config, you can look at one of the existing configs to see what belongs in there
+A guild config is a JavaScript file containing guild-specific information like emotes, games, categories, levels and which commands should work on the guild. If you place it in `guild_configs`, it will automatically be loaded when the bot starts. To write your own guild config, you can look at one of the existing configs to see what belongs in there.

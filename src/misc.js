@@ -143,7 +143,7 @@ export function createSQLiteTable(database, tableName, tableColumns, indexName, 
 }
 
 /** HTML codes for the function `decodeHTML` */
-const entities = Object.assign(Object.create(null), {
+const entities = Object.assign(newMap(), {
     amp: "&",
     apos: "'",
     lt: "<",
@@ -303,6 +303,11 @@ export function logError(text, guild) {
     return text;
 }
 
+/** Returns a new object without a prototype, those can be used as maps */
+export function newMap() {
+    return Object.create(null);
+}
+
 /** Returns a promise that resolves after the specified time */
 export const setTimeoutPromise = util.promisify(setTimeout);
 
@@ -337,17 +342,19 @@ export function spacesAroundMentions(text) {
  * Helps output an array of objects as a table
  * @param {object[]} array The array to output
  * @param {string[]} consistentWidthProperties Array of property names whose values should be paded with spaces on the left to ensure the same width in every row
+ * @param {boolean} cloneObjects Whether or not to clone the objects in the array before changing them
  * @param {(item: object, index: number) => void} lineString Function that gets executed for every row
  */
-export function toTable(array, consistentWidthProperties, lineString) {
+export function toTable(array, consistentWidthProperties, cloneObjects, lineString) {
     if (array.length < 1) {
         return;
     }
 
+    consistentWidthProperties = new Set(consistentWidthProperties);
     const maxWidths = {};
 
     for (let name in array[0]) {
-        if (consistentWidthProperties.includes(name)) {
+        if (consistentWidthProperties.has(name)) {
             for (let item of array) {
                 maxWidths[name] = Math.max(maxWidths[name] ?? 0, item[name].toString().length);
             }
@@ -357,8 +364,12 @@ export function toTable(array, consistentWidthProperties, lineString) {
     const returnValues = [];
     let index = 0;
     for (let item of array) {
+        if (cloneObjects) {
+            item = item.clone();
+        }
+
         for (let name in item) {
-            if (consistentWidthProperties.includes(name)) {
+            if (consistentWidthProperties.has(name)) {
                 item[name] = item[name].toString().padStart(maxWidths[name]);
             }
         }
@@ -422,6 +433,12 @@ Number.prototype.toOrdinal = function() {
 };
 
 Object.defineProperties(Object.prototype, {
+    clone: {
+        /** Returns a shallow copy of the object, the prototype is the same */
+        value: function clone() {
+            return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+        }
+    },
     withPrototype: {
         /**
          * Returns an object (might be a shallow copy) that uses the specified prototype

@@ -1,28 +1,28 @@
 # Bingo Bot
 
-Bingo Bot is a speedrunning race bot for Discord, [originally developed for LittleBigPlanet](https://github.com/TadCordle/bingo-bot) by RbdJellyfish (no bingo functionality)
+Bingo Bot is a speedrunning race bot for Discord, [originally developed for LittleBigPlanet](https://github.com/TadCordle/bingo-bot) by RbdJellyfish (no bingo functionality).
 
-To get an overview of how the code works and where to start, see [`code_structure.md`](/code_structure.md)
+To get an overview of how the code works and where to start, see [`code_structure.md`](/code_structure.md).
 
 ## Setup
 
 [Set up a Discord bot](https://discord.com/developers/applications)
 
-Enable Application > Bot > Server Members Intent
+Enable Application > Bot > Server Members Intent.
 
 Install [Node.js](https://nodejs.org/en/) (latest or LTS version).
 
-Get build tools
+Get build tools.
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
 * Linux: `sudo apt-get install build-essential`
 
-Get dependencies
+Get dependencies.
 
 ```
 npm i
 ```
 
-Create `discord_auth.json` in the bingo-bot folder with your auth token
+Create `discord_auth.json` in the bingo-bot folder with your auth token.
 
 ```json
 {
@@ -30,13 +30,15 @@ Create `discord_auth.json` in the bingo-bot folder with your auth token
 }
 ```
 
-Create a configuration file for your speedrunning server and put it into `src/guild_configs`
+Create a configuration file for your speedrunning server and put it into `src/guild_configs`.
 
-Run bot
+Run bot.
 
 ```
 npm start
 ```
+
+To run the bot on a server, I recommend [PM2](https://github.com/Unitech/pm2).
 
 ## Commands
 
@@ -66,7 +68,7 @@ npm start
 
 **Stat commands**
 * `status`/`s` – Shows the current race status.
-* `result [<race ID>]` – Shows the results of the specified race ID or the last race.
+* `result [<race ID>]` – Shows the results of the given/last race.
 * `leaderboard <game name> / <category name>` – Shows the Elo leaderboard for the current/given game / category.
 * `me <game name>` – Shows your race stats for a game.
 * `runner <user> / <game name>` – Shows a user's race stats.
@@ -77,4 +79,4 @@ npm start
 **Moderator-only commands**
 * `as <@user or ID> <command>` – Calls a command as the specified user.
 * `fixelo` – Recalculates the Elo leaderboards.
-* `clearrace` – Ends the race without recording any results.
+* `clearrace` – Ends the race immediately.

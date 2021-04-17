@@ -7,9 +7,9 @@ import Race from "../Race.js";
 import Discord from "discord.js";
 
 const emotes = {
-    ppjE: "<:ppjE:795059062403760129>", // "<:ppjE:230442929859198977>" REPLACE
-    ppjSmug: "<:ppjSmug:795059081957343260>", // "<:ppjSmug:230442929838227457>" REPLACE
-    ppjWink: "<:ppjWink:795059091969671169>" // "<:ppjWink:367254404811980801>" REPLACE
+    ppjE: "<:ppjE:795059062403760129>",
+    ppjSmug: "<:ppjSmug:795059081957343260>",
+    ppjWink: "<:ppjWink:795059091969671169>"
 };
 
 const ilAliases = [ "il", "ils" ];
@@ -87,20 +87,17 @@ function bobOnRaceRecorded(race) {
 
 /** @type {GuildInput} */
 const lbp = {
-    id: "794629930667343915", // "129652811754504192" REPLACE
-    name: "bob testing", // "LittleBigPlanet" REPLACE // LBP Speedrunning
-    aliases: [ "bob" ], // [ "lbp", "lbpsr" ] REPLACE
-    abbreviation: "bob", // "LBP" REPLACE
-    guildCommand: "bob", // "lbp" REPLACE
+    id: "794629930667343915",
+    name: "Bingo Bot Server",
+    aliases: [ "bob" ],
+    abbreviation: "bob",
+    guildCommand: "bob",
     raceChannelIDs: [
         "794629930667343918",
         "814156861221634089"
-    ], // [ "551242726251954185" ] REPLACE // #racing
-    modRoleIDs: [ "795064134609666118" ], /*[
-        "485215306990747649", // Moderator
-        "146643995307540480"  // Admin
-    ] REPLACE */
-    moduleIDs: [ "lbp", "race_control", "roles" ],
+    ],
+    modRoleIDs: [ "795064134609666118" ],
+    moduleIDs: [ "race_control" ],
     commonCategories: {
         "Individual Levels": {
             aliases: ilAliases,
@@ -708,110 +705,6 @@ const lbp = {
         raceRunner: "runner kadiwa/lbp1",
         raceLeaderboard: "elo 1/no"
     },
-    roles: {
-        init: function bobRolesInit(guild, role) {
-            guild.sqlite.getUserGamesRan = guild.database.prepare("SELECT DISTINCT game, category FROM user_stats WHERE user_id = ?;");
-            gameRoles = {
-                "LittleBigPlanet": role("797952946150440960"), // role("716015233256390696") REPLACE
-                "LittleBigPlanet (PSP)": role("797953068159074325"), // role("716015332040507503") REPLACE
-                "Sackboy's Prehistoric Moves": role("797953108616413207"), // role("716015421878435891") REPLACE
-                "LittleBigPlanet 2": role("797953167790571558"), // role("716015284183367701") REPLACE
-                "LittleBigPlanet PS Vita": role("797953189961269278"), // role("716015465024979085") REPLACE
-                "LittleBigPlanet Karting": role("797953243023802431"), // role("716015510797680741") REPLACE
-                "LittleBigPlanet 3": role("797953274270449694"), // role("716015547984117872") REPLACE
-                "Sackboy: A Big Adventure": role("797954957784383538"), // role("760606311679000626") REPLACE
-                "DLC": role("797953016271470632") // role("729768987365474355") REPLACE
-            };
-
-            wrRoles = [
-                role("797953312540459078"), // role("716014433121337504") REPLACE // 1
-                role("797953352087371787"), // role("725437638974373978") REPLACE // 2
-                role("797953626194182194"), // role("725437745262231602") REPLACE // 3
-                role("797953610108370984"), // role("725437781073199265") REPLACE // 4
-                role("797953595752054786"), // role("725437800874377317") REPLACE // 5
-                role("797953578798940182"), // role("725437819224588300") REPLACE // 6
-                role("797953560536285185"), // role("725437839403384962") REPLACE // 7
-                role("797953542299058196"), // role("725437863381958696") REPLACE // 8
-                role("797953512133754892"), // role("725437884420587703") REPLACE // 9
-                role("797953471579553802") // role("725437901680279637") REPLACE // 10+
-            ];
-
-            ilWRRoles = {
-                1: role("797953960316239902"), // role("784118229143781397") REPLACE // 1
-                2: role("797953941731541002"), // role("784627988703739976") REPLACE // 2
-                3: role("797953924271308830"), // role("784628034317058058") REPLACE // 3
-                4: role("797953897197076501"), // role("784628058149617684") REPLACE // 4
-                5: role("797953871284666398"), // role("784118331388854288") REPLACE // 5+
-                10: role("797953843093569557"), // role("784118436585799721") REPLACE // 10+
-                20: role("797953811028377631"), // role("784118484342800384") REPLACE // 20+
-                30: role("797953763897376778"), // role("784118537933291541") REPLACE // 30+
-                40: role("797953740261818399"), // role("784118624197672960") REPLACE // 40+
-                50: role("797953711703851078"), // role("784118766145503232") REPLACE // 50+
-                60: role("814211501065896046"), // role("800566048586727454") REPLACE // 60+
-                70: role("814211629830111293"), // role("800566126827536385") REPLACE // 70+
-                80: role("814211652965892118"), // role("800566196738981888") REPLACE // 80+
-                90: role("814211666325667852"), // role("800566238891343873") REPLACE // 90+
-                100: role("814211678270652419") // role("800566271573229659") REPLACE // 100+
-            };
-
-            const multiCategories = guild.games[MULTI_GAME].categories;
-            multiCategoryFromID = {
-                "wkp3v8v2": multiCategories["an3"],
-                "7dg69w4k": multiCategories["7ny"]
-            };
-
-            guild.on("raceRecorded", bobOnRaceRecorded);
-
-            const allRoles = Object.values(gameRoles);
-            allRoles.push(...wrRoles, ...Object.values(ilWRRoles));
-            return new Set(allRoles);
-        },
-        getRoles: function bobGetRoles(member, srcData) {
-            const { guild } = member;
-
-            /** @type {Set<Discord.Role>} */
-            const newRoles = new Set();
-            const wrCounts = { fullGame: 0, il: 0 };
-            for (let run of srcData) {
-                if (run.place === 1) {
-                    wrCounts[(!run.run.level || ilFullGameCategories.has(run.run.category))
-                        ? "fullGame" : "il"]++;
-                }
-
-                newRoles.add(gameRoles[gameNameFromID[run.run.game]]
-                    ?? multiCategoryFromID[run.run.category].games.map((game) => gameRoles[game.name]));
-            }
-
-            if (wrCounts.fullGame > 0) {
-                newRoles.add(wrRoles[(wrCounts.fullGame >= 10) ? 9 : wrCounts.fullGame - 1]);
-            }
-
-            if (wrCounts.il > 0) {
-                if (wrCounts.il < 10) {
-                    newRoles.add(ilWRRoles[(wrCounts.il >= 5) ? 5 : wrCounts.il]);
-                } else {
-                    newRoles.add(ilWRRoles[(wrCounts.il >= 100)
-                        ? 100 : 10 * Math.floor(wrCounts.il / 10)])
-                }
-            }
-
-            const multiGame = guild.games[MULTI_GAME];
-            for (let stat of guild.sqlite.getUserGamesRan.all(member.id)) {
-                if (stat.game === MULTI_GAME) {
-                    const category = multiGame.getCategory(stat.category);
-                    if (category) {
-                        newRoles.add(category.games.map((game) => gameRoles[game.name]));
-                    }
-                } else {
-                    newRoles.add(gameRoles[stat.game]);
-                }
-            }
-
-            return newRoles;
-        },
-        srcAPIFilter: "?series=v7emqr49",
-        unicodeNameFix: false
-    },
     config: {
         race: {
             maxTeamSize: 4,
@@ -824,7 +717,7 @@ const lbp = {
         cleanUpCategory: bobCleanUpCategory,
         cleanUpLevelName: bobCleanUpLevelName,
         emotes: {
-            acknowledge: "795059101402791936", // "394255134340677634" REPLACE // :rbdBingo:
+            acknowledge: "795059101402791936", // :rbdBingo:
             elo: emotes.ppjSmug,
 
             countdownStart: emotes.ppjWink,

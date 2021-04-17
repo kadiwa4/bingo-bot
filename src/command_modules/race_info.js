@@ -3,7 +3,7 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { assert, calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+import { assert, calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable, WHITESPACE } from "../misc.js";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -32,8 +32,8 @@ export const commands = {
                 case RaceState.COUNTDOWN:
                     const entrantCount = race.entrants.length;
 
-                    race.showJoiningEntrants(onError, message, `**${race} is currently open with ${entrantCount
-                        } entrant${entrantCount === 1 ? "" : "s"}. Use \`${guild.commandPrefix}race\` to join!**\n`,
+                    race.showJoiningEntrants(onError, message,
+                        `**${race} is currently open with ${entrantCount} entrant${entrantCount === 1 ? "" : "s"}. Use \`${guild.commandPrefix}race\` to join!**\n`,
                         `**${race.gameCategoryLevel} race (cont):**\n`);
 
                     return;
@@ -82,7 +82,7 @@ export const commands = {
     raceResult: {
         names: [ "result" ],
         aliases: [ "results" ],
-        description: "Shows the results of the specified race ID or the last race",
+        description: "Shows the results of the given/last race",
         usage: "[<race ID>]",
         category: HelpCategory.STATS,
         guildDependent: true,
@@ -109,7 +109,7 @@ export const commands = {
             /** @type {object[]} */
             const race = sqlite.getRace.get(raceID);
             if (!race) {
-                message.inlineReply(`Result for race ID \`${raceID}\` not found.`);
+                message.inlineReply(`Race with ID \`${raceID}\` not found.`);
                 return;
             }
 
@@ -133,7 +133,9 @@ export const commands = {
                     : "";
             }
 
-            let placeObject = { place: 1, tie: 1, };
+            let placeObject = { place: 1, tie: 1 };
+
+            // \xA0 is a non-breaking space
             message.multiReply(onError, `${messageStart}ID\xA0\`${raceID}\`):**\n`,
                 `${messageStart}cont):**\n`, async function*() {
                 for (let result of sqlite.getResults.all(raceID)) {
@@ -160,7 +162,8 @@ export const commands = {
             /** @type {{ race: Race; }} */
             const { race } = message.channel;
 
-            if (!race.category.isIL || (race.state !== RaceState.JOINING && race.state !== RaceState.ACTIVE)) {
+            if (!race.category.isIL || (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN && race.state !== RaceState.ACTIVE)) {
+                // no IL race happening
                 return;
             }
 
@@ -175,9 +178,7 @@ export const commands = {
 
             message.multiReply(onError, `${messageStart}listed by race ID):**\n`,
                 `${messageStart}cont):**\n`, function*() {
-                for (let result of race.ilResults) {
-                    yield `\t${result.id}: ${result.level} (${result.game.config.emotes.firstPlace} ${result.winnerTeamName})\n`;
-                }
+                yield* toTable(race.ilResults, [ "id" ], true, (result) => `\t\`${result.id}\`: ${result.level} (${result.game.config.emotes.firstPlace} ${result.winnerTeamName})\n`);
             });
         }
     },
@@ -249,9 +250,8 @@ export const commands = {
 
             const messageStart = `**Elo Rankings for ${game} / ${categoryName}`;
             message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, async function*() {
-                yield* toTable(memberStats, [ "place" ], async (stat, index) =>
-                    // \xA0 is a non-breaking space
-                    `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo.toFixed()}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`);
+                // \xA0 is a non-breaking space
+                yield* toTable(memberStats, [ "place" ], false, async (stat, index) => `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo.toFixed()}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`);
             });
         }
     },
@@ -350,7 +350,7 @@ export const commands = {
             const eloConfig = guild.getGame(race.game).config.race.elo;
             const resultsSinceRace = sqlite.getResultsSinceRace.all(raceID, race.game, race.category);
 
-            let placeObject = { place: 1, tie: 1, };
+            let placeObject = { place: 1, tie: 1 };
             function revertUserStat(userID, row) {
                 const stat = sqlite.getUserStat.get(userID, race.game, race.category);
                 if (stat.race_count === 1) {
@@ -478,7 +478,7 @@ export const commands = {
             } else {
                 id = getUserID(splitArgs[0]);
                 if (!id) {
-                    message.inlineReply(`User “${splitArgs[0]}” not found.`);
+                    message.inlineReply(`User “${splitArgs[0]}” not found.`, { split: true });
                     return;
                 }
 
@@ -540,7 +540,7 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
             return;
         }
 
-        yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], (stat) =>
+        yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], false, (stat) =>
             // \xA0 is a non-breaking space
             `  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
             }\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count

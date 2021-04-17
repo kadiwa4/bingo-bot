@@ -29,7 +29,7 @@ import "./discord/GuildMember.js";
 import "./discord/Message.js";
 import "./discord/User.js";
 
-import { assert, log, logError, noop } from "./misc.js";
+import { assert, log, logError, newMap, noop } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -74,14 +74,12 @@ const client = new Discord.Client({
 await client.login(discordAuthToken);
 log("connected to discord");
 
-Object.assign(client, {
-    application: await client.fetchApplication(),
-    srGuilds: Object.create(null),
-    modules: Object.create(null),
-    commands: Object.create(null),
-    config: {},
-    databases: []
-});
+client.application = await client.fetchApplication();
+client.srGuilds = newMap();
+client.modules = newMap();
+client.commands = newMap();
+client.config = {};
+client.databases = [];
 
 client.owner = client.application.owner;
 if (client.owner instanceof Discord.Team) {
