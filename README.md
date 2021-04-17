@@ -80,4 +80,4 @@ To run the bot on a server, I recommend [PM2](https://github.com/Unitech/pm2).
 * `as <@user or ID> <command>` – Calls a command as the specified user.
 * `clearrace` – Ends the race immediately.
 * `fixelo` – Recalculates the Elo leaderboards.
-* `removerace [<race ID>]` – Deletes the given/last race.
+* `removerace <race ID>` – Deletes the given race.

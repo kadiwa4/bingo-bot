@@ -109,7 +109,7 @@ export const commands = {
             /** @type {object[]} */
             const race = sqlite.getRace.get(raceID);
             if (!race) {
-                message.inlineReply(`Race with ID \`${raceID}\` not found.`);
+                message.inlineReply("Race not found.");
                 return;
             }
 
@@ -320,8 +320,8 @@ export const commands = {
     raceRemove: {
         names: [ "removerace" ],
         aliases: [ "deleterace" ],
-        description: "Deletes the given/last race",
-        usage: "[<race ID>]",
+        description: "Deletes the given race",
+        usage: "<race ID>",
         category: HelpCategory.MOD,
         modOnly: true,
         onUse: function raceRemove(onError, message, member, args) {
@@ -329,15 +329,9 @@ export const commands = {
             const { guild } = member;
             const { sqlite } = guild;
 
-            let raceID = guild.raceID - 1;
-            if (args) {
-                raceID = parseInt(args);
-                if (Number.isNaN(raceID) || raceID <= 0) {
-                    this.showUsage(...arguments);
-                    return;
-                }
-            } else if (raceID === 0) {
-                message.inlineReply("No races have happened yet.");
+            const raceID = parseInt(args);
+            if (Number.isNaN(raceID) || raceID <= 0) {
+                this.showUsage(...arguments);
                 return;
             }
 
