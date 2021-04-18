@@ -11,6 +11,11 @@ const emotes = {
 const ilAliases = [ "il", "ils" ];
 const anyNCAliases = [ "anynooverlord", "nocreate", "nooverlord", "anync", "anyno", "nc", "no" ];
 
+const ilCategory = {
+    aliases: ilAliases,
+    il: true
+};
+
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
 
 /**
@@ -49,12 +54,6 @@ const lbp = {
     ],
     modRoleIDs: [ "795064134609666118" ],
     moduleIDs: [ "race_control" ],
-    commonCategories: {
-        "Individual Levels": {
-            aliases: ilAliases,
-            il: true
-        }
-    },
     cleanUpGameName: function bobCleanUpGameName(input) {
         return input.toLowerCase()
             .replace(/\W/g, "")
@@ -74,7 +73,8 @@ const lbp = {
                     aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
                     default: true
                 },
-                "All Levels": { aliases: [ "al" ] }
+                "All Levels": { aliases: [ "al" ] },
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Introduction": { default: true },
@@ -147,7 +147,8 @@ const lbp = {
             aliases: [ "psp", "lbpp", "p" ],
             categories: {
                 "Any%": { default: true },
-                "100%": null
+                "100%": null,
+                "Individual Levels": ilCategory
             },
             levels: {
                 "The Introduction": { default: true },
@@ -186,7 +187,8 @@ const lbp = {
             aliases: [ "lbpspm", "lbpm", "m" ],
             categories: {
                 "Any%": { default: true },
-                "100%": null
+                "100%": null,
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Learning to Move": {
@@ -212,7 +214,8 @@ const lbp = {
                     aliases: anyNCAliases,
                     default: true
                 },
-                "All Levels": { aliases: [ "al" ] }
+                "All Levels": { aliases: [ "al" ] },
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Introduction": { default: true },
@@ -276,7 +279,8 @@ const lbp = {
             aliases: [ "vita", "lbpv", "v"],
             categories: {
                 "Any%": { default: true },
-                "100%": null
+                "100%": null,
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Introduction": { default: true },
@@ -329,7 +333,8 @@ const lbp = {
             aliases: [ "karting", "lbpk", "k" ],
             categories: {
                 "Any%": { default: true },
-                "100%": null
+                "100%": null,
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Karting Lessons": {
@@ -398,7 +403,8 @@ const lbp = {
                     default: true
                 },
                 "All Main Quests": { aliases: [ "amq" ] },
-                "Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] }
+                "Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] },
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Introduction": { default: true },
@@ -441,7 +447,8 @@ const lbp = {
             categories: {
                 "Any%": { default: true },
                 "New Game+": { aliases: [ "ng" ] },
-                "100%": null
+                "100%": null,
+                "Individual Levels": ilCategory
             },
             levels: {
                 "Trial 1: Ain't Seen Nothing Yeti": { aliases: [ "trial1", "aintseennothingyeti" ] },
