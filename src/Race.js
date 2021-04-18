@@ -529,7 +529,7 @@ export default class Race {
      * @readonly
      */
     get averageLevelChoiceCount() {
-        return Math.floor(this.entrants.map((entrant) => entrant.ilChoiceCount).reduce((x, y) => x + y, 0));
+        return Math.floor(this.entrants.map((entrant) => entrant.ilChoiceCount ?? 0).reduce((x, y) => x + y, 0));
     }
 
     /**

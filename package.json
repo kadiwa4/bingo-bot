@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/TadCordle/bingo-bot#readme",
   "dependencies": {
-    "better-sqlite3": "^7.1.2",
+    "better-sqlite3": "^7.1.5",
     "bl": "^4.1.0",
     "discord.js": "^12.5.3"
   },
