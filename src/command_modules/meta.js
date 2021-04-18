@@ -27,7 +27,7 @@ export const commands = {
                 return;
             }
 
-            const inputMatch = args.match(RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)$`));
+            const inputMatch = args.match(/^(.?\W)?[\s\uFFEF\xA0\W]*(\w+)$/);
             if (!inputMatch) {
                 this.showUsage(...arguments);
                 return;

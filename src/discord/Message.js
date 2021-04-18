@@ -1,4 +1,4 @@
-import { bind, noop } from "../misc.js";
+import { bind, hasProperties, noop } from "../misc.js";
 
 import Discord, { Message } from "discord.js";
 
@@ -76,7 +76,7 @@ Message.prototype.inlineReply = async function(content, options) {
     const apiMessage = (content instanceof Discord.APIMessage) ? content.resolveData() : Discord.APIMessage.create(this.channel, content, options).resolveData();
     Object.assign(apiMessage.data, { message_reference: { message_id: this.id } });
 
-    if (!apiMessage.data.allowed_mentions || Object.keys(apiMessage.data.allowed_mentions).length === 0) {
+    if (!apiMessage.data.allowed_mentions || !hasProperties(apiMessage.data.allowed_mentions)) {
         apiMessage.data.allowed_mentions = { parse: ["users", "roles", "everyone"] };
     }
 

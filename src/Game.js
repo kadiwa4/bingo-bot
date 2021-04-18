@@ -1,7 +1,7 @@
 /// <reference path="./types.d.ts" />
 
 import Category from "./Category.js";
-import { assert, invertObject, newMap } from "./misc.js";
+import { invertObject, newMap } from "./misc.js";
 
 import Discord from "discord.js";
 
@@ -23,7 +23,10 @@ export default class Game {
          */
         this.config = (gameInput.config ?? {}).withPrototypeRecursive(guild.config);
         if (gameInput.default) {
-            assert(!guild.defaultGame, `multiple default games (${guild.defaultGame} and ${this})`, guild);
+            if (guild.defaultGame) {
+                throw new Error(`multiple default games\n1: '${guild.defaultGame}'\n2: '${this}'`);
+            }
+
             guild.defaultGame = this;
         }
     }
@@ -66,7 +69,7 @@ export default class Game {
      * @returns {?Category}
      */
     getCategory(input) {
-        const { name, coop } = this.config.cleanUpCategory(input);
+        const { name, coop } = this.config.cleanUpCategory(input.trim());
         const category = this.categories[name];
 
         return category ? category.forCoop(coop) : null;
@@ -114,18 +117,27 @@ export default class Game {
             const category = new Category(categoryName, categoryInput);
 
             if (categoryInput?.default) {
-                assert(!this.defaultCategory, `multiple default categories for game ${this} (${this.defaultCategory} and ${categoryName})`, guild);
+                if (this.defaultCategory) {
+                    throw new Error(`multiple default categories of game '${this}'\n1: '${this.defaultCategory}'\n2: '${categoryName}'`);
+                }
+
                 this.defaultCategory = category;
             }
 
             const cleanedUpCategoryName = this.config.cleanUpCategory(categoryName).name;
             if (multiGame) {
                 category.games = [];
-                assert(categoryInput?.games, `no property 'games' for multi-game category ${categoryName}`, guild);
+                if (!categoryInput?.games) {
+                    throw new Error(`no property 'games' of multi-game category '${categoryName}'`)
+                }
+
                 for (let input of categoryInput.games) {
                     /** @type {Game} */
                     const game = guild.getGame(input);
-                    assert(game, `couldn't find game ${input} for multi-game category ${categoryName}`, guild);
+                    if (!game) {
+                        throw new Error(`couldn't find game '${input}' for multi-game category '${categoryName}'`);
+                    }
+
                     category.games.push(game);
                     invertObject(cleanedUpCategoryName, categoryInput.aliases, game.categories, category);
                 }
@@ -134,7 +146,9 @@ export default class Game {
             invertObject(cleanedUpCategoryName, categoryInput?.aliases, this.categories, category);
         }
 
-        assert(this.defaultCategory, `no default category for game ${this}`, guild);
+        if (!this.defaultCategory) {
+            throw new Error(`no default category of game '${this}'`);
+        }
     }
 };
 

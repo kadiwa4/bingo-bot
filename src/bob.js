@@ -29,7 +29,7 @@ import "./discord/GuildMember.js";
 import "./discord/Message.js";
 import "./discord/User.js";
 
-import { assert, log, logError, newMap, noop } from "./misc.js";
+import { log, logError, newMap, noop } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -71,42 +71,9 @@ const client = new Discord.Client({
     ws: { intents: [ "DIRECT_MESSAGES", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILDS" ] }
 });
 
+client.databases = [];
 await client.login(discordAuthToken);
 log("connected to discord");
-
-client.application = await client.fetchApplication();
-client.srGuilds = newMap();
-client.modules = newMap();
-client.commands = newMap();
-client.config = {};
-client.databases = [];
-
-client.owner = client.application.owner;
-if (client.owner instanceof Discord.Team) {
-    client.owner = client.owner.owner.user;
-}
-
-client.owner.createDM();
-
-// load all guild configs in `src/guild_configs`
-for (let file of fs.readdirSync("./src/guild_configs")) {
-    if (file.toLowerCase().includes("ignore")) {
-        continue;
-    }
-
-    assert(file.toLowerCase().endsWith(".js"), `'src/guild_configs/${file}' is not a JavaScript file`);
-
-    /** @type {GuildInput} */
-    let guildInput = await import(`./guild_configs/${file}`);
-    if (Object.keys(guildInput).length === 1 && guildInput.default) {
-        guildInput = guildInput.default;
-    }
-
-    assert(guildInput.id, `couldn't load 'src/guild_configs/${file}'`);
-
-    const guild = await client.guilds.fetch(guildInput.id);
-    await guild.init(guildInput);
-}
 
 // event handlers
 
@@ -130,7 +97,7 @@ client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
 
 // unhandled promise rejection
 process.on("unhandledRejection", async function onUnhandledRejection(error) {
-    logError(`unhandled promise rejection: ${error.stack ?? error}`);
+    logError(`unhandled promise rejection: ${error?.stack ?? error}`);
 
     await client.user.setStatus("invisible").catch(noop);
 
@@ -148,7 +115,7 @@ process.on("exit", function onExit() {
 
 // uncaught JS exception
 process.on("uncaughtException", async function onUncaughtException(error) {
-    logError(error?.stack ?? error);
+    logError(`uncaught error: ${error?.stack ?? error}`);
 
     await client.user.setStatus("invisible").catch(noop);
 
@@ -163,5 +130,47 @@ process.on("SIGINT", async function onKeyboardInterrupt() {
 
     process.exit(0);
 });
+
+client.application = await client.fetchApplication();
+client.srGuilds = newMap();
+client.modules = newMap();
+client.commands = newMap();
+client.config = {};
+
+client.owner = client.application.owner;
+if (client.owner instanceof Discord.Team) {
+    client.owner = client.owner.owner.user;
+}
+
+client.owner.createDM();
+
+// load all guild configs in `src/guild_configs`
+for (let file of fs.readdirSync("./src/guild_configs")) {
+    if (file.toLowerCase().includes("ignore")) {
+        continue;
+    }
+
+    if (!file.toLowerCase().endsWith(".js")) {
+        throw new Error(`'src/guild_configs/${file}' is not a JavaScript file`);
+    }
+
+    /** @type {GuildInput} */
+    let guildInput = await import(`./guild_configs/${file}`);
+    if (Object.keys(guildInput).length === 1 && guildInput.default) {
+        guildInput = guildInput.default;
+    }
+
+    if (!guildInput.id) {
+        throw new Error(`'src/guild_configs/${file}' doesn't have the property 'id'`);
+    }
+
+    const guild = await client.guilds.fetch(guildInput.id);
+
+    try {
+        await guild.init(guildInput);
+    } catch (error) {
+        throw new Error(`error while setting up guild ${guildInput.id}:\n${error?.stack ?? error}`);
+    }
+}
 
 log("ready");

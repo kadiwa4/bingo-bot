@@ -1,5 +1,5 @@
 import Command from "../Command.js";
-import { addUserNames, log, logError, logFormat, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
+import { addUserNames, log, logError, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
 
 import Discord, { Client } from "discord.js";
 
@@ -19,6 +19,8 @@ Client.prototype.cleanUpGuildName = function(input) {
 Client.prototype.getGuild = function(input) {
     return this.srGuilds[this.cleanUpGuildName(input)] ?? null;
 };
+
+const INPUT_MATCH_REGEXP = RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)${WHITESPACE}*(.*)$`);
 
 /**
  * Uses the command that was given to the function.
@@ -46,18 +48,18 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
 
             message.respondedError = true;
         } catch {
-            throw new Error(logFormat("couldn't send error messages on discord; giving up", guild));
+            throw new Error("couldn't send error messages on discord; giving up", guild);
         }
     }
 
     try {
-        const { guild } = userOrMember;
+        let { guild } = userOrMember;
 
         if (!input) {
             input = spacesAroundMentions(message.content).trim();
         }
 
-        const inputMatch = input.match(RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)${WHITESPACE}*(.*)$`));
+        const inputMatch = input.match(INPUT_MATCH_REGEXP);
         if (!inputMatch) {
             return false;
         }
@@ -71,21 +73,27 @@ Client.prototype.useCommand = async function(message, userOrMember, input) {
             return false;
         }
 
-        if (command.guildCommand) {
-            if (userOrMember.guild) {
-                message.inlineReply(`\`${commandName}\` is DM-only.`);
-                return true;
-            }
+        if (command.guildCommandGuild) {
+            let member;
+            if (command.guildCommandGuild === guild) {
+                member = userOrMember;
+            } else {
+                if (guild) {
+                    message.inlineReply(`\`${commandName}\` is DM-only.`);
+                    return true;
+                }
 
-            if (!inputMatch[3]) {
-                message.inlineReply(`Usage: \`${commandName} <command>\``);
-                return true;
-            }
+                guild = command.guildCommandGuild;
+                if (!inputMatch[3]) {
+                    message.inlineReply(`Usage: \`${commandName} <command>\``);
+                    return true;
+                }
 
-            const member = await command.guildCommand.members.fetch(userOrMember.id);
-            if (!member) {
-                message.inlineReply(`You're not a server member of ${command.guildCommand.srName}.`);
-                return true;
+                member = await guild.members.fetch(userOrMember.id);
+                if (!member) {
+                    message.inlineReply(`You're not a server member of ${guild.srName}.`);
+                    return true;
+                }
             }
 
             if (!await this.useCommand(message, member, inputMatch[3])) {

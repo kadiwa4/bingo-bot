@@ -3,7 +3,9 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { assert, calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable, WHITESPACE } from "../misc.js";
+import { calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable, WHITESPACE } from "../misc.js";
+
+import assert from "assert";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -201,7 +203,7 @@ export const commands = {
 
             let customCategory = false;
             if (args) {
-                const splitArgs = args.split(RegExp(`${WHITESPACE}*/${WHITESPACE}*`));
+                const splitArgs = args.split("/");
                 if (splitArgs.length !== 2) {
                     this.showUsage(...arguments);
                     return;
@@ -215,7 +217,7 @@ export const commands = {
 
                 const category = game.getCategory(splitArgs[1]);
                 if (!category) {
-                    categoryName = clean(splitArgs[1], message);
+                    categoryName = clean(splitArgs[1].trim(), message);
                     customCategory = true;
                 } else {
                     categoryName = category.name;
@@ -457,7 +459,7 @@ export const commands = {
             const { guild } = member;
 
             const splitArgs = args.split("/");
-            if (!splitArgs) {
+            if (splitArgs.length !== 2) {
                 this.showUsage(...arguments);
                 return;
             }
@@ -472,7 +474,7 @@ export const commands = {
             } else {
                 id = getUserID(splitArgs[0]);
                 if (!id) {
-                    message.inlineReply(`User “${splitArgs[0]}” not found.`, { split: true });
+                    message.inlineReply(`User “${splitArgs[0].trim()}” not found.`, { split: true });
                     return;
                 }
 
@@ -484,8 +486,7 @@ export const commands = {
                 }
             }
 
-            const gameInput = splitArgs.slice(1).join("");
-            showUserStats(onError, guild, message, id, userName, gameInput, false);
+            showUserStats(onError, guild, message, id, userName, splitArgs[1], false);
         }
     }
 };

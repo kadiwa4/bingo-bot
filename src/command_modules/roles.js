@@ -1,6 +1,8 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { assert, clean, createSQLiteTable, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
+import { clean, createSQLiteTable, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
+
+import assert from "assert";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -13,7 +15,7 @@ export const id = "roles";
  * @see CommandModule.init
  */
 export function init(guild, guildInput) {
-    assert(guildInput.roles, "no config for command module roles", guild);
+    assert(guildInput.roles, "no config for command module roles");
 
     /** @type {{ database: BetterSqlite3.Database; }} */
     const { database } = guild;
@@ -34,7 +36,10 @@ export function init(guild, guildInput) {
     /** @param {string} roleID */
     function role(roleID) {
         const role = guild.roles.cache.get(roleID);
-        assert(role, `role ${roleID} not found`, guild);
+        if (!role) {
+            throw new Error(`role ${roleID} not found`);
+        }
+
         return role;
     }
 
@@ -185,7 +190,7 @@ async function updateAllRoles(onError, guild) {
  * @param {(error) => void} onError
  * @param {?Discord.Message} message
  * @param {Discord.GuildMember} member
- * @param {string} srcID
+ * @param {?string} srcID
  * @param {boolean} [addToDB]
  */
 async function updateRoles(onError, message, member, srcID, addToDB = false) {
@@ -233,7 +238,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
         }
     }
 
-    await member.roles.set([...allRoles]);
+    await member.roles.set([...allRoles], (!message || message?.author === member.user) ? undefined : `responsible user: '${message.author.tag}'`);
     message?.acknowledge(member);
 }
 

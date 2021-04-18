@@ -6,7 +6,9 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { assert, clean, createSQLiteTable, formatTime, invertObject, MULTI_GAME, newMap, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+import { clean, createSQLiteTable, formatTime, hasProperties, invertObject, MULTI_GAME, newMap, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+
+import assert from "assert";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
@@ -88,20 +90,27 @@ export function init(guild, guildInput) {
             const levelInput = gameInput.levels[levelName];
 
             if (levelInput?.default) {
-                assert(!game.defaultLevel, `multiple default levels for game ${gameName} (${game.defaultLevel} and ${levelName})`, guild);
+                if (game.defaultLevel) {
+                    throw new Error(`multiple default levels of game '${gameName}'\n1: '${game.defaultLevel}'\n2: '${levelName}'`);
+                }
+
                 game.defaultLevel = levelName;
             }
 
             invertObject(game.config.cleanUpLevelName(levelName), levelInput?.aliases, game.levels, levelName);
         }
 
-        assert(Object.keys(game.levels).length === 0 || game.defaultLevel, `no default level for game ${gameName}`, guild);
+        if (hasProperties(game.levels) && !game.defaultLevel) {
+            throw new Error(`no default level of game '${gameName}'`);
+        }
+
         invertObject(guild.cleanUpGameName(gameName), gameInput.aliases, guild.games, game);
     }
 
     // set up game "Multiple Games" if configured
     if (multiGame) {
-        assert(multiGame.categories && Object.keys(multiGame.categories).length > 0, "property 'multiGame' was specified but has no categories", guild);
+        assert(multiGame.categories && hasProperties(multiGame.categories), "multi-game has no categories");
+
         const game = new Game(guild, MULTI_GAME, multiGame);
         game.categories = newMap();
 
@@ -343,13 +352,13 @@ export const commands = {
                 return;
             }
 
-            const splitArgs = args.split(RegExp(`${WHITESPACE}*/${WHITESPACE}*`));
+            const splitArgs = args.split("/");
             if (splitArgs.length > 2) {
                 this.showUsage(...arguments);
                 return;
             }
 
-            const categoryInput = splitArgs.pop();
+            const categoryInput = splitArgs.pop().trim();
             /** @type {?Game} */
             let game = null;
             if (splitArgs.length > 0) {

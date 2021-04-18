@@ -1,6 +1,6 @@
 ﻿import { TeamState } from "./enums.js";
 
-import nodeAssert from "assert";
+import assert from "assert";
 import https from "https";
 import util from "util";
 
@@ -11,7 +11,7 @@ import Discord from "discord.js";
 export const FROZEN_ARRAY = Object.freeze([]);
 export const MULTI_GAME = "Multiple Games";
 export const WHITESPACE = `[\\s\\uFEFF\\xA0]`; // to stay consistent with how String.trim() behaves
-export const WHITESPACE_PLUS = RegExp(`${WHITESPACE}+`, "g");
+export const WHITESPACE_PLUS = new RegExp(`${WHITESPACE}+`, "g");
 
 export function noop() {}
 
@@ -35,22 +35,10 @@ export function addUserNames(member) {
 }
 
 /**
- * Node.js assert function with output messages from logFormat. Returns the input
- * @template T
- * @param {T} value The value to check
- * @param {string | Error} [message] The message to send on assertion error
- * @param {Discord.Guild} [guild] The guild that is the cause
- */
-export function assert(value, message, guild) {
-    nodeAssert(value, message ? logFormat(message, guild) : null);
-    return value;
-}
-
-/**
  * For the given function (property `functionKey` of `object`), creates
  * a bound function that has the same body as the original function.
- * @param {*} object
- * @param {*} functionKey
+ * @param {object} object
+ * @param {string} functionKey
  * @param {any[]} [args]
  * @returns {Function}
  */
@@ -190,6 +178,19 @@ export function getUserID(input) {
 }
 
 /**
+ * Returns whether or not the object has at least one iterable property
+ * @param {object} object
+ * @returns {boolean}
+ */
+export function hasProperties(object) {
+    for (property in object) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Gets a web page over HTTPS
  * @param {string} hostname The hostname
  * @param {string} path The path, starting with '/'
@@ -246,15 +247,23 @@ export function increasePlace(placeObject, time) {
  * invertObject(myCleanUpFn("LittleBigPlanet"), [ "lbp1", "1" ], allMyGames, lbp1Game);
  * // allMyGames afterwards: { "lbp": lbp1Game, "lbp1": lbp1Game, "1": lbp1Game }
  * @template T
- * @param {string} cleanedUpName Name to be appended to `aliases`
+ * @param {?string} cleanedUpName Name to be appended to `aliases` or null
  * @param {string[]} [aliases] The keys to be set in the output object
  * @param {NodeJS.Dict<T>} object The object to be changed
  * @param {T} outputValue The value to be set in the output object
  */
 export function invertObject(cleanedUpName, aliases = [], object, outputValue) {
-    aliases.push(cleanedUpName);
-    for (let alias of aliases) {
-        object[alias] = outputValue;
+    if (cleanedUpName) {
+        aliases.push(cleanedUpName);
+    }
+
+    for (let name of aliases) {
+        const conflictingProperty = object[name];
+        if (conflictingProperty) {
+            throw new Error(`Can't add property '${name}' to object because it already exists.\n1: ${conflictingProperty}\n2: ${outputValue}`);
+        }
+
+        object[name] = outputValue;
     }
 }
 
@@ -311,6 +320,9 @@ export function newMap() {
 /** Returns a promise that resolves after the specified time */
 export const setTimeoutPromise = util.promisify(setTimeout);
 
+const USERS_PATTERN_1 = new RegExp(`\\S${Discord.MessageMentions.USERS_PATTERN.source}`, "g");
+const USERS_PATTERN_2 = new RegExp(`${Discord.MessageMentions.USERS_PATTERN.source}\\S`, "g");
+
 /**
  * Places spaces around all user mentions that don't have spaces around them.
  * As a user, it's easy to miss that you didn't use spaces before/after
@@ -319,17 +331,15 @@ export const setTimeoutPromise = util.promisify(setTimeout);
  * @returns {string}
  */
 export function spacesAroundMentions(text) {
-    const mention = Discord.MessageMentions.USERS_PATTERN.source;
-
     let changeOffset = 0;
-    text.replace(RegExp(`\\S${mention}`, "g"), (match, p1, offset) => {
+    text.replace(USERS_PATTERN_1, (match, p1, offset) => {
         offset += changeOffset + 1;
         changeOffset++;
         text = `${text.slice(0, offset)} ${text.slice(offset)}`;
     });
 
     changeOffset = 0;
-    text.replace(RegExp(`${mention}\\S`, "g"), (match, p1, offset) => {
+    text.replace(USERS_PATTERN_2, (match, p1, offset) => {
         offset += changeOffset + match.length - 1;
         changeOffset++;
         text = `${text.slice(0, offset)} ${text.slice(offset)}`;

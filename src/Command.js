@@ -1,6 +1,8 @@
 import CommandModule from "./CommandModule.js";
 import { HelpCategory } from "./enums.js";
-import { assert, FROZEN_ARRAY } from "./misc.js";
+import { FROZEN_ARRAY } from "./misc.js";
+
+import assert from "assert";
 
 import Discord from "discord.js";
 
@@ -193,7 +195,7 @@ Command.prototype.examples = null;
  * If this is a guild command, the guild, otherwise null
  * @type {?Discord.Guild}
  */
-Command.prototype.guildCommand = null;
+Command.prototype.guildCommandGuild = null;
 
 /**
  * Whether or not the command needs to know which guild it is called in.

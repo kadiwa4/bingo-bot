@@ -4,7 +4,7 @@ import { HelpCategory } from "../enums.js";
 import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
 import Game from "../Game.js";
-import { addUserNames, assert, bind, createSQLiteTable, getUserID, invertObject, log, logFormat, newMap, noop } from "../misc.js";
+import { addUserNames, bind, createSQLiteTable, getUserID, invertObject, log, newMap, noop } from "../misc.js";
 
 import EventEmitter from "events";
 import fs from "fs";
@@ -22,7 +22,9 @@ Object.assign(Guild.prototype, EventEmitter.prototype);
 Guild.prototype.init = async function(guildInput) {
     const { client } = this;
 
-    assert(/^(.?\W)?$/.test(guildInput.commandPrefix), `invalid command prefix '${guildInput.commandPrefix}'`, this);
+    if (!/^(.?\W)?$/.test(guildInput.commandPrefix)) {
+        throw new Error(`bad command prefix '${guildInput.commandPrefix}'`);
+    }
 
     EventEmitter.call(this);
 
@@ -40,9 +42,15 @@ Guild.prototype.init = async function(guildInput) {
     this.modRoles = guildInput.modRoleIDs.map(bind(roleCache, "get"));
 
     // guild command
-    const guildCommand = new Command(null, guildInput.guildCommand);
-    guildCommand.guildCommand = this;
-    this.client.commands[guildInput.guildCommand] = guildCommand;
+    const guildCommandName = guildInput.guildCommand;
+    const guildCommand = new Command(null, guildCommandName);
+    guildCommand.guildCommandGuild = this;
+    const conflictingCommand = client.commands[guildCommandName];
+    if (conflictingCommand) {
+        throw new Error(`multiple commands named '${guildCommandName}':\n1: ${conflictingCommand.id} from module ${module.id}\n2: guild command of ${this.abbreviation}`);
+    }
+
+    client.commands[guildCommandName] = guildCommand;
 
     // load command modules
     const moduleIDs = [ "meta" ];
@@ -78,7 +86,7 @@ Guild.prototype.init = async function(guildInput) {
         client.modules[moduleID].init(this, guildInput);
     }
 
-    let message = `In DMs, start your message with \`${guildInput.guildCommand}\` to use this server's commands.\n\n`;
+    let message = `In DMs, start your message with \`${guildCommandName}\` to use this server's commands.\n\n`;
     const add = function add(toAdd) {
         if (message.length + toAdd.length > 2000) {
             this.helpMessages.push(message);
@@ -114,7 +122,7 @@ Guild.prototype.init = async function(guildInput) {
  * @returns {?Game}
  */
 Guild.prototype.getGame = function(input) {
-    return this.games[this.cleanUpGameName(input)] ?? null;
+    return this.games[this.cleanUpGameName(input.trim())] ?? null;
 }
 
 /**
@@ -188,7 +196,10 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
             moduleInput = moduleInput.default;
         }
 
-        assert(moduleInput.id, `couldn't load module ${moduleID} or it doesn't have the property 'id'`, this);
+        if (!moduleInput.id) {
+            throw new Error(`couldn't load module ${moduleID} or it doesn't have the property 'id'`);
+        }
+
         module = client.modules[moduleInput.id] = new CommandModule(client, moduleInput);
     } else {
         module = client.modules[moduleID];
@@ -201,14 +212,7 @@ Guild.prototype.loadModule = async function(guildInput, moduleID) {
 
         if (constructModule) {
             command = module.commands[commandID] = new Command(module, commandID);
-            for (let name of command.allNames) {
-                const conflictingCommand = client.commands[name];
-                if (conflictingCommand) {
-                    throw new Error(logFormat(`multiple commands named '${name}':\n\t'${conflictingCommand.id}' from module '${conflictingCommand.module.id}' and\n\t'${commandID}' from module '${module.id}'`));
-                }
-
-                client.commands[name] = command;
-            }
+            invertObject(null, command.allNames, client.commands, command);
         } else {
             command = module.commands[commandID];
         }
