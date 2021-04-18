@@ -183,7 +183,7 @@ export function getUserID(input) {
  * @returns {boolean}
  */
 export function hasProperties(object) {
-    for (property in object) {
+    for (let {} in object) {
         return true;
     }
 
