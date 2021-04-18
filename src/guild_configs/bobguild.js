@@ -1,10 +1,6 @@
 /// <reference path="../types.d.ts" />
 
-import Category from "../Category.js";
 import { MULTI_GAME } from "../misc.js";
-import Race from "../Race.js";
-
-import Discord from "discord.js";
 
 const emotes = {
     ppjE: "<:ppjE:795059062403760129>",
@@ -38,51 +34,6 @@ function bobCleanUpLevelName(input) {
         .replace(/&/g, "and")
         .replace(/\W|^the/g, "")
         .replace("introduction", "intro");
-}
-
-let gameRoles;
-let wrRoles;
-let ilWRRoles;
-
-/** Maps from sr.c IDs to the game names */
-const gameNameFromID = {
-    "369pp31l": "LittleBigPlanet",
-    "pd0n821e": "LittleBigPlanet (PSP)",
-    "4d704r17": "Sackboy's Prehistoric Moves",
-    "pdvzzk6w": "LittleBigPlanet 2",
-    "369vz81l": "LittleBigPlanet PS Vita",
-    "pd0n531e": "LittleBigPlanet Karting",
-    "k6qw8z6g": "LittleBigPlanet 3",
-    "j1nevzx1": "Sackboy: A Big Adventure",
-    "j1llxz71": "DLC"
-    //"4d79me31": MULTI_GAME
-};
-
-/**
- * Maps from sr.c IDs to the categories
- * @type {NodeJS.Dict<Category>}
- */
-let multiCategoryFromID;
-
-const ilFullGameCategories = new Set([
-    "824xr8md", // LBP1 - Styrofoam%
-    "9d8pgl6k", // LBP1 - Die%
-    "7dg8qml2", // LBP3 - Profile Corruption%
-    "5dw60re2"  // SABA - Trial 16
-]);
-
-/**
- * @param {Race} race
- */
-function bobOnRaceRecorded(race) {
-    /** @type {Discord.Role | Discord.Role[]} */
-    const roles = race.category.games
-        ? race.category.games.map((game) => gameRoles[game.name])
-        : gameRoles[race.game.name];
-
-    for (let entrant of race.entrantIterator()) {
-        entrant.roles.add(roles);
-    }
 }
 
 /** @type {GuildInput} */

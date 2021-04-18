@@ -252,18 +252,22 @@ export function increasePlace(placeObject, time) {
  * @param {NodeJS.Dict<T>} object The object to be changed
  * @param {T} outputValue The value to be set in the output object
  */
-export function invertObject(cleanedUpName, aliases = [], object, outputValue) {
-    if (cleanedUpName) {
-        aliases.push(cleanedUpName);
-    }
-
-    for (let name of aliases) {
+export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outputValue) {
+    function add(name) {
         const conflictingProperty = object[name];
         if (conflictingProperty) {
             throw new Error(`Can't add property '${name}' to object because it already exists.\n1: ${conflictingProperty}\n2: ${outputValue}`);
         }
 
         object[name] = outputValue;
+    }
+
+    if (cleanedUpName) {
+        add(cleanedUpName);
+    }
+
+    for (let name of aliases) {
+        add(name);
     }
 }
 

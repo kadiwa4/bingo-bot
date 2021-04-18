@@ -169,7 +169,7 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
     try {
         await guild.init(guildInput);
     } catch (error) {
-        throw new Error(`error while setting up guild ${guildInput.id}:\n${error?.stack ?? error}`);
+        throw new Error(`error while setting up guild ${guildInput.abbreviation}:\n${error?.stack ?? error}`);
     }
 }
 
