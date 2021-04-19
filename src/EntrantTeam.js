@@ -185,7 +185,7 @@ export default class EntrantTeam extends Array {
      * @type {number}
      */
     get ilScoreAverage() {
-        return this.reduce((teamMember1, teamMember2) => teamMember1.ilScore + teamMember2.ilScore) / this.length;
+        return this.isCoop ? this.reduce((teamMember1, teamMember2) => teamMember1.ilScore + teamMember2.ilScore) / this.length : this.leader.ilScore;
     }
 
     /**
