@@ -155,7 +155,7 @@ export default class Command {
     toString(guild) {
         return this.names ? `\`${this.getDisplayNames(guild)}\`` : this.getFirstAlias(guild);
     }
-};
+}
 
 /**
  * Other command names that aren't displayed

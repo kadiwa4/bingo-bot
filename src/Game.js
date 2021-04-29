@@ -95,9 +95,9 @@ export default class Game {
             null,
             emotes.firstPlace,
             emotes.secondPlace,
-            emotes.thirdPlace
+            emotes.thirdPlace,
         ][place] ?? emotes.done;
-    };
+    }
 
     /** Returns the game name */
     toString() {
@@ -128,7 +128,7 @@ export default class Game {
             if (multiGame) {
                 category.games = [];
                 if (!categoryInput?.games) {
-                    throw new Error(`no property 'games' of multi-game category '${categoryName}'`)
+                    throw new Error(`no property 'games' of multi-game category '${categoryName}'`);
                 }
 
                 for (let input of categoryInput.games) {
@@ -150,7 +150,7 @@ export default class Game {
             throw new Error(`no default category of game '${this}'`);
         }
     }
-};
+}
 
 /**
  * The game's speedrun.com ID or null if it was never set

@@ -246,7 +246,7 @@ export default class EntrantTeam extends Array {
             this.place.toOrdinal(),
             splitContent[2],
             this.eloChangeString,
-            splitContent[4]
+            splitContent[4],
         ];
 
         (await this.endMessage).edit(this.splitDoneMessageContent.join(""));
@@ -259,11 +259,11 @@ export default class EntrantTeam extends Array {
     get boldName() {
         const stars = this.isCoop ? "**" : "";
 
-        return `${stars}${this.name}${stars}`
+        return `${stars}${this.name}${stars}`;
     }
 
     /** Returns the team name in bold (markdown) if the team has more than one member */
     toString() {
         return this.boldName;
     }
-};
+}

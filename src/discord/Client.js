@@ -7,16 +7,16 @@ import Discord, { Client } from "discord.js";
  * Takes a user-input string and cleans it up so that it can then be used as a key in an object
  * @param {string} input
  */
-Client.prototype.cleanUpGuildName = function(input) {
+Client.prototype.cleanUpGuildName = function (input) {
     return input.toLowerCase().replace(/\W/, "").replace(/speedrun(ning)?|server|guild/, "");
-}
+};
 
 /**
  * Gets the guild that matches the input the closest or null
  * @param {string} input
  * @returns {?string}
  */
-Client.prototype.getGuild = function(input) {
+Client.prototype.getGuild = function (input) {
     return this.srGuilds[this.cleanUpGuildName(input)] ?? null;
 };
 
@@ -29,7 +29,7 @@ const INPUT_MATCH_REGEXP = RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)${WHITESP
  * @param {Discord.User | Discord.GuildMember} userOrMember
  * @param {string} [input]
  */
-Client.prototype.useCommand = async function(message, userOrMember, input) {
+Client.prototype.useCommand = async function (message, userOrMember, input) {
     function onError(error) {
         if (message.respondedError) {
             return;

@@ -5,7 +5,7 @@ import { MULTI_GAME } from "../misc.js";
 const emotes = {
     ppjE: "<:ppjE:795059062403760129>",
     ppjSmug: "<:ppjSmug:795059081957343260>",
-    ppjWink: "<:ppjWink:795059091969671169>"
+    ppjWink: "<:ppjWink:795059091969671169>",
 };
 
 const ilAliases = [ "il", "ils" ];
@@ -13,7 +13,7 @@ const anyNCAliases = [ "anynooverlord", "nocreate", "nooverlord", "anync", "anyn
 
 const ilCategory = {
     aliases: ilAliases,
-    il: true
+    il: true,
 };
 
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
@@ -26,7 +26,7 @@ function bobCleanUpCategory(input) {
     const name = input.toLowerCase().replace(/\W/g, "");
     return {
         name: name.replace(COOP_REGEX, ""),
-        coop: COOP_REGEX.test(name)
+        coop: COOP_REGEX.test(name),
     };
 }
 
@@ -50,7 +50,7 @@ const lbp = {
     guildCommand: "bob",
     raceChannelIDs: [
         "794629930667343918",
-        "814156861221634089"
+        "814156861221634089",
     ],
     modRoleIDs: [ "795064134609666118" ],
     moduleIDs: [ "race_control" ],
@@ -71,10 +71,10 @@ const lbp = {
                 "100%": null,
                 "Any% No Overlord": {
                     aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
-                    default: true
+                    default: true,
                 },
                 "All Levels": { aliases: [ "al" ] },
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Introduction": { default: true },
@@ -140,15 +140,15 @@ const lbp = {
                 "The Collector": null,
                 "Spline Rider": null,
                 "Rotor Tubes": null,
-                "Jetpack Tunnel": null
-            }
+                "Jetpack Tunnel": null,
+            },
         },
         "LittleBigPlanet (PSP)": {
             aliases: [ "psp", "lbpp", "p" ],
             categories: {
                 "Any%": { default: true },
                 "100%": null,
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "The Introduction": { default: true },
@@ -180,30 +180,30 @@ const lbp = {
 
                 "Crashing the Party": null,
                 "Road to Joy": null,
-                "The Procession": { aliases: [ "carnival" ] }
-            }
+                "The Procession": { aliases: [ "carnival" ] },
+            },
         },
         "Sackboy's Prehistoric Moves": {
             aliases: [ "lbpspm", "lbpm", "m" ],
             categories: {
                 "Any%": { default: true },
                 "100%": null,
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Learning to Move": {
                     aliases: [ "intro" ],
-                    default: true
+                    default: true,
                 },
                 "Prehistoric Paradise": null,
                 "Inside Big Rex": null,
                 "Cro-Magnon City": null,
                 "Hot Stepping": null,
-                "Fossil Fight": null
+                "Fossil Fight": null,
             },
             config: {
-                race: { maxTeamSize: 5 }
-            }
+                race: { maxTeamSize: 5 },
+            },
         },
         "LittleBigPlanet 2": {
             aliases: [ "2" ],
@@ -212,10 +212,10 @@ const lbp = {
                 "100%": null,
                 "Any% No Create": {
                     aliases: anyNCAliases,
-                    default: true
+                    default: true,
                 },
                 "All Levels": { aliases: [ "al" ] },
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Introduction": { default: true },
@@ -272,15 +272,15 @@ const lbp = {
                 "Into The Heart Of The Negativatron": null,
                 "Rocket Funland": null,
                 "Ping Pang Pong": null,
-                "Space Pool": null
-            }
+                "Space Pool": null,
+            },
         },
         "LittleBigPlanet PS Vita": {
-            aliases: [ "vita", "lbpv", "v"],
+            aliases: [ "vita", "lbpv", "v" ],
             categories: {
                 "Any%": { default: true },
                 "100%": null,
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Introduction": { default: true },
@@ -326,20 +326,20 @@ const lbp = {
                 "In The Clutches Of Evil": null,
                 "Zombie Springtime": null,
                 "Eye Ball Maze": null,
-                "Sorting Panic": null
-            }
+                "Sorting Panic": null,
+            },
         },
         "LittleBigPlanet Karting": {
             aliases: [ "karting", "lbpk", "k" ],
             categories: {
                 "Any%": { default: true },
                 "100%": null,
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Karting Lessons": {
                     aliases: [ "intro" ],
-                    default: true
+                    default: true,
                 },
                 "Garden Grip": null,
                 "After The Wedding": null,
@@ -390,8 +390,8 @@ const lbp = {
                 "Ride Scroller": null,
                 "Full Tilt": null,
 
-                "The Garage at the End of the Craftverse": { aliases: [ "tgateotc", "gateotc" ] }
-            }
+                "The Garage at the End of the Craftverse": { aliases: [ "tgateotc", "gateotc" ] },
+            },
         },
         "LittleBigPlanet 3": {
             aliases: [ "3" ],
@@ -400,11 +400,11 @@ const lbp = {
                 "100%": null,
                 "Any% No Create": {
                     aliases: anyNCAliases,
-                    default: true
+                    default: true,
                 },
                 "All Main Quests": { aliases: [ "amq" ] },
                 "Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] },
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Introduction": { default: true },
@@ -439,8 +439,8 @@ const lbp = {
                 "The Great Escape": null,
                 "Even Bosses Wear Hats Sometimes": null,
                 "Battle Of The Airwaves": null,
-                "Joust In Time": null
-            }
+                "Joust In Time": null,
+            },
         },
         "Sackboy: A Big Adventure": {
             aliases: [ "saba", "sackboy", "s" ],
@@ -448,7 +448,7 @@ const lbp = {
                 "Any%": { default: true },
                 "New Game+": { aliases: [ "ng" ] },
                 "100%": null,
-                "Individual Levels": ilCategory
+                "Individual Levels": ilCategory,
             },
             levels: {
                 "Trial 1: Ain't Seen Nothing Yeti": { aliases: [ "trial1", "aintseennothingyeti" ] },
@@ -468,7 +468,7 @@ const lbp = {
                 "Trial 15: Fish 'N' Slips": { aliases: [ "trial15", "fishnslips" ] },
                 "Trial 16: The Ripsnorter": {
                     aliases: [ "trial16", "ripsnorter", "alltrials" ],
-                    default: true
+                    default: true,
                 },
 
                 "A Big Adventure": null,
@@ -553,8 +553,8 @@ const lbp = {
                 "Best in Throw": null,
                 "High and Mighty": null,
                 "In Full Swing": null,
-                "Little Big Finale": null
-            }
+                "Little Big Finale": null,
+            },
         },
         "DLC": {
             aliases: [ "lbpdlc", "lbpseriesdlc", "seriesdlc" ],
@@ -562,13 +562,13 @@ const lbp = {
                 "Individual Levels": {
                     aliases: ilAliases,
                     default: true,
-                    il: true
-                }
+                    il: true,
+                },
             },
             levels: {
                 "Metal Gear Solid Level Pack": {
                     aliases: [ "mgs" ],
-                    default: true
+                    default: true,
                 },
                 "Pirates of the Caribbean Level Kit": { aliases: [ "potc" ] },
                 "Marvel Level Pack": null,
@@ -633,26 +633,26 @@ const lbp = {
                 "Cereal Isle": null,
                 "Watermill Valley": null,
                 "Mighty Mite LBP8 Little Big Mountain Mission": { aliases: [ "mightymite", "mightymitelbp8", "littlebigmountainmission" ] },
-                "TAKLAMAKAN 'Go and never come back'": { aliases: [ "taklamakan", "goandnevercomeback" ] }
+                "TAKLAMAKAN 'Go and never come back'": { aliases: [ "taklamakan", "goandnevercomeback" ] },
             },
             config: {
                 cleanUpLevelName: function lbpdlcCleanUpLevelName(input) {
                     return bobCleanUpLevelName(input).replace(/(level|move)?(pack|kit)/g, "");
-                }
-            }
-        }
+                },
+            },
+        },
     },
     multiGame: {
         categories: {
             "An3%": {
                 default: true,
-                games: [ "1", "2", "3" ]
+                games: [ "1", "2", "3" ],
             },
             "7ny%": {
                 aliases: [ "7y" ],
-                games: [ "1", "p", "m", "2", "v", "k", "3" ]
-            }
-        }
+                games: [ "1", "p", "m", "2", "v", "k", "3" ],
+            },
+        },
     },
     commandPrefix: "!",
     commandExamples: {
@@ -661,7 +661,7 @@ const lbp = {
         raceTeam: "team rbdjellyfish",
         raceMe: "me saba",
         raceRunner: "runner kadiwa/lbp1",
-        raceLeaderboard: "elo 1/no"
+        raceLeaderboard: "elo 1/no",
     },
     config: {
         race: {
@@ -669,8 +669,8 @@ const lbp = {
             elo: {
                 calculateTeamElo: function bobCalculateTeamElo(elos) {
                     return (Math.max(...elos) * (elos.length - 1) + elos.reduce((elo1, elo2) => elo1 + elo2)) / (2 * elos.length - 1);
-                }
-            }
+                },
+            },
         },
         cleanUpCategory: bobCleanUpCategory,
         cleanUpLevelName: bobCleanUpLevelName,
@@ -680,9 +680,9 @@ const lbp = {
 
             countdownStart: emotes.ppjWink,
             countdown: emotes.ppjE,
-            raceStart: emotes.ppjSmug
-        }
-    }
+            raceStart: emotes.ppjSmug,
+        },
+    },
 };
 
 export default lbp;

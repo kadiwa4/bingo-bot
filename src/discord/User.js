@@ -8,5 +8,5 @@ Object.defineProperty(User.prototype, "cleanTag", {
     get: function cleanTag() {
         // \u200B is a zero-width space
         return Discord.Util.escapeMarkdown(this.tag);
-    }
+    },
 });

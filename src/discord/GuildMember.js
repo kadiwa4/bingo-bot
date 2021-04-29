@@ -13,7 +13,7 @@ Object.defineProperties(GuildMember.prototype, {
             return (this.id === "159245797328814081") ? "bean"
                 // the line from the original function
                 : (this.nickname ?? this.user.username);
-        }
+        },
     },
     cleanName: {
         /**
@@ -23,7 +23,7 @@ Object.defineProperties(GuildMember.prototype, {
         get: function cleanName_() {
             // \u200B is a zero-width space
             return cleanName(this.displayName);
-        }
+        },
     },
     readyEmote: {
         /**
@@ -33,6 +33,6 @@ Object.defineProperties(GuildMember.prototype, {
          */
         get: function readyEmote() {
             return this.team.race.game.config.emotes[this.isReady ? "ready" : "notReady"];
-        }
-    }
+        },
+    },
 });

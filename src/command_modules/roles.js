@@ -1,6 +1,6 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { clean, createSQLiteTable, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
+import { clean, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
 
 import assert from "assert";
 
@@ -21,16 +21,18 @@ export function init(guild, guildInput) {
     const { database } = guild;
 
     // set up tables for keeping track of speedrun.com user IDs
-    createSQLiteTable(database, "src_users",
+    database.createTable(
+        "src_users",
         `discord_id TEXT PRIMARY KEY,
-        src_id TEXT NOT NULL`);
+        src_id TEXT NOT NULL`
+    );
 
     Object.assign(guild.sqlite, {
         // set up SQLite queries for setting/retrieving speedrun.com user IDs
         getAllSrcUsers: database.prepare("SELECT * FROM src_users;"),
         getSrcID: database.prepare("SELECT src_id FROM src_users WHERE discord_id = ?;").pluck(),
         addSrcUser: database.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
-        deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;")
+        deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;"),
     });
 
     /** @param {string} roleID */
@@ -117,12 +119,14 @@ export const commands = {
             // sr.c replaces characters whose char code is higher than 0xFF with question marks
             if (guild.unicodeNameFix && srcTag.includes("?") && srcTag.length === discordTag.length && srcTag.slice(-5) === discordTag.slice(-5)) {
                 let tagsMatch = true;
+                let index = 0;
                 // the last 5 characters (e.g. '#0872') have already been checked
                 for (let srcChar of srcTag.slice(0, -5)) {
-                    if (srcChar !== discordTag[i] && (srcChar !== "?" || discordTag.charCodeAt(i) < 0x100)) {
+                    if (srcChar !== discordTag[index] && (srcChar !== "?" || discordTag.charCodeAt(index) < 0x100)) {
                         tagsMatch = false;
                         break;
                     }
+                    index += 1;
                 }
 
                 if (tagsMatch) {
@@ -133,7 +137,7 @@ export const commands = {
 
             message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${member.user.cleanTag}). You can update it at https://www.speedrun.com/editprofile. If you have issues with this, contact a moderator.`);
             return;
-        }
+        },
     },
     rolesRemove: {
         names: [ "removeroles" ],
@@ -144,7 +148,7 @@ export const commands = {
 
             guild.sqlite.deleteSrcUser.run(member.id);
             updateRoles(onError, message, member, null).catch(onError);
-        }
+        },
     },
     rolesUpdate: {
         names: [ "updateroles" ],
@@ -155,8 +159,8 @@ export const commands = {
         onUse: async function rolesUpdate(onError, message, member) {
             await updateAllRoles(onError, member.guild).catch(onError);
             message.acknowledge(member);
-        }
-    }
+        },
+    },
 };
 
 function setUpdateAllRolesTimeout(guild) {
@@ -215,10 +219,10 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
             if (message) {
                 message.inlineReply(`Couldn't find any ${guild.srName} runs on your speedrun.com account.`);
                 return;
-            } else {
-                log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
-                guild.sqlite.deleteSrcUser(member.id);
             }
+
+            log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
+            guild.sqlite.deleteSrcUser(member.id);
         } else if (addToDB) {
             guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/([^/]+)\/p/)[1] });
         }
@@ -238,7 +242,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
         }
     }
 
-    await member.roles.set([...allRoles], (!message || message?.author === member.user) ? undefined : `responsible user: '${message.author.tag}'`);
+    await member.roles.set([ ...allRoles ], (!message || message?.author === member.user) ? undefined : `responsible user: '${message.author.tag}'`);
     message?.acknowledge(member);
 }
 
@@ -255,7 +259,7 @@ async function callSRC(onError, guild, path) {
     // - delay after API call: 1 sec
     // - delay after downloading any other sr.c page: 5 sec
     // API: https://github.com/speedruncomorg/api/tree/master/version1
-    let apiPauseLength = path.startsWith('/api') ? 1000 : 5000;
+    let apiPauseLength = path.startsWith("/api") ? 1000 : 5000;
     if (srcCallTimestamp < Date.now()) {
         srcCallTimestamp = Date.now() + apiPauseLength;
     } else {

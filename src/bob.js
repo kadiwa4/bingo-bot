@@ -15,13 +15,13 @@ const nodeStdoutWrite = process.stdout.write;
 process.stdout.write = function stdoutWrite() {
     logFile.write(...arguments);
     nodeStdoutWrite.call(process.stdout, ...arguments);
-}
+};
 
 const nodeStderrWrite = process.stderr.write;
 process.stderr.write = function stderrWrite() {
     logFile.write(...arguments);
     nodeStderrWrite.call(process.stderr, ...arguments);
-}
+};
 
 import "./discord/Client.js";
 import "./discord/Guild.js";
@@ -68,7 +68,7 @@ if (discordAuthToken === TOKEN_HERE || discordAuthToken.length === 0) {
 const client = new Discord.Client({
     disableMentions: "everyone",
     messageEditHistoryMaxSize: 0,
-    ws: { intents: [ "DIRECT_MESSAGES", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILDS" ] }
+    ws: { intents: [ "DIRECT_MESSAGES", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILDS" ] },
 });
 
 client.databases = [];
@@ -124,7 +124,7 @@ process.on("uncaughtException", async function onUncaughtException(error) {
 
 // keyboard interrupt
 process.on("SIGINT", async function onKeyboardInterrupt() {
-    log("keyboard interrupt")
+    log("keyboard interrupt");
 
     await client.user.setStatus("invisible");
 

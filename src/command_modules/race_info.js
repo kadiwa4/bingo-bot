@@ -3,7 +3,7 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable, WHITESPACE } from "../misc.js";
+import { calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable } from "../misc.js";
 
 import assert from "assert";
 
@@ -31,21 +31,25 @@ export const commands = {
                     return;
 
                 case RaceState.JOINING:
-                case RaceState.COUNTDOWN:
+                case RaceState.COUNTDOWN: {
                     const entrantCount = race.entrants.length;
 
-                    race.showJoiningEntrants(onError, message,
+                    race.showJoiningEntrants(
+                        onError,
+                        message,
                         `**${race} is currently open with ${entrantCount} entrant${entrantCount === 1 ? "" : "s"}. Use \`${guild.commandPrefix}race\` to join!**\n`,
-                        `**${race.gameCategoryLevel} race (cont):**\n`);
+                        `**${race.gameCategoryLevel} race (cont):**\n`
+                    );
 
                     return;
+                }
 
                 case RaceState.ACTIVE:
-                case RaceState.DONE:
+                case RaceState.DONE: {
                     /** @param {EntrantTeam} team */
-                    function teamMembers(team) {
+                    const teamMembers = function (team) {
                         return team.isCoop ? `\n  \t${team.names.join("\n  \t")}` : "";
-                    }
+                    };
 
                     /** @type {EntrantTeam[]} */
                     const doneTeams = [];
@@ -57,29 +61,34 @@ export const commands = {
                         ({
                             [TeamState.DONE]: doneTeams,
                             [TeamState.NOT_DONE]: racingTeams,
-                            [TeamState.FORFEITED]: forfeitedTeams
+                            [TeamState.FORFEITED]: forfeitedTeams,
                         })[team.state].push(team);
                     }
 
                     // say race is done if it is, otherwise say it's in progress and show the time
-                    message.multiReply(onError, `**${race} is ${race.state === RaceState.ACTIVE
+                    message.multiReply(
+                        onError,
+                        `**${race} is ${race.state === RaceState.ACTIVE
                             ? `in progress. Current time: ${formatTime(Date.now() / 1000 - race.startTime)}`
                             : `done!${race.everyoneForfeited ? "" : " Results will be recorded soon."}`}**\n`,
-                            `**${race.gameCategoryLevel} race (cont):**\n`, function*() {
-                        // list done entrants
-                        yield* doneTeams.sort((team1, team2) => team1.doneTime - team2.doneTime)
-                            .map((team) => `  ${race.game.placeEmote(team.place)} \`${formatTime(team.doneTime, false)}\` – ${team} (${team.eloChangeString})${teamMembers(team)}\n`);
+                        `**${race.gameCategoryLevel} race (cont):**\n`,
+                        function* () {
+                            // list done entrants
+                            yield* doneTeams.sort((team1, team2) => team1.doneTime - team2.doneTime)
+                                .map((team) => `  ${race.game.placeEmote(team.place)} \`${formatTime(team.doneTime, false)}\` – ${team} (${team.eloChangeString})${teamMembers(team)}\n`);
 
-                        // list racers still going
-                        yield* racingTeams.map((team) => `  ${emotes.racing} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
+                            // list racers still going
+                            yield* racingTeams.map((team) => `  ${emotes.racing} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
 
-                        // list forfeited entrants
-                        yield* forfeitedTeams.map((team) => (race.state === RaceState.DONE)
-                            ? `  ${emotes.forfeited} \`--:--:--.--\` – ${team} (${team.eloChangeString})${teamMembers(team)}\n`
-                            : `  ${emotes.forfeited} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
-                    });
+                            // list forfeited entrants
+                            yield* forfeitedTeams.map((team) => (race.state === RaceState.DONE)
+                                ? `  ${emotes.forfeited} \`--:--:--.--\` – ${team} (${team.eloChangeString})${teamMembers(team)}\n`
+                                : `  ${emotes.forfeited} \`--:--:--.--\` – ${team}${teamMembers(team)}\n`);
+                        }
+                    );
+                }
             }
-        }
+        },
     },
     raceResult: {
         names: [ "result" ],
@@ -124,7 +133,7 @@ export const commands = {
             async function userOrTeamName(result) {
                 return result.team_name
                     ? `**${result.team_name}**`
-                    : await guild.getUserName(result.user_or_team_id);
+                    : guild.getUserName(result.user_or_team_id);
             }
 
             async function teamMembers(result) {
@@ -138,21 +147,25 @@ export const commands = {
             let placeObject = { place: 1, tie: 1 };
 
             // \xA0 is a non-breaking space
-            message.multiReply(onError, `${messageStart}ID\xA0\`${raceID}\`):**\n`,
-                `${messageStart}cont):**\n`, async function*() {
-                for (let result of sqlite.getResults.all(raceID)) {
-                    const name = await userOrTeamName(result).catch(onError);
-                    const members = await teamMembers(result).catch(onError);
-                    assert(name && members !== undefined);
+            message.multiReply(
+                onError,
+                `${messageStart}ID\xA0\`${raceID}\`):**\n`,
+                `${messageStart}cont):**\n`,
+                async function* () {
+                    for (let result of sqlite.getResults.all(raceID)) {
+                        const name = await userOrTeamName(result).catch(onError);
+                        const members = await teamMembers(result).catch(onError);
+                        assert(name && members !== undefined);
 
-                    yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}\n${members}`;
+                        yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}\n${members}`;
 
-                    if (!result.forfeited) {
-                        increasePlace(placeObject, result.time);
+                        if (!result.forfeited) {
+                            increasePlace(placeObject, result.time);
+                        }
                     }
                 }
-            });
-        }
+            );
+        },
     },
     raceIlresults: {
         names: [ "ilresults" ],
@@ -176,13 +189,17 @@ export const commands = {
 
             // if people do too many ILs, it might break the message limit,
             // so it gets split over multiple messages
-            const messageStart = `**Results for current IL series (`;
+            const messageStart = "**Results for current IL series (";
 
-            message.multiReply(onError, `${messageStart}listed by race ID):**\n`,
-                `${messageStart}cont):**\n`, function*() {
-                yield* toTable(race.ilResults, [ "id" ], true, (result) => `\t\`${result.id}\`: ${result.level} (${result.game.config.emotes.firstPlace} ${result.winnerTeamName})\n`);
-            });
-        }
+            message.multiReply(
+                onError,
+                `${messageStart}listed by race ID):**\n`,
+                `${messageStart}cont):**\n`,
+                function* () {
+                    yield* toTable(race.ilResults, [ "id" ], true, (result) => `\t\`${result.id}\`: ${result.level} (${result.game.config.emotes.firstPlace} ${result.winnerTeamName})\n`);
+                }
+            );
+        },
     },
     raceLeaderboard: {
         names: [ "leaderboard" ],
@@ -251,11 +268,16 @@ export const commands = {
             }
 
             const messageStart = `**Elo Rankings for ${game} / ${categoryName}`;
-            message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, async function*() {
-                // \xA0 is a non-breaking space
-                yield* toTable(memberStats, [ "place" ], false, async (stat, index) => `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo.toFixed()}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`);
-            });
-        }
+            message.multiReply(
+                onError,
+                `${messageStart}:**\n`,
+                `${messageStart} (cont):**\n`,
+                async function* () {
+                    // \xA0 is a non-breaking space
+                    yield* toTable(memberStats, [ "place" ], false, async (stat, index) => `\`${stat.place}\` ${game.placeEmote(index + 1)}   \`${stat.elo.toFixed()}\`\xA0${game.config.emotes.elo} – ${await guild.getUserName(stat.user_id)}\n`);
+                }
+            );
+        },
     },
     raceFixElo: {
         names: [ "fixelo" ],
@@ -284,7 +306,7 @@ export const commands = {
             for (let gameName of sqlite.getGames.all()) {
                 sqlite.updateAllGameElos.run({
                     game: gameName,
-                    elo: guild.getGame(gameName).config.race.elo.start
+                    elo: guild.getGame(gameName).config.race.elo.start,
                 });
             }
 
@@ -317,7 +339,7 @@ export const commands = {
             recordRaceElo(sqlite, teams, raceID, previousGameName, previousCategoryName);
 
             message.acknowledge(member);
-        }
+        },
     },
     raceRemove: {
         names: [ "removerace" ],
@@ -331,7 +353,7 @@ export const commands = {
             const { guild } = member;
             const { sqlite } = guild;
 
-            const raceID = parseInt(args);
+            let raceID = parseInt(args);
             if (Number.isNaN(raceID) || raceID <= 0) {
                 this.showUsage(...arguments);
                 return;
@@ -354,17 +376,17 @@ export const commands = {
                     return;
                 }
 
-                stat.race_count--;
+                stat.race_counti -= 1;
                 if (stat.pb === row.time) {
                     stat.pb = null;
                 }
 
                 if (row.time === null) {
-                    stat.forfeit_count--;
+                    stat.forfeit_count -= 1;
                 } else {
                     const placeWord = [ null, "first", "second", "third" ][placeObject.place];
                     if (placeWord) {
-                        stat[`${placeWord}_place_count`]--;
+                        stat[`${placeWord}_place_count`] -= 1;
                     }
 
                     increasePlace(placeObject, row.time);
@@ -426,7 +448,7 @@ export const commands = {
             }
 
             message.acknowledge();
-        }
+        },
     },
     raceMe: {
         names: [ "me" ],
@@ -441,7 +463,7 @@ export const commands = {
             }
 
             showUserStats(onError, member.guild, message, member.id, member.cleanName, args, true);
-        }
+        },
     },
     raceRunner: {
         names: [ "runner" ],
@@ -487,8 +509,8 @@ export const commands = {
             }
 
             showUserStats(onError, guild, message, id, userName, splitArgs[1], false);
-        }
-    }
+        },
+    },
 };
 
 /**
@@ -525,26 +547,32 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
             stats2.push(stat);
         } else {
             stats2.splice(fullGameIndex, 0, stat);
-            fullGameIndex++;
+            fullGameIndex += 1;
         }
     }
 
     const messageStart = `**${fromMeCmd ? "Your" : `${userName}'s`} ${game} stats`;
-    message.multiReply(onError, `${messageStart}:**\n`, `${messageStart} (cont):**\n`, function*() {
-        if (stats2.length === 0) {
-            return;
-        }
+    message.multiReply(
+        onError,
+        `${messageStart}:**\n`,
+        `${messageStart} (cont):**\n`,
+        function* () {
+            if (stats2.length === 0) {
+                return;
+            }
 
-        yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], false, (stat) =>
-            // \xA0 is a non-breaking space
-            `  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
-            }\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count
-            }\`   ${emotes.secondPlace}\xA0\`${stat.second_place_count
-            }\`   ${emotes.thirdPlace}\xA0\`${stat.third_place_count
-            }\`   ${emotes.forfeited}\xA0\`${stat.forfeit_count
-            }\`   ${emotes.elo}\xA0\`${Math.floor(stat.elo).toString().padStart(4)
-            }\`   ${emotes.racing}\xA0\`${formatTime(stat.pb, false)}\`\n`);
-    });
+            yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], false, (stat) => (
+                // \xA0 is a non-breaking space
+                `  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
+                }\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count
+                }\`   ${emotes.secondPlace}\xA0\`${stat.second_place_count
+                }\`   ${emotes.thirdPlace}\xA0\`${stat.third_place_count
+                }\`   ${emotes.forfeited}\xA0\`${stat.forfeit_count
+                }\`   ${emotes.elo}\xA0\`${Math.floor(stat.elo).toString().padStart(4)
+                }\`   ${emotes.racing}\xA0\`${formatTime(stat.pb, false)}\`\n`
+            ));
+        }
+    );
 }
 
 /**
@@ -561,7 +589,7 @@ function recalculateElo(sqlite, eloConfig, row, teams, game, category) {
         oldElo: null,
         eloChange: 0,
         time: row.time,
-        state: row.time ? TeamState.DONE : TeamState.FORFEITED
+        state: row.time ? TeamState.DONE : TeamState.FORFEITED,
     };
 
     if (row.team_name) {

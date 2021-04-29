@@ -26,17 +26,17 @@ export default class CommandModule {
     id;
 
     /**
+     * Dict with the command module's commands
+     * @type {NodeJS.Dict<Command>}
+     */
+    commands;
+
+    /**
      * Function that initializes the command module for a guild
      * @param {Discord.Guild} guild The guild from where this is called
      * @param {GuildInput} guildInput The object from src/guild_configs
      */
     init(guild, guildInput) {}
-
-    /**
-     * Dict with the command module's commands
-     * @type {NodeJS.Dict<Command>}
-     */
-    commands;
 
     /**
      * Loads all dependency modules this command module has
@@ -55,7 +55,7 @@ export default class CommandModule {
     toString() {
         return this.id;
     }
-};
+}
 
 /**
  * Other command module names of modules which this module requires

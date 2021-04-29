@@ -41,7 +41,7 @@ export const commands = {
             }
 
             message.inlineReply(command.getHelp(guild));
-        }
+        },
     },
     metaAs: {
         names: [ "as" ],
@@ -59,7 +59,7 @@ export const commands = {
                 return;
             }
 
-            const userInput = splitArgs[0]
+            const userInput = splitArgs[0];
             const id = getUserID(userInput);
             if (!id) {
                 this.showUsage(...arguments);
@@ -75,6 +75,6 @@ export const commands = {
             if (!await client.useCommand(message, member, args.slice(userInput.length).trim())) {
                 message.inlineReply("Command not found.");
             }
-        }
-    }
+        },
+    },
 };

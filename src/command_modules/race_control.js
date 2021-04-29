@@ -6,7 +6,7 @@ import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { clean, createSQLiteTable, formatTime, hasProperties, invertObject, MULTI_GAME, newMap, WHITESPACE, WHITESPACE_PLUS } from "../misc.js";
+import { clean, formatTime, hasProperties, invertObject, MULTI_GAME, newMap, WHITESPACE_PLUS } from "../misc.js";
 
 import assert from "assert";
 
@@ -31,8 +31,8 @@ export const defaultConfig = {
             /** Returns the average Elo */
             calculateTeamElo: function defaultCalculateTeamElo(elos) {
                 return elos.reduce((elo1, elo2) => elo1 + elo2) / elos.length;
-            }
-        }
+            },
+        },
     },
     emotes: {
         // don't use guild emotes as defaults
@@ -51,8 +51,8 @@ export const defaultConfig = {
         thirdPlace: "🥉",
         done: "🏁",
         racing: "⏱",
-        forfeited: "❌"
-    }
+        forfeited: "❌",
+    },
 };
 
 /**
@@ -124,29 +124,37 @@ export function init(guild, guildInput) {
     const { database } = guild;
 
     // set up tables for keeping track of race information
-    createSQLiteTable(database, "races",
+    database.createTable(
+        "races",
         `race_id INT PRIMARY KEY,
         game TEXT NOT NULL,
         category TEXT NOT NULL,
-        level TEXT`);
+        level TEXT`
+    );
 
     // set up tables for keeping track of team members
-    createSQLiteTable(database, "team_members",
+    database.createTable(
+        "team_members",
         `team_id INT NOT NULL,
-        user_id TEXT NOT NULL`);
+        user_id TEXT NOT NULL`
+    );
 
     // set up tables for keeping track of race results
-    createSQLiteTable(database, "results",
+    database.createTable(
+        "results",
         `race_id INT NOT NULL,
         user_or_team_id TEXT NOT NULL,
         team_name TEXT,
         time INT,
         elo_change REAL NOT NULL,
         forfeited INT NOT NULL`,
-        "idx_results_race", "race_id, user_or_team_id, team_name");
+        "idx_results_race",
+        "race_id, user_or_team_id, team_name"
+    );
 
     // set up tables for keeping track of user stats
-    createSQLiteTable(database, "user_stats",
+    database.createTable(
+        "user_stats",
         `user_id TEXT NOT NULL,
         game TEXT NOT NULL,
         category TEXT NOT NULL,
@@ -158,7 +166,9 @@ export function init(guild, guildInput) {
         forfeit_count INT NOT NULL,
         elo REAL NOT NULL,
         pb INT`,
-        "idx_user_stats_id", "user_id, game, category");
+        "idx_user_stats_id",
+        "user_id, game, category"
+    );
 
     Object.assign(guild.sqlite, {
         // set up SQLite queries for setting/retrieving race information
@@ -249,9 +259,9 @@ export const commands = {
                     clearTimeout(race.endTimeout);
                     race.clean(!race.everyoneForfeited);
                     race = message.channel.race;
-                    // don't return so that a new race gets started
+                    // fall through so that a new race gets started
 
-                case RaceState.NO_RACE:
+                case RaceState.NO_RACE: {
                     // start race
                     /** @type {string} */
                     const prefix = guild.commandPrefix;
@@ -260,6 +270,7 @@ export const commands = {
                     message.inlineReply(`You started a new race! Use \`${prefix}race\` to join or \`${prefix}category\` / \`${prefix}level\` to setup the race further (currently ${race.gameCategoryLevel}).`);
                     race.state = RaceState.JOINING;
                     return;
+                }
 
                 case RaceState.COUNTDOWN:
                     // interrupt countdown
@@ -269,7 +280,7 @@ export const commands = {
                     }
 
                     race.stopCountdown();
-                    // don't return so that user joins
+                    // fall through so that user joins
 
                 case RaceState.JOINING:
                     // join existing race
@@ -288,7 +299,7 @@ export const commands = {
                         message.inlineReply("You can't join, there's a race already in progress!");
                     }
             }
-        }
+        },
     },
     raceQuit: {
         names: [ "quit", "q" ],
@@ -317,7 +328,7 @@ export const commands = {
                 // leave the race completely if it hasn't started yet
                 message.inlineReply(race.removeEntrant(member));
             }
-        }
+        },
     },
     raceGame: {
         aliases: [ "game" ],
@@ -329,7 +340,7 @@ export const commands = {
             if (race.hasEntrant(member) && race.state === RaceState.JOINING) {
                 message.inlineReply(`${this.toString(guild)} was removed, use \`${guild.commandPrefix}category <game name> / <category name>\` instead.`);
             }
-        }
+        },
     },
     raceCategory: {
         names: [ "category" ],
@@ -413,7 +424,7 @@ export const commands = {
             }
 
             message.inlineReply(`${race.categoryMessagesStart} updated to ${race.gameCategoryLevel}.${note}`);
-        }
+        },
     },
     raceLevel: {
         names: [ "level" ],
@@ -461,7 +472,7 @@ export const commands = {
 
             race.entrantWhoChoseIL = member;
             message.inlineReply(`Level updated to ${race.level}.${note}`);
-        }
+        },
     },
     raceReady: {
         names: [ "ready" ],
@@ -490,7 +501,7 @@ export const commands = {
                 // start countdown if everyone is ready
                 race.channel.send(race.startCountdown(message));
             }
-        }
+        },
     },
     raceUnready: {
         names: [ "unready", "ur" ],
@@ -513,7 +524,7 @@ export const commands = {
                 race.stopCountdown();
                 message.inlineReply(`${member.cleanName} isn't ready; stopping countdown.`);
             }
-        }
+        },
     },
     raceR: {
         aliases: [ "r" ],
@@ -525,7 +536,7 @@ export const commands = {
 
             // depending on the situation, run either the command `ready` or `race`
             return client.commands[(race.hasEntrant(member) && race.state === RaceState.JOINING) ? "ready" : "race"].onUse(...arguments);
-        }
+        },
     },
     raceDone: {
         names: [ "done", "d" ],
@@ -561,7 +572,7 @@ export const commands = {
 
                 if (team2.doneTime < team.doneTime) {
                     // team2 finished before team
-                    team.place++;
+                    team.place += 1;
                 } else if (team.doneTime < team2.doneTime) {
                     // team2 is slower but already finished,
                     // this happens due to some discord messages arriving slower than others
@@ -575,7 +586,7 @@ export const commands = {
                 team.place.toOrdinal(),
                 " place (",
                 team.eloChangeString,
-                `) with a time of ${formatTime(team.doneTime)}`
+                `) with a time of ${formatTime(team.doneTime)}`,
             ];
 
             // update race state
@@ -586,7 +597,7 @@ export const commands = {
 
             team.splitDoneMessageContent = splitContent;
             team.endMessage = message.inlineReply(splitContent.join(""));
-        }
+        },
     },
     raceUndone: {
         names: [ "undone", "ud" ],
@@ -622,7 +633,7 @@ export const commands = {
             message.acknowledge(member);
             (await team.endMessage.catch(onError))?.crossOut?.();
             team.endMessage = null;
-        }
+        },
     },
     raceForfeit: {
         names: [ "forfeit", "f" ],
@@ -643,7 +654,7 @@ export const commands = {
 
             team.state = TeamState.FORFEITED;
             team.endMessage = message.inlineReply(`${team} forfeited (use \`${guild.commandPrefix}unforfeit\` to rejoin if this was an accident).${race.checkIfStillGoing()}`);
-        }
+        },
     },
     raceUnforfeit: {
         names: [ "unforfeit", "uf" ],
@@ -666,7 +677,7 @@ export const commands = {
             message.acknowledge(member);
             (await team.endMessage.catch(onError))?.crossOut?.();
             team.endMessage = null;
-        }
+        },
     },
     raceTeam: {
         names: [ "team" ],
@@ -697,12 +708,12 @@ export const commands = {
             // split args at slashes
             const splitArgs = args.split("/");
 
-            for (let index = 0; index < splitArgs.length; index++) {
+            for (let index = 0; index < splitArgs.length; index += 1) {
                 let arg = splitArgs[index];
 
                 const mentionedMember = await guild.getMember(arg);
                 if (!mentionedMember) {
-                    message.inlineReply(`Entrant “${clean(arg, message)}” not found.`, { split: true })
+                    message.inlineReply(`Entrant “${clean(arg, message)}” not found.`, { split: true });
                     return;
                 }
 
@@ -746,7 +757,7 @@ export const commands = {
 
             const members = team.map((member) => `${member.readyEmote} ${member.cleanName}`).join("\n  ");
             message.inlineReply(`${team}'s members were updated to:\n  ${members}${race.checkNotCountingDown()}`, { split: true });
-        }
+        },
     },
     raceTeamname: {
         names: [ "teamname" ],
@@ -796,12 +807,12 @@ export const commands = {
 
             team.teamName = teamName;
             message.acknowledge(member);
-        }
+        },
     },
     raceUnteam: {
         names: [ "unteam" ],
         aliases: [ "part", "partteam", "leaveteam" ],
-        description:"Leaves your current team",
+        description: "Leaves your current team",
         category: HelpCategory.COOP_RACE,
         raceChannelOnly: true,
         onUse: function raceUnteam(onError, message, member) {
@@ -825,7 +836,7 @@ export const commands = {
             race.teams.push(new EntrantTeam(race, member));
             race.checkCategoryCoop();
             message.acknowledge(member);
-        }
+        },
     },
     raceUnteamall: {
         names: [ "unteamall" ],
@@ -845,7 +856,7 @@ export const commands = {
             race.teams = race.entrants.map((entrant) => new EntrantTeam(race, entrant));
             race.category = race.category.forCoop(false);
             message.acknowledge(member);
-        }
+        },
     },
     raceRandomteams: {
         names: [ "randomteams" ],
@@ -886,12 +897,12 @@ export const commands = {
                 }
 
                 currentTeam.push(entrant);
-                index++;
+                index += 1;
             }
 
             race.checkCategoryCoop();
             race.showJoiningEntrants(onError, message, `**${race}:**\n`, `**${race.gameCategoryLevel} race (cont):**\n`);
-        }
+        },
     },
     raceClear: {
         names: [ "clearrace" ],
@@ -923,6 +934,6 @@ export const commands = {
             }
 
             message.acknowledge(member);
-        }
-    }
+        },
+    },
 };

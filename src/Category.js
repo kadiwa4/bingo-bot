@@ -53,7 +53,7 @@ export default class Category {
     toString() {
         return this.name;
     }
-};
+}
 
 /** Whether or not the category is an IL category */
 Category.prototype.isIL = false;

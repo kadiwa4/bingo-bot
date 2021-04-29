@@ -6,12 +6,12 @@ import Discord, { Message } from "discord.js";
  * Reacts with an emote that shows that the message was understood
  * @param {Discord.GuildMember} member
  */
-Message.prototype.acknowledge = function(member) {
+Message.prototype.acknowledge = function (member) {
     this.react((this.channel.race?.game ?? member.guild).config.emotes.acknowledge);
 };
 
 /** Crosses out the message */
-Message.prototype.crossOut = function() {
+Message.prototype.crossOut = function () {
     this.edit(`~~${this}~~`).catch(noop);
 };
 
@@ -22,7 +22,7 @@ Message.prototype.crossOut = function() {
  * @param {string} otherHeading
  * @param {() => Generator<string, void, unknown> | Promise<Generator<string, void, unknown>>} messageGenerator
  */
-Message.prototype.multiReply = async function(onError, firstHeading, otherHeading, messageGenerator) {
+Message.prototype.multiReply = async function (onError, firstHeading, otherHeading, messageGenerator) {
     const messages = [];
     let messageString = firstHeading;
 
@@ -57,17 +57,16 @@ Message.prototype.multiReply = async function(onError, firstHeading, otherHeadin
         setTimeout(() => {
             this.channel.send(messageToSend);
         }, index * 100);
-        index++;
+        index += 1;
     }
 };
 
 // https://gist.github.com/Allvaa/0320f06ee793dc88e4e209d3ea9f6256
 // this is already in #master (https://github.com/discordjs/discord.js/pull/4874)
 // but not in #stable, it'll be merged in version 13
-Message.prototype.inlineReply = async function(content, options) {
+Message.prototype.inlineReply = async function (content, options) {
     if (this.channel.type === "dm") {
-        this.channel.send(...arguments);
-        return;
+        return this.channel.send(...arguments);
     }
 
     const mentionRepliedUser = (options ?? content)?.allowedMentions?.repliedUser ? (options ?? content).allowedMentions.repliedUser : true;
@@ -77,7 +76,7 @@ Message.prototype.inlineReply = async function(content, options) {
     Object.assign(apiMessage.data, { message_reference: { message_id: this.id } });
 
     if (!apiMessage.data.allowed_mentions || !hasProperties(apiMessage.data.allowed_mentions)) {
-        apiMessage.data.allowed_mentions = { parse: ["users", "roles", "everyone"] };
+        apiMessage.data.allowed_mentions = { parse: [ "users", "roles", "everyone" ] };
     }
 
     if (!apiMessage.data.allowed_mentions.replied_user) {

@@ -4,13 +4,14 @@ import assert from "assert";
 import https from "https";
 import util from "util";
 
-import BetterSqlite3 from "better-sqlite3";
+import { Database } from "better-sqlite3";
 import { BufferList } from "bl";
 import Discord from "discord.js";
 
+/** to stay consistent with how String#trim() behaves */
+export const WHITESPACE = "[\\s\\uFEFF\\xA0]";
 export const FROZEN_ARRAY = Object.freeze([]);
 export const MULTI_GAME = "Multiple Games";
-export const WHITESPACE = `[\\s\\uFEFF\\xA0]`; // to stay consistent with how String.trim() behaves
 export const WHITESPACE_PLUS = new RegExp(`${WHITESPACE}+`, "g");
 
 export function noop() {}
@@ -30,7 +31,7 @@ export function addUserNames(member) {
     member.guild.sqlite.addUserNames.run({
         user_id: member.id,
         name: member.user.username,
-        nickname
+        nickname,
     });
 }
 
@@ -107,37 +108,14 @@ export function cleanName(name) {
     return Discord.Util.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
 }
 
-/**
- * Creates a new SQLite table and optionally a unique index
- * @param {BetterSqlite3.Database} database The SQLite database
- * @param {string} tableName The table name
- * @param {string} tableColumns The table's columns
- * @param {string} [indexName] The name of the UNIQUE INDEX created on the table
- * @param {string} [indexColumns] The UNIQUE INDEX' columns
- */
-export function createSQLiteTable(database, tableName, tableColumns, indexName, indexColumns) {
-    if (database.prepare(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;`).pluck().get(tableName)) {
-        return;
-    }
-
-    database.prepare(`CREATE TABLE ${tableName} (${tableColumns});`).run();
-
-    if (indexName) {
-        database.prepare(`CREATE UNIQUE INDEX ${indexName} ON ${tableName} (${indexColumns});`).run();
-    }
-
-    database.pragma("synchronous = NORMAL;");
-    database.pragma("journal_mode = WAL;");
-}
-
 /** HTML codes for the function `decodeHTML` */
 const entities = Object.assign(newMap(), {
     amp: "&",
     apos: "'",
     lt: "<",
     gt: ">",
-    quot: '"',
-    nbsp: " "
+    quot: "\"",
+    nbsp: " ",
 });
 
 /**
@@ -151,7 +129,7 @@ export function decodeHTML(text) {
         // return original string if there is no matching entity (no replace)
         return entities[entity] ?? match;
     });
-};
+}
 
 /**
  * Formats a time in (HH:)mm:ss.ss
@@ -162,8 +140,7 @@ export function decodeHTML(text) {
 export function formatTime(time, canHideHours = true) {
     return !time
         ? `${canHideHours ? "" : "--:"}--:--.--`
-        : `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice(
-            (canHideHours && time < 3600) ? -10 : -13, -2)}`;
+        : `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice((canHideHours && time < 3600) ? -10 : -13, -2)}`;
 }
 
 /**
@@ -202,7 +179,7 @@ export function httpsGet(hostname, path) {
             hostname: hostname,
             path: path,
             port: 443,
-            headers: { "User-Agent": "bingo-bot/1.0" }
+            headers: { "User-Agent": "bingo-bot/0.2" },
         }, (message) => {
             const bufferList = new BufferList();
             const { statusCode, statusMessage } = message;
@@ -231,7 +208,7 @@ export function httpsGet(hostname, path) {
  */
 export function increasePlace(placeObject, time) {
     if (placeObject.previousTime === time) {
-        placeObject.tie++;
+        placeObject.tie += 1;
     } else {
         placeObject.previousTime = time;
         placeObject.place += placeObject.tie;
@@ -338,14 +315,14 @@ export function spacesAroundMentions(text) {
     let changeOffset = 0;
     text.replace(USERS_PATTERN_1, (match, p1, offset) => {
         offset += changeOffset + 1;
-        changeOffset++;
+        changeOffset += 1;
         text = `${text.slice(0, offset)} ${text.slice(offset)}`;
     });
 
     changeOffset = 0;
     text.replace(USERS_PATTERN_2, (match, p1, offset) => {
         offset += changeOffset + match.length - 1;
-        changeOffset++;
+        changeOffset += 1;
         text = `${text.slice(0, offset)} ${text.slice(offset)}`;
     });
 
@@ -360,8 +337,8 @@ export function spacesAroundMentions(text) {
  * @param {(item: object, index: number) => void} lineString Function that gets executed for every row
  */
 export function toTable(array, consistentWidthProperties, cloneObjects, lineString) {
-    if (array.length < 1) {
-        return;
+    if (array.length === 0) {
+        return FROZEN_ARRAY;
     }
 
     consistentWidthProperties = new Set(consistentWidthProperties);
@@ -389,11 +366,33 @@ export function toTable(array, consistentWidthProperties, cloneObjects, lineStri
         }
 
         returnValues.push(lineString(item, index));
-        index++;
+        index += 1;
     }
 
     return returnValues;
 }
+
+/**
+* Creates a new SQLite table and optionally a unique index
+* @param {string} tableName The table name
+* @param {string} tableColumns The table's columns
+* @param {string} [indexName] The name of the UNIQUE INDEX created on the table
+* @param {string} [indexColumns] The UNIQUE INDEX' columns
+*/
+Database.prototype.createTable = function (tableName, tableColumns, indexName, indexColumns) {
+    if (this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;").pluck().get(tableName)) {
+        return;
+    }
+
+    this.prepare(`CREATE TABLE ${tableName} (${tableColumns});`).run();
+
+    if (indexName) {
+        this.prepare(`CREATE UNIQUE INDEX ${indexName} ON ${tableName} (${indexColumns});`).run();
+    }
+
+    this.pragma("synchronous = NORMAL;");
+    this.pragma("journal_mode = WAL;");
+};
 
 Object.defineProperties(Array.prototype, {
     remove: {
@@ -410,7 +409,7 @@ Object.defineProperties(Array.prototype, {
                     this.splice(index, 1);
                 }
             }
-        }
+        },
     },
     shuffle: {
         /**
@@ -419,22 +418,22 @@ Object.defineProperties(Array.prototype, {
          * @this any[]
          */
         value: function shuffle() {
-            for (let i = this.length - 1; i > 0; i--) {
+            for (let i = this.length - 1; i > 0; i -= 1) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [ this[i], this[j] ] = [ this[j], this[i] ];
             }
-        }
-    }
+        },
+    },
 });
 
 const signs = {
     "-1": "−", // This is not a hyphen, it's a minus sign
     "0": "±",
-    "1": "+"
+    "1": "+",
 };
 
 /** Converts the number to a string that always starts with a sign */
-Number.prototype.toDifference = function() {
+Number.prototype.toDifference = function () {
     return `${signs[Math.sign(this)]}${Math.abs(this)}`;
 };
 
@@ -442,7 +441,7 @@ Number.prototype.toDifference = function() {
 const ordinalSuffixes = [ null, "st", "nd", "rd" ];
 
 /** Converts the integer number to an English ordinal number */
-Number.prototype.toOrdinal = function() {
+Number.prototype.toOrdinal = function () {
     return `${this}${ordinalSuffixes[this / 10 % 10 ^ 1 && this % 10] ?? "th"}`;
 };
 
@@ -451,7 +450,7 @@ Object.defineProperties(Object.prototype, {
         /** Returns a shallow copy of the object, the prototype is the same */
         value: function clone() {
             return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
-        }
+        },
     },
     withPrototype: {
         /**
@@ -460,7 +459,7 @@ Object.defineProperties(Object.prototype, {
          */
         value: function withPrototype(prototype) {
             return prototype ? Object.assign(Object.create(prototype), this) : this;
-        }
+        },
     },
     withPrototypeRecursive: {
         /**
@@ -483,6 +482,6 @@ Object.defineProperties(Object.prototype, {
             }
 
             return object;
-        }
-    }
+        },
+    },
 });

@@ -9,7 +9,7 @@ export const HelpCategory = {
     IL_RACE: "IL-race commands",
     STATS: "Stat commands",
     OTHER: "Other commands",
-    MOD: "Moderator-only commands"
+    MOD: "Moderator-only commands",
 };
 
 /**
@@ -21,7 +21,7 @@ export const RaceState = {
     JOINING: 1,
     COUNTDOWN: 2,
     ACTIVE: 3,
-    DONE: 4
+    DONE: 4,
 };
 
 /**
@@ -31,5 +31,5 @@ export const RaceState = {
 export const TeamState = {
     NOT_DONE: 0,
     DONE: 1,
-    FORFEITED: 2
+    FORFEITED: 2,
 };

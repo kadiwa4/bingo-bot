@@ -4,7 +4,7 @@ import { HelpCategory } from "../enums.js";
 import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
 import Game from "../Game.js";
-import { addUserNames, bind, createSQLiteTable, getUserID, invertObject, log, newMap, noop } from "../misc.js";
+import { addUserNames, bind, getUserID, invertObject, log, newMap, noop } from "../misc.js";
 
 import EventEmitter from "events";
 import fs from "fs";
@@ -19,7 +19,7 @@ Object.assign(Guild.prototype, EventEmitter.prototype);
  * Initializes the guild
  * @param {GuildInput} guildInput
  */
-Guild.prototype.init = async function(guildInput) {
+Guild.prototype.init = async function (guildInput) {
     const { client } = this;
 
     if (!/^(.?\W)?$/.test(guildInput.commandPrefix)) {
@@ -69,16 +69,18 @@ Guild.prototype.init = async function(guildInput) {
     const database = this.database = new BetterSqlite3(`${this.dataFolder}/db.sqlite`);
     client.databases.push(database);
 
-    createSQLiteTable(database, "user_names",
+    database.createTable(
+        "user_names",
         `user_id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        nickname TEXT`);
+        nickname TEXT`
+    );
 
     this.sqlite = {
         getUserNames: database.prepare("SELECT name, nickname FROM user_names WHERE user_id = ?;"),
         getUserIDFromName: database.prepare("SELECT user_id FROM user_names WHERE name = ? COLLATE NOCASE;").pluck(),
         getUserIDFromNickname: database.prepare("SELECT user_id FROM user_names WHERE nickname = ? COLLATE NOCASE;").pluck(),
-        addUserNames: database.prepare("INSERT OR REPLACE INTO user_names (user_id, name, nickname) VALUES (@user_id, @name, @nickname);")
+        addUserNames: database.prepare("INSERT OR REPLACE INTO user_names (user_id, name, nickname) VALUES (@user_id, @name, @nickname);"),
     };
 
     // init command modules
@@ -111,7 +113,7 @@ Guild.prototype.init = async function(guildInput) {
 
     this.helpMessages.push(message);
     delete this.helpStrings;
-    log(`initialized guild`, this);
+    log("initialized guild", this);
 
     invertObject(client.cleanUpGuildName(this.srName), guildInput.aliases, client.srGuilds, this);
 };
@@ -121,29 +123,29 @@ Guild.prototype.init = async function(guildInput) {
  * @param {string} input
  * @returns {?Game}
  */
-Guild.prototype.getGame = function(input) {
+Guild.prototype.getGame = function (input) {
     return this.games[this.cleanUpGameName(input.trim())] ?? null;
-}
+};
 
 /**
  * Gets the guild member that matches the input the closest
  * @param {string} input
  * @returns {?Game}
  */
-Guild.prototype.getMember = async function(input) {
+Guild.prototype.getMember = async function (input) {
     const { sqlite } = this;
     input = input.trim();
 
     const id = getUserID(input) ?? sqlite.getUserIDFromName.get(input) ?? sqlite.getUserIDFromNickname.get(input);
     return id ? await this.members.fetch(id).catch(noop) ?? null : null;
-}
+};
 
 /**
  * Gets the name of a user, even if they aren't a member anymore
  * @param {string} id
  * @returns {Promise<?string>}
  */
-Guild.prototype.getUserName = async function(id) {
+Guild.prototype.getUserName = async function (id) {
     let member = this.member(id);
     if (member) {
         return member.cleanName;
@@ -161,17 +163,7 @@ Guild.prototype.getUserName = async function(id) {
     }
 
     const user = await this.client.users.fetch(id).catch(noop);
-    if (!user) {
-        return null;
-    }
-
-    this.sqlite.addUserNames.run({
-        user_id: user.id,
-        name: user.username,
-        nickname: null
-    });
-
-    return Discord.Util.escapeMarkdown(user.username);
+    return user ? Discord.Util.escapeMarkdown(user.username) : null;
 };
 
 /**
@@ -179,7 +171,7 @@ Guild.prototype.getUserName = async function(id) {
  * @param {GuildInput} guildInput The guild input from src/guild_configs/
  * @param {string} moduleID The ID of the module to load
  */
-Guild.prototype.loadModule = async function(guildInput, moduleID) {
+Guild.prototype.loadModule = async function (guildInput, moduleID) {
     if (this.moduleIDs.has(moduleID)) {
         return;
     }

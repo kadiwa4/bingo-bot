@@ -10,7 +10,7 @@ export const commands = {
         guildDependent: false,
         onUse: function lbpLenny(onError, message) {
             message.channel.send("( ͡° ͜ʖ ͡°)");
-        }
+        },
     },
     lbpNewRunner: {
         aliases: [ "newrunner", "nr" ],
@@ -20,8 +20,8 @@ export const commands = {
             let index2 = Math.floor(Math.random() * (randomRunners.length - 1));
             index2 += index1 <= index2;
             message.inlineReply(`${randomRunners[index1][0]}${randomRunners[index2][1]}`);
-        }
-    }
+        },
+    },
 };
 
 const randomRunners = [ [ "KaDi", "Wa" ], [ "p-p", "-j" ], [ "Rbd", "Jellyfish" ], [ "Liam", "12221" ], [ "Wiigo", "cadee" ], [ "Slen", "ds" ], [ "Krosso", "TV" ], [ "Gen", "rist" ], [ "Loud", "Orange" ], [ "Darkened", "_Duck" ], [ "bross", "entia" ], [ "Fire", "Thieff" ], [ "Sean", "Vertigo" ], [ "Abstract", "Sadd" ], [ "Glit", "cher" ], [ "a50_Caliber", "Camel" ], [ "Retro", "gamer1246" ], [ "Ted", "der" ], [ "A2on", "Craft" ], [ "xsHI", "MEsx" ], [ "Lombax", "_Pieboy" ], [ "Sam", "pai" ], [ "Gel", "ly" ], [ "flying", "_ragey" ], [ "fri", "tt_" ], [ "Ricky", "Pipe" ], [ "yes", "oops" ], [ "E", "man1530" ], [ "Lenny", "verse" ], [ "Mad", "brine" ], [ "legit", "knight39" ], [ "Mr.", " zebra" ], [ "ture", "cross" ], [ "k", "zix4_" ], [ "Cookiest", "Monster" ], [ "Deli", "tris" ], [ "Wobb", "ulz" ], [ "TheAlpha", "Moose" ], [ "cheeky", "chunk" ], [ "Hoon", "Goons" ], [ "Norton", "Antivirus" ], [ "Over", " The Horizon" ], [ "Shoe", "SABA" ], [ "deep", " mind" ], [ "O", "mar1" ], [ "red", "wed6" ], [ "tas", "rhys" ], [ "Tai", "therZ" ], [ "Th3", "Re4l" ], [ "Kiwa", "mi" ], [ "Chris", " the Gamer" ], [ "in", "alone" ] ];

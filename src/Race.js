@@ -148,16 +148,17 @@ export default class Race {
                 this.startTime = Date.now() / 1000 + (this.game.config.race.timerOffset ?? 0);
 
                 if (this.entrantWhoChoseIL) {
-                    this.entrantWhoChoseIL.ilChoiceCount++;
+                    this.entrantWhoChoseIL.ilChoiceCount += 1;
                     this.entrantWhoChoseIL = null;
                 }
-            }, 1000 * race.countdownLength)
+            }, 1000 * race.countdownLength),
         ];
 
-        this.countdownTimeouts.push(...race.countdown.map((number) =>
+        this.countdownTimeouts.push(...race.countdown.map((number) => (
             setTimeout(() => {
                 raceChannel.send(`${emotes.countdown} ${number}…`);
-            }, 1000 * (race.countdownLength - number))));
+            }, 1000 * (race.countdownLength - number))))
+        );
 
         return `\nEveryone is ready, gl;hf! ${emotes.countdownStart} Starting race in 10 seconds…`;
     }
@@ -274,7 +275,7 @@ export default class Race {
             race_id: this.id,
             game: this.game.name,
             category: this.category.name,
-            level: levelName
+            level: levelName,
         });
 
         for (let team of this.teams) {
@@ -294,7 +295,7 @@ export default class Race {
                 team_name: team.isCoop ? team.name : null,
                 time: team.doneTime,
                 elo_change: team.eloChange,
-                forfeited: +(team.state === TeamState.FORFEITED)
+                forfeited: +(team.state === TeamState.FORFEITED),
             });
 
             for (let teamMember of team) {
@@ -328,13 +329,13 @@ export default class Race {
                     third_place_count: (userStats?.third_place_count ?? 0) + (team.place === 3),
                     forfeit_count: (userStats?.forfeit_count ?? 0) + (team.state === TeamState.FORFEITED),
                     elo: (userStats?.elo ?? this.game.config.race.elo.start) + team.eloChange,
-                    pb
+                    pb,
                 });
             }
         }
 
         this.guild.emit("raceRecorded", this);
-        this.id++;
+        this.id += 1;
         if (isIL) {
             let winnerTeam;
             for (let team of this.teams) {
@@ -357,8 +358,8 @@ export default class Race {
                 id: this.id - 1,
                 game: this.game,
                 level: this.level,
-                winnerTeamName: winnerTeam.boldName
-            })
+                winnerTeamName: winnerTeam.boldName,
+            });
 
             this.newIL();
         } else {
@@ -409,7 +410,7 @@ export default class Race {
      * Returns a generator that yields each race entrant
      * @returns {Generator<Discord.GuildMember, void, undefined>}
      */
-    *entrantIterator() {
+    * entrantIterator() {
         for (let team of this.teams) {
             yield* team;
         }
@@ -568,11 +569,11 @@ export default class Race {
 
             // show IL race status
             /** @param {Discord.GuildMember} entrant */
-            function entrantString(entrant, fiveSpaces) {
+            const entrantString = function (entrant, fiveSpaces) {
                 return `  \`${entrant.ilScore.toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
-            }
+            };
 
-            message.multiReply(onError, firstHeading, otherHeading, function*() {
+            message.multiReply(onError, firstHeading, otherHeading, function* () {
                 // copy the list of teams and sort it, then loop through it
                 for (let team of this.teams.slice()
                     .sort((team1, team2) => team2.ilScoreAverage - team1.ilScoreAverage)) {
@@ -588,13 +589,13 @@ export default class Race {
         } else {
             // show full game race status
             /** @param {Discord.GuildMember} entrant */
-            function entrantString(entrant) {
+            const entrantString = function (entrant) {
                 return `  ${entrant.readyEmote} ${entrant.cleanName}\n`;
-            }
+            };
 
             const soloEntrants = [];
 
-            message.multiReply(onError, firstHeading, otherHeading, function*() {
+            message.multiReply(onError, firstHeading, otherHeading, function* () {
                 for (let team of this.teams) {
                     if (team.isCoop) {
                         yield `  ${team}\n\t${team.map(entrantString).join("\t")}`;
@@ -639,4 +640,4 @@ export default class Race {
     toString() {
         return this.info;
     }
-};
+}
