@@ -1,4 +1,4 @@
-﻿import { TeamState } from "./enums.js";
+import { TeamState } from "./enums.js";
 
 import assert from "assert";
 import https from "https";
@@ -21,18 +21,18 @@ export function noop() {}
  * @param {Discord.GuildMember} member
  */
 export function addUserNames(member) {
-    let nickname = null;
-    if (member.id === "159245797328814081") {
-        nickname = "bean";
-    } else if (member.nickname) {
-        nickname = member.cleanName;
-    }
+	let nickname = null;
+	if (member.id === "159245797328814081") {
+		nickname = "bean";
+	} else if (member.nickname) {
+		nickname = member.cleanName;
+	}
 
-    member.guild.sqlite.addUserNames.run({
-        user_id: member.id,
-        name: member.user.username,
-        nickname,
-    });
+	member.guild.sqlite.addUserNames.run({
+		user_id: member.id,
+		name: member.user.username,
+		nickname,
+	});
 }
 
 /**
@@ -44,7 +44,7 @@ export function addUserNames(member) {
  * @returns {Function}
  */
 export function bind(object, functionKey, ...args) {
-    return object[functionKey].bind(object, ...args);
+	return object[functionKey].bind(object, ...args);
 }
 
 /**
@@ -59,35 +59,35 @@ export function bind(object, functionKey, ...args) {
  * @param {boolean} [team2EloFunction] Whether or not `team2Elo` is a function
  */
 export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, team2State, team2Time, eloConfig, team2EloFunction = false) {
-    // the score is a number between 0 and 1:
-    //   0: loss
-    // 0.5: tie
-    //   1: win
-    // it's then multiplied by the max Elo increase
+	// the score is a number between 0 and 1:
+	//   0: loss
+	// 0.5: tie
+	//   1: win
+	// it's then multiplied by the max Elo increase
 
-    if (team1State === TeamState.FORFEITED && team2State === TeamState.FORFEITED) {
-        // both teams forfeited, those two teams don't affect each other's scores
-        return 0;
-    }
+	if (team1State === TeamState.FORFEITED && team2State === TeamState.FORFEITED) {
+		// both teams forfeited, those two teams don't affect each other's scores
+		return 0;
+	}
 
-    if (team2EloFunction) {
-        team2Elo = team2Elo();
-    }
+	if (team2EloFunction) {
+		team2Elo = team2Elo();
+	}
 
-    // the expected score is an approximation of the score (anywhere between
-    // 0 and 1) that is calculated by comparing the previous Elos.
-    // the better the team (judging by the current Elos), the higher the expectations
-    // it's then multiplied by the max Elo increase
-    const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team2Elo - team1Elo) / eloConfig.dividend));
+	// the expected score is an approximation of the score (anywhere between
+	// 0 and 1) that is calculated by comparing the previous Elos.
+	// the better the team (judging by the current Elos), the higher the expectations
+	// it's then multiplied by the max Elo increase
+	const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team2Elo - team1Elo) / eloConfig.dividend));
 
-    if (team1State === team2State) {
-        // both teams finished
-        // calculate who was faster/if the teams tied
-        return (eloConfig.maxEloGain / 2) * (1 + Math.sign(team2Time - team1Time)) - expectedScore;
-    }
+	if (team1State === team2State) {
+		// both teams finished
+		// calculate who was faster/if the teams tied
+		return (eloConfig.maxEloGain / 2) * (1 + Math.sign(team2Time - team1Time)) - expectedScore;
+	}
 
-    // else determine who finished
-    return eloConfig.maxEloGain * (team1State === TeamState.DONE) - expectedScore;
+	// else determine who finished
+	return eloConfig.maxEloGain * (team1State === TeamState.DONE) - expectedScore;
 }
 
 /**
@@ -96,7 +96,7 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
  * @param {Discord.Message} message The message containing that string
  */
 export function clean(text, message) {
-    return Discord.Util.escapeMarkdown(Discord.Util.cleanContent(text, message));
+	return Discord.Util.escapeMarkdown(Discord.Util.cleanContent(text, message));
 }
 
 /**
@@ -104,18 +104,18 @@ export function clean(text, message) {
  * @param {string} name The string to escape
  */
 export function cleanName(name) {
-    // \u200B is a zero-width space
-    return Discord.Util.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
+	// \u200B is a zero-width space
+	return Discord.Util.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
 }
 
 /** HTML codes for the function `decodeHTML` */
 const entities = Object.assign(newMap(), {
-    amp: "&",
-    apos: "'",
-    lt: "<",
-    gt: ">",
-    quot: "\"",
-    nbsp: " ",
+	amp: "&",
+	apos: "'",
+	lt: "<",
+	gt: ">",
+	quot: "\"",
+	nbsp: " ",
 });
 
 /**
@@ -124,11 +124,11 @@ const entities = Object.assign(newMap(), {
  * @param {string} text The HTML-encoded text
  */
 export function decodeHTML(text) {
-    return text.replace(/&([a-z]+);/ig, (match, entity) => {
-        entity = entity.toLowerCase();
-        // return original string if there is no matching entity (no replace)
-        return entities[entity] ?? match;
-    });
+	return text.replace(/&([a-z]+);/ig, (match, entity) => {
+		entity = entity.toLowerCase();
+		// return original string if there is no matching entity (no replace)
+		return entities[entity] ?? match;
+	});
 }
 
 /**
@@ -138,9 +138,9 @@ export function decodeHTML(text) {
  * @returns {string}
  */
 export function formatTime(time, canHideHours = true) {
-    return !time
-        ? `${canHideHours ? "" : "--:"}--:--.--`
-        : `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice((canHideHours && time < 3600) ? -10 : -13, -2)}`;
+	return !time
+		? `${canHideHours ? "" : "--:"}--:--.--`
+		: `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice((canHideHours && time < 3600) ? -10 : -13, -2)}`;
 }
 
 /**
@@ -149,9 +149,9 @@ export function formatTime(time, canHideHours = true) {
  * @returns {?string}
  */
 export function getUserID(input) {
-    input = input.trim();
-    const match = input.match(/^<@!?(\d{17,19})>$/) ?? input.match(/^(\d{17,19})$/);
-    return match?.[1] ?? null;
+	input = input.trim();
+	const match = input.match(/^<@!?(\d{17,19})>$/) ?? input.match(/^(\d{17,19})$/);
+	return match?.[1] ?? null;
 }
 
 /**
@@ -160,11 +160,11 @@ export function getUserID(input) {
  * @returns {boolean}
  */
 export function hasProperties(object) {
-    for (let {} in object) {
-        return true;
-    }
+	for (let {} in object) {
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 /**
@@ -174,31 +174,31 @@ export function hasProperties(object) {
  * @returns {Promise<{ content: string; path: string; }>}
  */
 export function httpsGet(hostname, path) {
-    return new Promise((resolve, reject) => {
-        https.get({
-            hostname: hostname,
-            path: path,
-            port: 443,
-            headers: { "User-Agent": "bingo-bot/0.2" },
-        }, (message) => {
-            const bufferList = new BufferList();
-            const { statusCode, statusMessage } = message;
-            if ([ 301, 302, 307, 308 ].includes(statusCode)) {
-                resolve(httpsGet(hostname, message.headers.location));
-                return;
-            }
+	return new Promise((resolve, reject) => {
+		https.get({
+			hostname: hostname,
+			path: path,
+			port: 443,
+			headers: { "User-Agent": "bingo-bot/0.2" },
+		}, (message) => {
+			const bufferList = new BufferList();
+			const { statusCode, statusMessage } = message;
+			if ([ 301, 302, 307, 308 ].includes(statusCode)) {
+				resolve(httpsGet(hostname, message.headers.location));
+				return;
+			}
 
-            if (statusCode !== 200) {
-                reject(new Error(`https://${hostname}${path} responded '${statusCode} ${statusMessage}'`));
-                return;
-            }
+			if (statusCode !== 200) {
+				reject(new Error(`https://${hostname}${path} responded '${statusCode} ${statusMessage}'`));
+				return;
+			}
 
-            message.on("data", bind(bufferList, "append"));
-            message.on("end", function onEnd() {
-                resolve({ content: bufferList.toString("utf-8"), path });
-            });
-        }).on("error", reject);
-    });
+			message.on("data", bind(bufferList, "append"));
+			message.on("end", function onEnd() {
+				resolve({ content: bufferList.toString("utf-8"), path });
+			});
+		}).on("error", reject);
+	});
 }
 
 /**
@@ -207,13 +207,13 @@ export function httpsGet(hostname, path) {
  * @param {number} time
  */
 export function increasePlace(placeObject, time) {
-    if (placeObject.previousTime === time) {
-        placeObject.tie += 1;
-    } else {
-        placeObject.previousTime = time;
-        placeObject.place += placeObject.tie;
-        placeObject.tie = 1;
-    }
+	if (placeObject.previousTime === time) {
+		placeObject.tie += 1;
+	} else {
+		placeObject.previousTime = time;
+		placeObject.place += placeObject.tie;
+		placeObject.tie = 1;
+	}
 }
 
 /**
@@ -230,22 +230,22 @@ export function increasePlace(placeObject, time) {
  * @param {T} outputValue The value to be set in the output object
  */
 export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outputValue) {
-    function add(name) {
-        const conflictingProperty = object[name];
-        if (conflictingProperty) {
-            throw new Error(`Can't add property '${name}' to object because it already exists.\n1: ${conflictingProperty}\n2: ${outputValue}`);
-        }
+	function add(name) {
+		const conflictingProperty = object[name];
+		if (conflictingProperty) {
+			throw new Error(`Can't add property '${name}' to object because it already exists.\n1: ${conflictingProperty}\n2: ${outputValue}`);
+		}
 
-        object[name] = outputValue;
-    }
+		object[name] = outputValue;
+	}
 
-    if (cleanedUpName) {
-        add(cleanedUpName);
-    }
+	if (cleanedUpName) {
+		add(cleanedUpName);
+	}
 
-    for (let name of aliases) {
-        add(name);
-    }
+	for (let name of aliases) {
+		add(name);
+	}
 }
 
 /**
@@ -255,13 +255,13 @@ export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outp
  * @returns {boolean}
  */
 export function isMod(message, member) {
-    let authorMember = message.member;
-    if (!authorMember) {
-        authorMember = member.guild.member(message.author);
-        assert(authorMember);
-    }
+	let authorMember = message.member;
+	if (!authorMember) {
+		authorMember = member.guild.member(message.author);
+		assert(authorMember);
+	}
 
-    return member.guild.owner === authorMember || member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
+	return member.guild.owner === authorMember || member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
 }
 
 /**
@@ -270,7 +270,7 @@ export function isMod(message, member) {
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function logFormat(text, guild) {
-    return `[${new Date().toISOString()}${guild ? ` ${guild.abbreviation}` : ""}] ${text}`;
+	return `[${new Date().toISOString()}${guild ? ` ${guild.abbreviation}` : ""}] ${text}`;
 }
 
 /**
@@ -279,8 +279,8 @@ export function logFormat(text, guild) {
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function log(text, guild) {
-    console.log(logFormat(text, guild));
-    return text;
+	console.log(logFormat(text, guild));
+	return text;
 }
 
 /**
@@ -289,13 +289,17 @@ export function log(text, guild) {
  * @param {Discord.Guild} [guild] The guild that is the cause
  */
 export function logError(text, guild) {
-    console.error(logFormat(text, guild));
-    return text;
+	console.error(logFormat(text, guild));
+	return text;
 }
 
-/** Returns a new object without a prototype, those can be used as maps */
+/**
+ * Returns a new object without a prototype, those can be used as maps
+ * @template T
+ * @returns {NodeJS.Dict<T>}
+ */
 export function newMap() {
-    return Object.create(null);
+	return Object.create(null);
 }
 
 /** Returns a promise that resolves after the specified time */
@@ -312,21 +316,21 @@ const USERS_PATTERN_2 = new RegExp(`${Discord.MessageMentions.USERS_PATTERN.sour
  * @returns {string}
  */
 export function spacesAroundMentions(text) {
-    let changeOffset = 0;
-    text.replace(USERS_PATTERN_1, (match, p1, offset) => {
-        offset += changeOffset + 1;
-        changeOffset += 1;
-        text = `${text.slice(0, offset)} ${text.slice(offset)}`;
-    });
+	let changeOffset = 0;
+	text.replace(USERS_PATTERN_1, (match, p1, offset) => {
+		offset += changeOffset + 1;
+		changeOffset += 1;
+		text = `${text.slice(0, offset)} ${text.slice(offset)}`;
+	});
 
-    changeOffset = 0;
-    text.replace(USERS_PATTERN_2, (match, p1, offset) => {
-        offset += changeOffset + match.length - 1;
-        changeOffset += 1;
-        text = `${text.slice(0, offset)} ${text.slice(offset)}`;
-    });
+	changeOffset = 0;
+	text.replace(USERS_PATTERN_2, (match, p1, offset) => {
+		offset += changeOffset + match.length - 1;
+		changeOffset += 1;
+		text = `${text.slice(0, offset)} ${text.slice(offset)}`;
+	});
 
-    return text;
+	return text;
 }
 
 /**
@@ -337,39 +341,39 @@ export function spacesAroundMentions(text) {
  * @param {(item: object, index: number) => void} lineString Function that gets executed for every row
  */
 export function toTable(array, consistentWidthProperties, cloneObjects, lineString) {
-    if (array.length === 0) {
-        return FROZEN_ARRAY;
-    }
+	if (array.length === 0) {
+		return FROZEN_ARRAY;
+	}
 
-    consistentWidthProperties = new Set(consistentWidthProperties);
-    const maxWidths = {};
+	consistentWidthProperties = new Set(consistentWidthProperties);
+	const maxWidths = {};
 
-    for (let name in array[0]) {
-        if (consistentWidthProperties.has(name)) {
-            for (let item of array) {
-                maxWidths[name] = Math.max(maxWidths[name] ?? 0, item[name].toString().length);
-            }
-        }
-    }
+	for (let name in array[0]) {
+		if (consistentWidthProperties.has(name)) {
+			for (let item of array) {
+				maxWidths[name] = Math.max(maxWidths[name] ?? 0, item[name].toString().length);
+			}
+		}
+	}
 
-    const returnValues = [];
-    let index = 0;
-    for (let item of array) {
-        if (cloneObjects) {
-            item = item.clone();
-        }
+	const returnValues = [];
+	let index = 0;
+	for (let item of array) {
+		if (cloneObjects) {
+			item = item.clone();
+		}
 
-        for (let name in item) {
-            if (consistentWidthProperties.has(name)) {
-                item[name] = item[name].toString().padStart(maxWidths[name]);
-            }
-        }
+		for (let name in item) {
+			if (consistentWidthProperties.has(name)) {
+				item[name] = item[name].toString().padStart(maxWidths[name]);
+			}
+		}
 
-        returnValues.push(lineString(item, index));
-        index += 1;
-    }
+		returnValues.push(lineString(item, index));
+		index += 1;
+	}
 
-    return returnValues;
+	return returnValues;
 }
 
 /**
@@ -380,61 +384,61 @@ export function toTable(array, consistentWidthProperties, cloneObjects, lineStri
 * @param {string} [indexColumns] The UNIQUE INDEX' columns
 */
 Database.prototype.createTable = function (tableName, tableColumns, indexName, indexColumns) {
-    if (this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;").pluck().get(tableName)) {
-        return;
-    }
+	if (this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;").pluck().get(tableName)) {
+		return;
+	}
 
-    this.prepare(`CREATE TABLE ${tableName} (${tableColumns});`).run();
+	this.prepare(`CREATE TABLE ${tableName} (${tableColumns});`).run();
 
-    if (indexName) {
-        this.prepare(`CREATE UNIQUE INDEX ${indexName} ON ${tableName} (${indexColumns});`).run();
-    }
+	if (indexName) {
+		this.prepare(`CREATE UNIQUE INDEX ${indexName} ON ${tableName} (${indexColumns});`).run();
+	}
 
-    this.pragma("synchronous = NORMAL;");
-    this.pragma("journal_mode = WAL;");
+	this.pragma("synchronous = NORMAL;");
+	this.pragma("journal_mode = WAL;");
 };
 
 Object.defineProperties(Array.prototype, {
-    remove: {
-        /**
-         * Removes elements from the array
-         * @template T
-         * @this T[]
-         * @param {...T} items The items to remove
-         */
-        value: function remove(...items) {
-            for (let item of items) {
-                const index = this.indexOf(item);
-                if (index > -1) {
-                    this.splice(index, 1);
-                }
-            }
-        },
-    },
-    shuffle: {
-        /**
-         * Shuffles the elements in the array
-         * https://stackoverflow.com/a/12646864
-         * @this any[]
-         */
-        value: function shuffle() {
-            for (let i = this.length - 1; i > 0; i -= 1) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [ this[i], this[j] ] = [ this[j], this[i] ];
-            }
-        },
-    },
+	remove: {
+		/**
+		 * Removes elements from the array
+		 * @template T
+		 * @this T[]
+		 * @param {...T} items The items to remove
+		 */
+		value: function remove(...items) {
+			for (let item of items) {
+				const index = this.indexOf(item);
+				if (index > -1) {
+					this.splice(index, 1);
+				}
+			}
+		},
+	},
+	shuffle: {
+		/**
+		 * Shuffles the elements in the array
+		 * https://stackoverflow.com/a/12646864
+		 * @this any[]
+		 */
+		value: function shuffle() {
+			for (let i = this.length - 1; i > 0; i -= 1) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[ this[i], this[j] ] = [ this[j], this[i] ];
+			}
+		},
+	},
 });
 
 const signs = {
-    "-1": "−", // This is not a hyphen, it's a minus sign
-    "0": "±",
-    "1": "+",
+	"-1": "−", // This is not a hyphen, it's a minus sign
+	"0": "±",
+	"1": "+",
 };
 
 /** Converts the number to a string that always starts with a sign */
 Number.prototype.toDifference = function () {
-    return `${signs[Math.sign(this)]}${Math.abs(this)}`;
+	return `${signs[Math.sign(this)]}${Math.abs(this)}`;
 };
 
 /** Suffixes for function toOrdinal */
@@ -442,46 +446,46 @@ const ordinalSuffixes = [ null, "st", "nd", "rd" ];
 
 /** Converts the integer number to an English ordinal number */
 Number.prototype.toOrdinal = function () {
-    return `${this}${ordinalSuffixes[this / 10 % 10 ^ 1 && this % 10] ?? "th"}`;
+	return `${this}${ordinalSuffixes[this / 10 % 10 ^ 1 && this % 10] ?? "th"}`;
 };
 
 Object.defineProperties(Object.prototype, {
-    clone: {
-        /** Returns a shallow copy of the object, the prototype is the same */
-        value: function clone() {
-            return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
-        },
-    },
-    withPrototype: {
-        /**
-         * Returns an object (might be a shallow copy) that uses the specified prototype
-         * @param {object} prototype The prototype the output object should use
-         */
-        value: function withPrototype(prototype) {
-            return prototype ? Object.assign(Object.create(prototype), this) : this;
-        },
-    },
-    withPrototypeRecursive: {
-        /**
-         * Returns an object (might be a deep copy) that uses the specified prototype and
-         * whose "simple" subobjects (simple dicts with curly brackets; e.g. `{ e: 3 }`) also have that prototype.
-         * Used for game-specific configuration in the guild config.
-         * @param {object} prototype The prototype the output object should use
-         */
-        value: function withPrototypeRecursive(prototype) {
-            if (!prototype) {
-                return this;
-            }
+	clone: {
+		/** Returns a shallow copy of the object, the prototype is the same */
+		value: function clone() {
+			return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+		},
+	},
+	withPrototype: {
+		/**
+		 * Returns an object (might be a shallow copy) that uses the specified prototype
+		 * @param {object} prototype The prototype the output object should use
+		 */
+		value: function withPrototype(prototype) {
+			return prototype ? Object.assign(Object.create(prototype), this) : this;
+		},
+	},
+	withPrototypeRecursive: {
+		/**
+		 * Returns an object (might be a deep copy) that uses the specified prototype and
+		 * whose "simple" subobjects (simple dicts with curly brackets; e.g. `{ e: 3 }`) also have that prototype.
+		 * Used for game-specific configuration in the guild config.
+		 * @param {object} prototype The prototype the output object should use
+		 */
+		value: function withPrototypeRecursive(prototype) {
+			if (!prototype) {
+				return this;
+			}
 
-            const object = Object.create(prototype);
+			const object = Object.create(prototype);
 
-            for (let key in this) {
-                object[key] = this[key]?.constructor === Object
-                    ? this[key].withPrototypeRecursive(prototype[key])
-                    : this[key];
-            }
+			for (let key in this) {
+				object[key] = this[key]?.constructor === Object
+					? this[key].withPrototypeRecursive(prototype[key])
+					: this[key];
+			}
 
-            return object;
-        },
-    },
+			return object;
+		},
+	},
 });
