@@ -3,6 +3,8 @@ import Game from "./Game.js";
 import Discord from "discord.js";
 
 declare global {
+	type ErrorFunction = (error: Error | any) => void;
+
 	/** Type of the guild input's root object */
 	interface GuildInput {
 		/** Discord guild ID */
@@ -115,10 +117,10 @@ declare global {
 		/** Type of `roles`, which contains configuration for the `roles` command module */
 		interface Roles {
 			/** Gets called on startup */
-			init?(guild: Discord.Guild, role: (id: string) => Discord.Role): Set<Discord.Role>;
+			init?(guild: Discord.Guild): Set<string>;
 
-			/** Returns an array of roles that the guild member should have */
-			getRoles(member: Discord.GuildMember, srcData: any[]): Set<Discord.Role>;
+			/** Returns a set of roles that the guild member should have */
+			getRoles(member: Discord.GuildMember, srcData: any[]): Set<string>;
 
 			/**
 			 * URL query that filters users' personal-best lists. Either `?game=` or `?series=`, followed by a speedrun.com game/series ID

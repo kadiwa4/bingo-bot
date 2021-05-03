@@ -3,7 +3,6 @@
 import { HelpCategory } from "../enums.js";
 import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
-import Game from "../Game.js";
 import { addUserNames, bind, getUserID, invertObject, log, newMap, noop } from "../misc.js";
 
 import EventEmitter from "events";
@@ -15,10 +14,7 @@ import Discord, { Guild } from "discord.js";
 // make EventEmitter functions available on guild objects
 Object.assign(Guild.prototype, EventEmitter.prototype);
 
-/**
- * Initializes the guild
- * @param {GuildInput} guildInput
- */
+/** Initializes the guild */
 Guild.prototype.init = async function (guildInput) {
 	const { client } = this;
 
@@ -118,20 +114,12 @@ Guild.prototype.init = async function (guildInput) {
 	invertObject(client.cleanUpGuildName(this.srName), guildInput.aliases, client.srGuilds, this);
 };
 
-/**
- * Gets the game that matches the input the closest
- * @param {string} input
- * @returns {?Game}
- */
+/** Gets the game that matches the input the closest */
 Guild.prototype.getGame = function (input) {
 	return this.games[this.cleanUpGameName(input.trim())] ?? null;
 };
 
-/**
- * Gets the guild member that matches the input the closest
- * @param {string} input
- * @returns {?Game}
- */
+/** Gets the guild member that matches the input the closest */
 Guild.prototype.getMember = async function (input) {
 	const { sqlite } = this;
 	input = input.trim();
@@ -140,11 +128,7 @@ Guild.prototype.getMember = async function (input) {
 	return id ? await this.members.fetch(id).catch(noop) ?? null : null;
 };
 
-/**
- * Gets the name of a user, even if they aren't a member anymore
- * @param {string} id
- * @returns {Promise<?string>}
- */
+/** Gets the name of a user, even if they aren't a member anymore */
 Guild.prototype.getUserName = async function (id) {
 	let member = this.member(id);
 	if (member) {
@@ -182,11 +166,14 @@ Guild.prototype.loadModule = async function (guildInput, moduleID) {
 	let module;
 	const constructModule = !client.modules[moduleID];
 	if (constructModule) {
-		/** @type {CommandModule} */
-		let moduleInput = await import(`../command_modules/${moduleID}.js`);
-		if (Object.keys(moduleInput).length === 1 && "default" in moduleInput) {
-			moduleInput = moduleInput.default;
+		/** @type {CommandModule | { default: CommandModule; }} */
+		let moduleInputImport = await import(`../command_modules/${moduleID}.js`);
+		if (Object.keys(moduleInputImport).length === 1 && "default" in moduleInputImport) {
+			moduleInputImport = moduleInputImport.default;
 		}
+
+		/** @type {CommandModule} */
+		const moduleInput = moduleInputImport;
 
 		if (!moduleInput.id) {
 			throw new Error(`couldn't load module ${moduleID} or it doesn't have the property 'id'`);
@@ -219,7 +206,7 @@ Guild.prototype.loadModule = async function (guildInput, moduleID) {
 		}
 
 		if (command.names) {
-			if (!this.helpStrings[command.category]) {
+			if (!(command.category in this.helpStrings)) {
 				this.helpStrings[command.category] = [];
 			}
 

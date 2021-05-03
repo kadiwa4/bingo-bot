@@ -10,7 +10,7 @@ export default class Game {
 	 * Creates a new game
 	 * @param {Discord.Guild} guild
 	 * @param {string} name
-	 * @param {GameInput | MultiGameInput} gameInput
+	 * @param {GuildInput.BaseGame} [gameInput]
 	 */
 	constructor(guild, name, gameInput) {
 		/** The game name */
@@ -21,9 +21,9 @@ export default class Game {
 		 * it will default to the value in the guild config
 		 * @type {Config}
 		 */
-		this.config = (gameInput.config ?? {}).withPrototypeRecursive(guild.config);
-		if (gameInput.default) {
-			if (guild.defaultGame) {
+		this.config = (gameInput?.config ?? {}).withPrototypeRecursive(guild.config);
+		if (gameInput?.default) {
+			if ("defaultGame" in guild) {
 				throw new Error(`multiple default games\n1: '${guild.defaultGame}'\n2: '${this}'`);
 			}
 
@@ -94,13 +94,13 @@ export default class Game {
 
 	/**
 	 * Sets up the game's categories. Helper function for `race_control.init`
-	 * @param {Discord.guild} guild
+	 * @param {Discord.Guild} guild
 	 * @param {NodeJS.Dict<?GuildInput.Category> | NodeJS.Dict<?GuildInput.MultiGameCategory>} categoriesInput
 	 * @param {boolean} multiGame
 	 */
 	setUpCategories(guild, categoriesInput, multiGame) {
 		for (let categoryName in categoriesInput) {
-			/** @type {GuildInput.MultiGameCategory} */
+			/** @type {GuildInput.Category | GuildInput.MultiGameCategory} */
 			const categoryInput = categoriesInput[categoryName];
 			const category = new Category(categoryName, categoryInput);
 
@@ -115,11 +115,13 @@ export default class Game {
 			const cleanedUpCategoryName = this.config.cleanUpCategory(categoryName).name;
 			if (multiGame) {
 				category.games = [];
-				if (!categoryInput?.games) {
+				if (!("games" in categoryInput)) {
 					throw new Error(`no property 'games' of multi-game category '${categoryName}'`);
 				}
 
-				for (let input of categoryInput.games) {
+				/** @type {GuildInput.MultiGameCategory} */
+				const multiCategoryInput = categoryInput;
+				for (let input of multiCategoryInput.games) {
 					/** @type {Game} */
 					const game = guild.getGame(input);
 					if (!game) {
@@ -127,7 +129,7 @@ export default class Game {
 					}
 
 					category.games.push(game);
-					invertObject(cleanedUpCategoryName, categoryInput.aliases, game.categories, category);
+					invertObject(cleanedUpCategoryName, multiCategoryInput.aliases, game.categories, category);
 				}
 			}
 

@@ -1,7 +1,7 @@
 /// <reference path="./types.d.ts" />
 
 import { TeamState } from "./enums.js";
-import { bind, calculateEloMatchup } from "./misc.js";
+import { add, bind, calculateEloMatchup } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -185,7 +185,7 @@ export default class EntrantTeam extends Array {
 	 * @type {number}
 	 */
 	get ilScoreAverage() {
-		return this.isCoop ? this.reduce((teamMember1, teamMember2) => teamMember1.ilScore + teamMember2.ilScore) / this.length : this.leader.ilScore;
+		return this.isCoop ? this.map((teamMember) => teamMember.ilScore).reduce(add) / this.length : this.leader.ilScore;
 	}
 
 	/**
@@ -224,7 +224,7 @@ export default class EntrantTeam extends Array {
 		const elo = this.getElo();
 		for (let team2 of this.race.teams) {
 			if (this !== team2) {
-				eloChange += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo, true) * team2.length;
+				eloChange += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo) * team2.length;
 			}
 		}
 

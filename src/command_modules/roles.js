@@ -4,7 +4,6 @@ import { clean, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } 
 
 import assert from "assert";
 
-import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
 
 export const id = "roles";
@@ -17,7 +16,6 @@ export const id = "roles";
 export function init(guild, guildInput) {
 	assert(guildInput.roles, "no config for command module roles");
 
-	/** @type {{ database: BetterSqlite3.Database; }} */
 	const { database } = guild;
 
 	// set up tables for keeping track of speedrun.com user IDs
@@ -35,19 +33,9 @@ export function init(guild, guildInput) {
 		deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;"),
 	});
 
-	/** @param {string} roleID */
-	function role(roleID) {
-		const role = guild.roles.cache.get(roleID);
-		if (!role) {
-			throw new Error(`role ${roleID} not found`);
-		}
-
-		return role;
-	}
-
-	guild.allSRRoles = guildInput.roles.init?.(guild, role);
+	guild.allSRRoles = guildInput.roles.init?.(guild);
 	guild.getSRRoles = guildInput.roles.getRoles;
-	guild.srcAPIFilter = guildInput.roles.srcAPIFilter ?? "";
+	guild.srcAPIFilter = guildInput.roles.srcAPIFilter;
 	guild.unicodeNameFix = guildInput.roles.unicodeNameFix ?? false;
 
 	setUpdateAllRolesTimeout(guild);
@@ -59,6 +47,7 @@ export const commands = {
 		names: [ "roles" ],
 		usage: "[<speedrun.com name>]",
 		description: "Sets your roles to match races finished + speedrun.com PBs or updates roles",
+		/** @param {Discord.GuildMember} member */
 		onUse: async function roles(onError, message, member, args) {
 			const { guild } = member;
 
@@ -143,6 +132,7 @@ export const commands = {
 		names: [ "removeroles" ],
 		aliases: [ "clearroles", "deleteroles", "unroles" ],
 		description: "Removes your speedrun roles",
+		/** @param {Discord.GuildMember} member */
 		onUse: function rolesRemove(onError, message, member) {
 			const { guild } = member;
 
@@ -156,6 +146,7 @@ export const commands = {
 		description: "Reloads all registered roles",
 		category: HelpCategory.MOD,
 		modOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function rolesUpdate(onError, message, member) {
 			await updateAllRoles(onError, member.guild).catch(onError);
 			message.acknowledge(member);
@@ -191,19 +182,25 @@ async function updateAllRoles(onError, guild) {
 }
 
 /**
- * @param {(error) => void} onError
+ * @param {ErrorFunction} onError
  * @param {?Discord.Message} message
  * @param {Discord.GuildMember} member
  * @param {?string} srcID
  * @param {boolean} [addToDB]
  */
 async function updateRoles(onError, message, member, srcID, addToDB = false) {
+	member = await member.fetch(true);
 	const { guild } = member;
 
-	/** @type {Set<Discord.Role>} */
+	/** @type {Set<string>} */
 	let newRoles;
 	if (srcID) {
-		const { content, path } = await callSRC(onError ?? logError, guild, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
+		const result = await callSRC(onError ?? logError, guild, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
+		if (!result) {
+			return;
+		}
+
+		const { content, path } = result;
 		const srcResponse = JSON.parse(content);
 		if ("status" in srcResponse) {
 			if (message) {
@@ -233,7 +230,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 		newRoles = new Set();
 	}
 
-	const allRoles = new Set(member.roles.cache.values());
+	const allRoles = new Set(member.roles.cache.keys());
 
 	for (let role of guild.allSRRoles) {
 		const shouldHave = newRoles.has(role);
@@ -250,10 +247,10 @@ let srcCallTimestamp = 0;
 
 /**
  * Gets a speedrun.com page over HTTPS
- * @param {(error) => void} onError Function that gets called to catch an error
+ * @param {ErrorFunction} onError Function that gets called to catch an error
  * @param {Discord.Guild} guild The guild
  * @param {string} path The path, starting with '/'
- * @returns {Promise<{ content: string; path: string; }>}
+ * @returns {Promise<{ content: string; path: string; } | void>}
  */
 async function callSRC(onError, guild, path) {
 	// - delay after API call: 1 sec

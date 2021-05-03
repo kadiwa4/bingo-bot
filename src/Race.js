@@ -502,11 +502,11 @@ export default class Race {
 	 * @param {Discord.GuildMember} entrant The race entrant to be reset
 	 */
 	resetEntrant(entrant) {
-		entrant.team = null;
-		entrant.isReady = false;
-		entrant.ilScore = 0;
 		entrant.ilChoiceCount = 0;
+		entrant.ilScore = 0;
+		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
+		entrant.team = null;
 		entrant.user.isEntrant = false;
 	}
 
@@ -558,7 +558,7 @@ export default class Race {
 
 	/**
 	 * For !status and !randomteams
-	 * @param {(error) => void} onError
+	 * @param {ErrorFunction} onError
 	 * @param {Discord.Message} message
 	 * @param {string} firstHeading
 	 * @param {string} otherHeading

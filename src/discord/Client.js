@@ -1,21 +1,14 @@
 import Command from "../Command.js";
-import { addUserNames, log, logError, isMod, spacesAroundMentions, WHITESPACE } from "../misc.js";
+import { addUserNames, log, logError, isMod, WHITESPACE } from "../misc.js";
 
 import Discord, { Client } from "discord.js";
 
-/**
- * Takes a user-input string and cleans it up so that it can then be used as a key in an object
- * @param {string} input
- */
+/** Takes a user-input string and cleans it up so that it can then be used as a key in an object */
 Client.prototype.cleanUpGuildName = function (input) {
 	return input.toLowerCase().replace(/\W/, "").replace(/speedrun(ning)?|server|guild/, "");
 };
 
-/**
- * Gets the guild that matches the input the closest or null
- * @param {string} input
- * @returns {?string}
- */
+/** Gets the guild that matches the input the closest or null */
 Client.prototype.getGuild = function (input) {
 	return this.srGuilds[this.cleanUpGuildName(input)] ?? null;
 };
@@ -25,9 +18,6 @@ const INPUT_MATCH_REGEXP = RegExp(`^(.?\\W)?[\\s\\uFFEF\\xA0\\W]*(\\w+)${WHITESP
 /**
  * Uses the command that was given to the function.
  * Returns whether or not the command was found
- * @param {Discord.Message} message
- * @param {Discord.User | Discord.GuildMember} userOrMember
- * @param {string} [input]
  */
 Client.prototype.useCommand = async function (message, userOrMember, input) {
 	function onError(error) {
@@ -56,7 +46,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 		let { guild } = userOrMember;
 
 		if (!input) {
-			input = spacesAroundMentions(message.content).trim();
+			input = message.content.trim();
 		}
 
 		const inputMatch = input.match(INPUT_MATCH_REGEXP);

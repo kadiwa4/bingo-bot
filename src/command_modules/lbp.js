@@ -18,7 +18,7 @@ export const commands = {
 		onUse: function lbpNewRunner(onError, message) {
 			const index1 = Math.floor(Math.random() * randomRunners.length);
 			let index2 = Math.floor(Math.random() * (randomRunners.length - 1));
-			index2 += index1 <= index2;
+			index2 += +(index1 <= index2);
 			message.inlineReply(`${randomRunners[index1][0]}${randomRunners[index2][1]}`);
 		},
 	},

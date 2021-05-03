@@ -1,3 +1,4 @@
+/// <reference path="./types.d.ts" />
 import CommandModule from "./CommandModule.js";
 import { HelpCategory } from "./enums.js";
 import { FROZEN_ARRAY } from "./misc.js";
@@ -50,7 +51,7 @@ export default class Command {
 
 	/**
 	 * Function that gets called when the command is used. Can be async
-	 * @param {(error) => void} onError Function that gets called to catch an error
+	 * @param {ErrorFunction} onError Function that gets called to catch an error
 	 * @param {Discord.Message} message The message that called this function
 	 * @param {Discord.GuildMember | Discord.User} userOrMember The guild member/user that used the command. Always a guild member if guildDependent is true
 	 * @param {?string} args The user input without the command name, trimmed
@@ -59,7 +60,7 @@ export default class Command {
 
 	/**
 	 * Replies the correct command usage
-	 * @param {(error => void)} onError
+	 * @param {ErrorFunction} onError
 	 * @param {Discord.Message} message
 	 * @param {Discord.GuildMember | Discord.User} userOrMember
 	 */
@@ -70,7 +71,7 @@ export default class Command {
 
 	/**
 	 * All command names that can be used to call this command
-	 * @type {string[]}
+	 * @type {string[] | readonly string[]}
 	 * @readonly
 	 */
 	get allNames() {
@@ -158,14 +159,14 @@ export default class Command {
 
 /**
  * Other command names that aren't displayed
- * @type {string[]}
+ * @type {string[] | readonly string[]}
  * @default [] // (frozen)
  */
 Command.prototype.aliases = FROZEN_ARRAY;
 
 /**
  * Other command names that are displayed but don't actually work
- * @type {string[]}
+ * @type {string[] | readonly string[]}
  * @default [] // (frozen)
  */
 Command.prototype.fakeNames = FROZEN_ARRAY;

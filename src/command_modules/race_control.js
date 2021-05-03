@@ -63,8 +63,6 @@ export const defaultConfig = {
 export function init(guild, guildInput) {
 	const { commonCategories, games, multiGame } = guildInput;
 
-	guild.cleanUpMultiGameCategory = guildInput.cleanUpMultiGameCategory ?? guild.config.cleanUpCategory;
-
 	// set up object with categories common across all games
 	guild.commonCategories = newMap();
 	for (let categoryName in commonCategories ?? {}) {
@@ -79,7 +77,7 @@ export function init(guild, guildInput) {
 	guild.games = newMap();
 	for (let gameName in games) {
 		const gameInput = games[gameName];
-		const game = new Game(guild, gameName, gameInput ?? {});
+		const game = new Game(guild, gameName, gameInput);
 		game.categories = Object.create(guild.commonCategories);
 
 		// set up object with games' categories
@@ -120,7 +118,6 @@ export function init(guild, guildInput) {
 		guild.games[MULTI_GAME] = game;
 	}
 
-	/** @type {{ database: BetterSqlite3.Database; }} */
 	const { database } = guild;
 
 	// set up tables for keeping track of race information
@@ -214,6 +211,9 @@ export function init(guild, guildInput) {
 	guild.raceChannels = [];
 	for (let channelID of guildInput.raceChannelIDs) {
 		const channel = guild.channels.cache.get(channelID);
+		if (!(channel instanceof Discord.TextChannel)) {
+			throw new Error(`channel ${channelID} is not a text channel`);
+		}
 
 		guild.raceChannels.push(channel);
 		channel.race = new Race(channel);
@@ -232,8 +232,9 @@ export const commands = {
 		description: "Starts a new race, or joins the currently open race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function race(onError, message, member) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			let { guild, race } = message.channel;
 
 			if (race.category.isIL && race.leaveWhenDone.has(member)) {
@@ -307,8 +308,9 @@ export const commands = {
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceQuit(onError, message, member) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
 
 			if (!race.hasEntrant(member)) {
@@ -334,8 +336,9 @@ export const commands = {
 		aliases: [ "game" ],
 		description: "Tells you to use `category` instead",
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceGame(onError, message, member) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
 			if (race.hasEntrant(member) && race.state === RaceState.JOINING) {
 				message.inlineReply(`${this.toString(guild)} was removed, use \`${guild.commandPrefix}category <game name> / <category name>\` instead.`);
@@ -348,8 +351,9 @@ export const commands = {
 		usage: "[<game name> /] <category name>",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceCategory(onError, message, member, args) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -432,8 +436,9 @@ export const commands = {
 		usage: "<level name>",
 		category: HelpCategory.IL_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceLevel(onError, message, member, args) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { client, guild, race } = message.channel;
 			const { communityLevels } = race.game.config.race;
 
@@ -480,8 +485,9 @@ export const commands = {
 		description: "Indicates that you're ready to start",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceReady(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			if (!race.hasEntrant(member) || member.isReady || race.state !== RaceState.JOINING) {
@@ -499,7 +505,7 @@ export const commands = {
 			message.acknowledge(member);
 			if (race.isEveryoneReady) {
 				// start countdown if everyone is ready
-				race.channel.send(race.startCountdown(message));
+				race.channel.send(race.startCountdown());
 			}
 		},
 	},
@@ -508,8 +514,9 @@ export const commands = {
 		description: "Indicates that you're not actually ready",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceUnready(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			if (!race.hasEntrant(member) || !member.isReady || (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN)) {
@@ -530,8 +537,9 @@ export const commands = {
 		aliases: [ "r" ],
 		description: "Starts a new race, joins the currently open race or indicates that you're ready to start",
 		raceChannelOnly: true,
-		onUse: function raceR(onError, message, member, args) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+		/** @param {Discord.GuildMember} member */
+		onUse: function raceR(onError, message, member) {
+			/** @type {Discord.TextChannel} */
 			const { client, race } = message.channel;
 
 			// depending on the situation, run either the command `ready` or `race`
@@ -544,10 +552,10 @@ export const commands = {
 		description: "Indicates that you/your team finished",
 		category: HelpCategory.MID_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceDone(onError, message, member) {
-			/** @type {Discord.TextChannel & { race: Race }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.ACTIVE || team.state !== TeamState.NOT_DONE) {
@@ -604,10 +612,10 @@ export const commands = {
 		description: "Indicates that you didn't actually finish",
 		category: HelpCategory.MID_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceUndone(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || team.state !== TeamState.DONE) {
@@ -641,10 +649,10 @@ export const commands = {
 		description: "Drops you/your team out of the race",
 		category: HelpCategory.MID_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceForfeit(onError, message, member) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.ACTIVE || team.state !== TeamState.NOT_DONE) {
@@ -661,10 +669,10 @@ export const commands = {
 		description: "Rejoins the race after you forfeited",
 		category: HelpCategory.MID_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceUnforfeit(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || team.state !== TeamState.FORFEITED) {
@@ -685,8 +693,9 @@ export const commands = {
 		usage: "<entrant 1> [/ <entrant 2>…]",
 		category: HelpCategory.COOP_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceTeam(onError, message, member, args) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -699,7 +708,6 @@ export const commands = {
 				return;
 			}
 
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 			const { maxTeamSize } = race.game.config.race;
 			const newTeamMembers = [];
@@ -718,7 +726,7 @@ export const commands = {
 				}
 
 				if (!race.hasEntrant(mentionedMember)) {
-					message.inlineReply(`${await guild.getUserName(mentionedMember)} isn't racing here.`);
+					message.inlineReply(`${mentionedMember.cleanName} isn't racing here.`);
 					return;
 				}
 
@@ -765,10 +773,10 @@ export const commands = {
 		usage: "[<team name>]",
 		category: HelpCategory.COOP_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceTeamname(onError, message, member, args) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -815,10 +823,10 @@ export const commands = {
 		description: "Leaves your current team",
 		category: HelpCategory.COOP_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceUnteam(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
-			/** @type {{ team: EntrantTeam; }} */
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -844,8 +852,9 @@ export const commands = {
 		description: "Disbands all current teams",
 		category: HelpCategory.COOP_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceUnteamall(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING || !race.hasCoopTeam) {
@@ -864,8 +873,9 @@ export const commands = {
 		usage: "[<team size>]",
 		category: HelpCategory.COOP_RACE,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceRandomteams(onError, message, member, args) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -910,8 +920,9 @@ export const commands = {
 		category: HelpCategory.MOD,
 		modOnly: true,
 		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceClear(onError, message, member) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			switch (race.state) {

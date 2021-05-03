@@ -5,7 +5,7 @@ import Game from "./Game.js";
 export default class Category {
 	/**
 	 * Creates a new category object
-	 * @param {string} name The category name without "(Co-op)"
+	 * @param {string} [name] The category name without "(Co-op)"
 	 * @param {GuildInput.CommonCategory} [categoryInput] The category input
 	 */
 	constructor(name, categoryInput) {

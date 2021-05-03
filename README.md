@@ -40,6 +40,12 @@ npm start
 
 To run the bot on a server, I recommend [PM2](https://github.com/Unitech/pm2).
 
+If you want properties on discord.js types to work, go to `node_modules/discord.js/package.json` and edit this line.
+
+```
+"types": "../../src/discord/types.d.ts",
+```
+
 ## Commands
 
 **Pre-race commands**

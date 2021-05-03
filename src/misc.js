@@ -1,10 +1,11 @@
+/// <reference path="./types.d.ts" />
 import { TeamState } from "./enums.js";
 
 import assert from "assert";
 import https from "https";
 import util from "util";
 
-import { Database } from "better-sqlite3";
+import BetterSqlite3 from "better-sqlite3";
 import { BufferList } from "bl";
 import Discord from "discord.js";
 
@@ -15,6 +16,15 @@ export const MULTI_GAME = "Multiple Games";
 export const WHITESPACE_PLUS = new RegExp(`${WHITESPACE}+`, "g");
 
 export function noop() {}
+
+/**
+ * Adds the two numbers
+ * @param {number} a
+ * @param {number} b
+ */
+export function add(a, b) {
+	return a + b;
+}
 
 /**
  * Adds the member to the user_names table or updates it
@@ -37,11 +47,12 @@ export function addUserNames(member) {
 
 /**
  * For the given function (property `functionKey` of `object`), creates
- * a bound function that has the same body as the original function.
- * @param {object} object
- * @param {string} functionKey
+ * a bound function that has the same body as the original function
+ * @template {{ bind(thisArg: any, ...argArray: any[]): F; }} F
+ * @param {*} object
+ * @param {string | number} functionKey
  * @param {any[]} [args]
- * @returns {Function}
+ * @returns {F}
  */
 export function bind(object, functionKey, ...args) {
 	return object[functionKey].bind(object, ...args);
@@ -52,13 +63,12 @@ export function bind(object, functionKey, ...args) {
  * @param {number} team1Elo Team 1's Elo before the race
  * @param {TeamState} team1State Team 1's current TeamState
  * @param {number} team1Time Team 1's time in seconds
- * @param {number | () => number} team2Elo Team 2's Elo before the race or a function returning it
+ * @param {number | (() => number)} team2Elo Team 2's Elo before the race or a function returning it
  * @param {TeamState} team2State Team 2's current TeamState
  * @param {number} team2Time Team 2's time in seconds
  * @param {Config.Elo} eloConfig The Elo calculation configuration
- * @param {boolean} [team2EloFunction] Whether or not `team2Elo` is a function
  */
-export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, team2State, team2Time, eloConfig, team2EloFunction = false) {
+export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, team2State, team2Time, eloConfig) {
 	// the score is a number between 0 and 1:
 	//   0: loss
 	// 0.5: tie
@@ -70,7 +80,7 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
 		return 0;
 	}
 
-	if (team2EloFunction) {
+	if (team2Elo instanceof Function) {
 		team2Elo = team2Elo();
 	}
 
@@ -87,7 +97,7 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
 	}
 
 	// else determine who finished
-	return eloConfig.maxEloGain * (team1State === TeamState.DONE) - expectedScore;
+	return eloConfig.maxEloGain * +(team1State === TeamState.DONE) - expectedScore;
 }
 
 /**
@@ -156,11 +166,11 @@ export function getUserID(input) {
 
 /**
  * Returns whether or not the object has at least one iterable property
- * @param {object} object
+ * @param {*} object
  * @returns {boolean}
  */
 export function hasProperties(object) {
-	for (let {} in object) {
+	for (let property in object) {
 		return true;
 	}
 
@@ -225,11 +235,12 @@ export function increasePlace(placeObject, time) {
  * // allMyGames afterwards: { "lbp": lbp1Game, "lbp1": lbp1Game, "1": lbp1Game }
  * @template T
  * @param {?string} cleanedUpName Name to be appended to `aliases` or null
- * @param {string[]} [aliases] The keys to be set in the output object
+ * @param {?readonly string[] | undefined} aliases The keys to be set in the output object
  * @param {NodeJS.Dict<T>} object The object to be changed
  * @param {T} outputValue The value to be set in the output object
  */
 export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outputValue) {
+	/** @param {string} name */
 	function add(name) {
 		const conflictingProperty = object[name];
 		if (conflictingProperty) {
@@ -305,51 +316,23 @@ export function newMap() {
 /** Returns a promise that resolves after the specified time */
 export const setTimeoutPromise = util.promisify(setTimeout);
 
-const USERS_PATTERN_1 = new RegExp(`\\S${Discord.MessageMentions.USERS_PATTERN.source}`, "g");
-const USERS_PATTERN_2 = new RegExp(`${Discord.MessageMentions.USERS_PATTERN.source}\\S`, "g");
-
-/**
- * Places spaces around all user mentions that don't have spaces around them.
- * As a user, it's easy to miss that you didn't use spaces before/after
- * a mention because Discord shows a small gap there
- * @param {string} text The string to put spaces in
- * @returns {string}
- */
-export function spacesAroundMentions(text) {
-	let changeOffset = 0;
-	text.replace(USERS_PATTERN_1, (match, p1, offset) => {
-		offset += changeOffset + 1;
-		changeOffset += 1;
-		text = `${text.slice(0, offset)} ${text.slice(offset)}`;
-	});
-
-	changeOffset = 0;
-	text.replace(USERS_PATTERN_2, (match, p1, offset) => {
-		offset += changeOffset + match.length - 1;
-		changeOffset += 1;
-		text = `${text.slice(0, offset)} ${text.slice(offset)}`;
-	});
-
-	return text;
-}
-
 /**
  * Helps output an array of objects as a table
- * @param {object[]} array The array to output
+ * @param {any[]} array The array to output
  * @param {string[]} consistentWidthProperties Array of property names whose values should be paded with spaces on the left to ensure the same width in every row
  * @param {boolean} cloneObjects Whether or not to clone the objects in the array before changing them
- * @param {(item: object, index: number) => void} lineString Function that gets executed for every row
+ * @param {(item: any, index: number) => void} lineString Function that gets executed for every row
  */
 export function toTable(array, consistentWidthProperties, cloneObjects, lineString) {
 	if (array.length === 0) {
 		return FROZEN_ARRAY;
 	}
 
-	consistentWidthProperties = new Set(consistentWidthProperties);
+	const properties = new Set(consistentWidthProperties);
 	const maxWidths = {};
 
 	for (let name in array[0]) {
-		if (consistentWidthProperties.has(name)) {
+		if (properties.has(name)) {
 			for (let item of array) {
 				maxWidths[name] = Math.max(maxWidths[name] ?? 0, item[name].toString().length);
 			}
@@ -364,7 +347,7 @@ export function toTable(array, consistentWidthProperties, cloneObjects, lineStri
 		}
 
 		for (let name in item) {
-			if (consistentWidthProperties.has(name)) {
+			if (properties.has(name)) {
 				item[name] = item[name].toString().padStart(maxWidths[name]);
 			}
 		}
@@ -383,7 +366,7 @@ export function toTable(array, consistentWidthProperties, cloneObjects, lineStri
 * @param {string} [indexName] The name of the UNIQUE INDEX created on the table
 * @param {string} [indexColumns] The UNIQUE INDEX' columns
 */
-Database.prototype.createTable = function (tableName, tableColumns, indexName, indexColumns) {
+BetterSqlite3.prototype.createTable = function (tableName, tableColumns, indexName, indexColumns) {
 	if (this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;").pluck().get(tableName)) {
 		return;
 	}
@@ -436,7 +419,10 @@ const signs = {
 	"1": "+",
 };
 
-/** Converts the number to a string that always starts with a sign */
+/**
+ * Converts the number to a string that always starts with a sign
+ * @this {number}
+ */
 Number.prototype.toDifference = function () {
 	return `${signs[Math.sign(this)]}${Math.abs(this)}`;
 };
@@ -444,7 +430,10 @@ Number.prototype.toDifference = function () {
 /** Suffixes for function toOrdinal */
 const ordinalSuffixes = [ null, "st", "nd", "rd" ];
 
-/** Converts the integer number to an English ordinal number */
+/**
+ * Converts the integer number to an English ordinal number
+ * @this {number}
+ */
 Number.prototype.toOrdinal = function () {
 	return `${this}${ordinalSuffixes[this / 10 % 10 ^ 1 && this % 10] ?? "th"}`;
 };
@@ -459,7 +448,7 @@ Object.defineProperties(Object.prototype, {
 	withPrototype: {
 		/**
 		 * Returns an object (might be a shallow copy) that uses the specified prototype
-		 * @param {object} prototype The prototype the output object should use
+		 * @param {*} prototype The prototype the output object should use
 		 */
 		value: function withPrototype(prototype) {
 			return prototype ? Object.assign(Object.create(prototype), this) : this;
@@ -470,7 +459,7 @@ Object.defineProperties(Object.prototype, {
 		 * Returns an object (might be a deep copy) that uses the specified prototype and
 		 * whose "simple" subobjects (simple dicts with curly brackets; e.g. `{ e: 3 }`) also have that prototype.
 		 * Used for game-specific configuration in the guild config.
-		 * @param {object} prototype The prototype the output object should use
+		 * @param {*} prototype The prototype the output object should use
 		 */
 		value: function withPrototypeRecursive(prototype) {
 			if (!prototype) {

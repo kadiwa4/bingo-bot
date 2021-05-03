@@ -14,13 +14,13 @@ const logFile = fs.createWriteStream(`./logs/${new Date().toISOString().replace(
 const nodeStdoutWrite = process.stdout.write;
 process.stdout.write = function stdoutWrite() {
 	logFile.write(...arguments);
-	nodeStdoutWrite.call(process.stdout, ...arguments);
+	return nodeStdoutWrite.apply(process.stdout, arguments);
 };
 
 const nodeStderrWrite = process.stderr.write;
 process.stderr.write = function stderrWrite() {
 	logFile.write(...arguments);
-	nodeStderrWrite.call(process.stderr, ...arguments);
+	return nodeStderrWrite.apply(process.stderr, arguments);
 };
 
 import "./discord/Client.js";
@@ -59,7 +59,7 @@ if (!fs.existsSync(DISCORD_AUTH)) {
 }
 
 /** @type {string} */
-const discordAuthToken = JSON.parse(fs.readFileSync(DISCORD_AUTH)).token;
+const discordAuthToken = JSON.parse(fs.readFileSync(DISCORD_AUTH, "utf-8")).token;
 if (discordAuthToken === TOKEN_HERE || discordAuthToken.length === 0) {
 	discordAuthRequired();
 }
@@ -81,7 +81,7 @@ const { Events } = Discord.Constants;
 
 // new incoming Discord message
 client.on(Events.MESSAGE_CREATE, function onMessage(message) {
-	if (!message.author.bot && (!message.guild || message.content.startsWith(message.guild.commandPrefix))) {
+	if (!message.author.bot && (!message.guild || (message.content.startsWith(message.guild.commandPrefix) && message.guild.srName))) {
 		client.useCommand(message, message.member ?? message.author);
 	}
 });
@@ -110,7 +110,7 @@ process.on("exit", function onExit() {
 		database.close();
 	}
 
-	log('', "exited");
+	log("exited");
 });
 
 // uncaught JS exception
@@ -132,14 +132,16 @@ process.on("SIGINT", async function onKeyboardInterrupt() {
 });
 
 client.application = await client.fetchApplication();
-client.srGuilds = newMap();
-client.modules = newMap();
 client.commands = newMap();
 client.config = {};
+client.modules = newMap();
+client.srGuilds = newMap();
 
-client.owner = client.application.owner;
-if (client.owner instanceof Discord.Team) {
-	client.owner = client.owner.owner.user;
+const { owner } = client.application;
+if (owner instanceof Discord.User) {
+	client.owner = owner;
+} else {
+	client.owner = owner.owner.user;
 }
 
 client.owner.createDM();
@@ -154,13 +156,16 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
 		throw new Error(`'src/guild_configs/${file}' is not a JavaScript file`);
 	}
 
-	/** @type {GuildInput} */
-	let guildInput = await import(`./guild_configs/${file}`);
-	if (Object.keys(guildInput).length === 1 && guildInput.default) {
-		guildInput = guildInput.default;
+	/** @type {GuildInput | { default: GuildInput; }} */
+	let guildInputImport = await import(`./guild_configs/${file}`);
+	if (Object.keys(guildInputImport).length === 1 && "default" in guildInputImport) {
+		guildInputImport = guildInputImport.default;
 	}
 
-	if (!guildInput.id) {
+	/** @type {GuildInput} */
+	const guildInput = guildInputImport;
+
+	if (!("id" in guildInput)) {
 		throw new Error(`'src/guild_configs/${file}' doesn't have the property 'id'`);
 	}
 

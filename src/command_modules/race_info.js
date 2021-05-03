@@ -21,7 +21,7 @@ export const commands = {
 		category: HelpCategory.STATS,
 		raceChannelOnly: true,
 		onUse: function raceStatus(onError, message) {
-			/** @type {Discord.TextChannel & { race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { guild, race } = message.channel;
 			const { emotes } = race.game.config;
 
@@ -97,8 +97,8 @@ export const commands = {
 		usage: "[<race ID>]",
 		category: HelpCategory.STATS,
 		guildDependent: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceResult(onError, message, member, args) {
-			/** @type {Discord.GuildMember} */
 			const { guild } = member;
 			const { sqlite } = guild;
 
@@ -117,14 +117,12 @@ export const commands = {
 				}
 			}
 
-			/** @type {object[]} */
 			const race = sqlite.getRace.get(raceID);
 			if (!race) {
 				message.inlineReply("Race not found.");
 				return;
 			}
 
-			/** @type {Game} */
 			const game = guild.getGame(race.game);
 
 			const messageStart = `**Result for ${game} / ${race.category}${race.level ? ` / ${race.level}` : ""} race (`;
@@ -174,7 +172,7 @@ export const commands = {
 		category: HelpCategory.IL_RACE,
 		raceChannelOnly: true,
 		onUse: function raceIlresults(onError, message) {
-			/** @type {{ race: Race; }} */
+			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
 			if (!race.category.isIL || (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN && race.state !== RaceState.ACTIVE)) {
@@ -208,8 +206,8 @@ export const commands = {
 		usage: "<game name> / <category name>",
 		category: HelpCategory.STATS,
 		guildDependent: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceLeaderboard(onError, message, member, args) {
-			/** @type {Discord.GuildMember} */
 			const { guild } = member;
 			const { sqlite } = guild;
 
@@ -243,7 +241,7 @@ export const commands = {
 					}
 				}
 			} else {
-				/** @type {{ race: Race; }} */
+				/** @type {Discord.TextChannel} */
 				const { race } = message.channel;
 
 				if (!race) {
@@ -285,8 +283,8 @@ export const commands = {
 		description: "Recalculates the Elo leaderboards",
 		category: HelpCategory.MOD,
 		modOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceFixElo(onError, message, member) {
-			/** @type {Discord.GuildMember} */
 			const { guild } = member;
 			const { sqlite } = guild;
 
@@ -348,8 +346,8 @@ export const commands = {
 		usage: "<race ID>",
 		category: HelpCategory.MOD,
 		modOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceRemove(onError, message, member, args) {
-			/** @type {Discord.GuildMember} */
 			const { guild } = member;
 			const { sqlite } = guild;
 
@@ -447,7 +445,7 @@ export const commands = {
 				recordRaceElo(sqlite, teams, raceID, race.game, race.category);
 			}
 
-			message.acknowledge();
+			message.acknowledge(member);
 		},
 	},
 	raceMe: {
@@ -456,6 +454,7 @@ export const commands = {
 		usage: "<game name>",
 		category: HelpCategory.STATS,
 		guildDependent: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: function raceMe(onError, message, member, args) {
 			if (!args) {
 				this.showUsage(...arguments);
@@ -471,6 +470,7 @@ export const commands = {
 		usage: "<user> / <game name>",
 		category: HelpCategory.STATS,
 		guildDependent: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function raceRunner(onError, message, member, args) {
 			if (!args) {
 				this.showUsage(...arguments);
@@ -515,12 +515,12 @@ export const commands = {
 
 /**
  * For !me and !runner
- * @param {(error) => void} onError
+ * @param {ErrorFunction} onError
  * @param {Discord.Guild} guild
  * @param {Discord.Message} message
  * @param {string} userID
  * @param {string} userName
- * @param {Game} gameInput
+ * @param {string} gameInput
  * @param {boolean} fromMeCmd
  */
 function showUserStats(onError, guild, message, userID, userName, gameInput, fromMeCmd) {
@@ -533,7 +533,7 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
 	const { sqlite } = guild;
 	const { emotes } = game.config;
 
-	/** @type {object[]} */
+	/** @type {any[]} */
 	const stats = sqlite.getUserStatsForGame.all(userID, game.name);
 	if (stats.length === 0) {
 		message.inlineReply(`${fromMeCmd ? "You have" : `${userName} has`}n't done any ${game} races yet.`);
@@ -576,10 +576,10 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
 }
 
 /**
- * @param {BetterSqlite3.Database} sqlite
+ * @param {*} sqlite
  * @param {Config.Elo} eloConfig
- * @param {object} row
- * @param {object[]} teams
+ * @param {*} row
+ * @param {any[]} teams
  * @param {string} game
  * @param {string} category
  */
@@ -613,8 +613,8 @@ function recalculateElo(sqlite, eloConfig, row, teams, game, category) {
 }
 
 /**
- * @param {BetterSqlite3.Database} sqlite
- * @param {object[]} teams
+ * @param {*} sqlite
+ * @param {any[]} teams
  * @param {number} raceID
  * @param {string} game
  * @param {string} category

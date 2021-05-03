@@ -2,26 +2,17 @@ import { bind, hasProperties, noop } from "../misc.js";
 
 import Discord, { Message } from "discord.js";
 
-/**
- * Reacts with an emote that shows that the message was understood
- * @param {Discord.GuildMember} member
- */
+/** Reacts with an emote that shows that the message was understood */
 Message.prototype.acknowledge = function (member) {
-	this.react((this.channel.race?.game ?? member.guild).config.emotes.acknowledge);
+	return this.react((this.channel.race?.game ?? member.guild).config.emotes.acknowledge);
 };
 
 /** Crosses out the message */
 Message.prototype.crossOut = function () {
-	this.edit(`~~${this}~~`).catch(noop);
+	return this.edit(`~~${this}~~`).catch(noop);
 };
 
-/**
- * Split long reply over multiple messages
- * @param {(error) => void} onError
- * @param {string} firstHeading
- * @param {string} otherHeading
- * @param {() => Generator<string, void, unknown> | Promise<Generator<string, void, unknown>>} messageGenerator
- */
+/** Split long reply over multiple messages */
 Message.prototype.multiReply = async function (onError, firstHeading, otherHeading, messageGenerator) {
 	const messages = [];
 	let messageString = firstHeading;

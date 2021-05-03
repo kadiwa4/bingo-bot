@@ -1,4 +1,5 @@
 /// <reference path="../types.d.ts" />
+//@ts-check
 
 import { MULTI_GAME } from "../misc.js";
 

@@ -13,8 +13,8 @@ export const commands = {
 		aliases: [ "commands", "tutorial" ],
 		usage: "[<command name>]",
 		description: "Shows a list of commands or details on one command",
+		/** @param {Discord.GuildMember} member */
 		onUse: function metaHelp(onError, message, member, args) {
-			/** @type {Discord.TextChannel} */
 			const { client, guild } = member;
 
 			if (!args) {
@@ -49,8 +49,8 @@ export const commands = {
 		usage: "<@user or ID> <command>",
 		category: HelpCategory.MOD,
 		modOnly: true,
+		/** @param {Discord.GuildMember} member */
 		onUse: async function metaAs(onError, message, member, args) {
-			/** @type {Discord.GuildMember} */
 			const { client, guild } = member;
 
 			const splitArgs = args?.split?.(WHITESPACE_PLUS) ?? "";
@@ -66,13 +66,13 @@ export const commands = {
 				return;
 			}
 
-			member = await guild.members.fetch(id).catch(noop);
-			if (!member) {
+			const mentionedMember = await guild.members.fetch(id).catch(noop);
+			if (!mentionedMember) {
 				message.inlineReply("Server member not found.");
 				return;
 			}
 
-			if (!await client.useCommand(message, member, args.slice(userInput.length).trim())) {
+			if (!await client.useCommand(message, mentionedMember, args.slice(userInput.length).trim())) {
 				message.inlineReply("Command not found.");
 			}
 		},
