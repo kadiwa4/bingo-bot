@@ -14,16 +14,6 @@ export default class Command {
 	 * @param {string} id The (normally alphanumeric) command ID
 	 */
 	constructor(module, id) {
-		if (module) {
-			const commandInput = module.commands[id];
-			Object.assign(this, commandInput);
-
-			assert((this.names || this.aliases.length > 0)
-				&& (!this.raceChannelOnly || this.guildDependent)
-				&& (!this.modOnly || this.guildDependent)
-				&& this.onUse !== Command.prototype.onUse);
-		}
-
 		/** The (normally alphanumeric) command ID */
 		this.id = id;
 
@@ -47,6 +37,16 @@ export default class Command {
 		 * @default HelpCategory.OTHER
 		 */
 		this.category = HelpCategory.OTHER;
+
+		if (module) {
+			const commandInput = module.commands[id];
+			Object.assign(this, commandInput);
+
+			assert((this.names || this.aliases.length > 0)
+				&& (!this.raceChannelOnly || this.guildDependent)
+				&& (!this.modOnly || this.guildDependent)
+				&& this.onUse !== Command.prototype.onUse);
+		}
 	}
 
 	/**
