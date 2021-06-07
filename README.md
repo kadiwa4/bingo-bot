@@ -4,13 +4,15 @@ Bingo Bot is a speedrunning race bot for Discord, [originally developed for Litt
 
 To get an overview of how the code works and where to start, see [`code_structure.md`](/code_structure.md).
 
+[Discord server](https://discord.gg/B9hBn7Gu9z)
+
 ## Setup
 
 [Set up a Discord bot](https://discord.com/developers/applications)
 
 Enable Application > Bot > Server Members Intent.
 
-Install [Node.js](https://nodejs.org/en/) (latest or LTS version).
+Install [Node.js](https://nodejs.org/en/) (LTS version or newer).
 
 Get build tools.
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
