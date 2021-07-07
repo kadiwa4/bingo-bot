@@ -10,7 +10,6 @@ import { clean, formatTime, hasProperties, invertObject, MULTI_GAME, newMap, WHI
 
 import assert from "assert";
 
-import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
 
 export const id = "race_control";
@@ -68,7 +67,12 @@ export function init(guild, guildInput) {
 	for (let categoryName in commonCategories ?? {}) {
 		const categoryInput = commonCategories[categoryName];
 
-		invertObject(guild.config.cleanUpCategory(categoryName).name, categoryInput.aliases, guild.commonCategories, new Category(categoryName, categoryInput));
+		invertObject(
+			guild.config.cleanUpCategory(categoryName).name,
+			categoryInput.aliases,
+			guild.commonCategories,
+			new Category(categoryName, categoryInput),
+		);
 	}
 
 	guild.cleanUpGameName = guildInput.cleanUpGameName;
@@ -95,14 +99,24 @@ export function init(guild, guildInput) {
 				game.defaultLevel = levelName;
 			}
 
-			invertObject(game.config.cleanUpLevelName(levelName), levelInput?.aliases, game.levels, levelName);
+			invertObject(
+				game.config.cleanUpLevelName(levelName),
+				levelInput?.aliases,
+				game.levels,
+				levelName,
+			);
 		}
 
 		if (hasProperties(game.levels) && !game.defaultLevel) {
 			throw new Error(`no default level of game '${gameName}'`);
 		}
 
-		invertObject(guild.cleanUpGameName(gameName), gameInput.aliases, guild.games, game);
+		invertObject(
+			guild.cleanUpGameName(gameName),
+			gameInput.aliases,
+			guild.games,
+			game,
+		);
 	}
 
 	// set up game "Multiple Games" if configured
@@ -249,8 +263,7 @@ export const commands = {
 			if (member.user.isEntrant && member.team.race !== race) {
 				// user is already racing somewhere else
 				race = member.team.race;
-				message.inlineReply(`You are already racing in ${(race.guild === guild)
-					? race.channel : race.guild.srName}.`);
+				message.inlineReply(`You are already racing in ${(race.guild === guild) ? race.channel : race.guild.srName}.`);
 				return;
 			}
 
@@ -318,8 +331,12 @@ export const commands = {
 				return;
 			}
 
-			if (race.state === RaceState.ACTIVE && member.team.state !== TeamState.NOT_DONE
-				&& race.category.isIL && !race.leaveWhenDone.has(member)) {
+			if (
+				race.state === RaceState.ACTIVE
+				&& member.team.state !== TeamState.NOT_DONE
+				&& race.category.isIL
+				&& !race.leaveWhenDone.has(member)
+			) {
 				// if this person has already finished the IL, mark them to leave once the race is over
 				race.leaveWhenDone.add(member);
 				member.leaveWhenDoneMessage = message.inlineReply(`You'll leave the race automatically once the current IL is done (use \`${guild.commandPrefix}race\` to rejoin if this was an accident).`);
@@ -388,7 +405,8 @@ export const commands = {
 			const wasIL = race.category.isIL;
 			let note = "";
 
-			const category = (game ?? race.game).getCategory(categoryInput)?.forCoop?.(race.hasCoopTeam);
+			const category = (game ?? race.game).getCategory(categoryInput)
+				?.forCoop?.(race.hasCoopTeam);
 			if (category) {
 				if ((!game || game === race.game) && race.category === category) {
 					// game and category didn't change
@@ -404,7 +422,8 @@ export const commands = {
 			} else {
 				// use unofficial category
 				note = `\n**Note:** That's not an official category in ${game ?? race.game} though; did you mean something else?`;
-				race.category = new Category(clean(categoryInput, message)).forCoop(race.hasCoopTeam);
+				race.category = new Category(clean(categoryInput, message))
+					.forCoop(race.hasCoopTeam);
 			}
 
 			if (game && game !== race.game) {
@@ -519,7 +538,11 @@ export const commands = {
 			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
-			if (!race.hasEntrant(member) || !member.isReady || (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN)) {
+			if (
+				!race.hasEntrant(member)
+				|| !member.isReady
+				|| (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN)
+			) {
 				// user isn't racing here / user isn't ready / race state isn't JOINING or COUNTDOWN
 				return;
 			}
@@ -543,7 +566,9 @@ export const commands = {
 			const { client, race } = message.channel;
 
 			// depending on the situation, run either the command `ready` or `race`
-			return client.commands[(race.hasEntrant(member) && race.state === RaceState.JOINING) ? "ready" : "race"].onUse(...arguments);
+			return client.commands[
+				(race.hasEntrant(member) && race.state === RaceState.JOINING) ? "ready" : "race"
+			].onUse(...arguments);
 		},
 	},
 	raceDone: {
@@ -558,7 +583,11 @@ export const commands = {
 			const { guild, race } = message.channel;
 			const { team } = member;
 
-			if (!race.hasEntrant(member) || race.state !== RaceState.ACTIVE || team.state !== TeamState.NOT_DONE) {
+			if (
+				!race.hasEntrant(member)
+				|| race.state !== RaceState.ACTIVE
+				|| team.state !== TeamState.NOT_DONE
+			) {
 				// user isn't in the race / it isn't active / the team isn't going anymore
 				return;
 			}
@@ -655,7 +684,11 @@ export const commands = {
 			const { guild, race } = message.channel;
 			const { team } = member;
 
-			if (!race.hasEntrant(member) || race.state !== RaceState.ACTIVE || team.state !== TeamState.NOT_DONE) {
+			if (
+				!race.hasEntrant(member)
+				|| race.state !== RaceState.ACTIVE
+				|| team.state !== TeamState.NOT_DONE
+			) {
 				// user isn't in the race / it isn't active / the team isn't going anymore
 				return;
 			}
@@ -717,11 +750,17 @@ export const commands = {
 			const splitArgs = args.split("/");
 
 			for (let index = 0; index < splitArgs.length; index += 1) {
-				let arg = splitArgs[index];
+				const arg = splitArgs[index].trim();
 
-				const mentionedMember = await guild.getMember(arg);
+				const id = guild.getUserID(arg);
+				if (!id) {
+					message.inlineReply(`User “${clean(arg, message)}” not found.`, { split: true });
+					return;
+				}
+
+				const mentionedMember = await this.members.fetch(id).catch(noop);
 				if (!mentionedMember) {
-					message.inlineReply(`Entrant “${clean(arg, message)}” not found.`, { split: true });
+					message.inlineReply("Server member not found.");
 					return;
 				}
 
@@ -763,7 +802,8 @@ export const commands = {
 
 			race.checkCategoryCoop();
 
-			const members = team.map((member) => `${member.readyEmote} ${member.cleanName}`).join("\n  ");
+			const members = team.map((member) => `${member.readyEmote} ${member.cleanName}`)
+				.join("\n  ");
 			message.inlineReply(`${team}'s members were updated to:\n  ${members}${race.checkNotCountingDown()}`, { split: true });
 		},
 	},
@@ -857,7 +897,11 @@ export const commands = {
 			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
-			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING || !race.hasCoopTeam) {
+			if (
+				!race.hasEntrant(member)
+				|| race.state !== RaceState.JOINING
+				|| !race.hasCoopTeam
+			) {
 				// user isn't racing here / race state isn't JOINING / there are only solo teams in the race
 				return;
 			}

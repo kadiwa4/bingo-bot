@@ -737,7 +737,7 @@ declare module 'discord.js' {
     public async init(guildInput: GuildInput): Promise<void>;
     public cleanUpGameName(input: string): string;
     public getGame(input: string): ?Game;
-    public async getMember(input: string): Promise<?GuildMember>;
+    public getUserID(input: string): ?string;
     public async getUserName(id: string): Promise<?string>;
     public async loadModule(guildInput: GuildInput, moduleID: string): Promise<void>;
 

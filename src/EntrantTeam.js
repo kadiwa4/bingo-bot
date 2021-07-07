@@ -113,7 +113,9 @@ export default class EntrantTeam extends Array {
 	 * @readonly
 	 */
 	get name() {
-		return this.isCoop ? (this.teamName ?? `Team ${this.leader.cleanName}`) : this.leader.cleanName;
+		return this.isCoop
+			? (this.teamName ?? `Team ${this.leader.cleanName}`)
+			: this.leader.cleanName;
 	}
 
 	/**
@@ -185,7 +187,9 @@ export default class EntrantTeam extends Array {
 	 * @type {number}
 	 */
 	get ilScoreAverage() {
-		return this.isCoop ? this.map((teamMember) => teamMember.ilScore).reduce(add) / this.length : this.leader.ilScore;
+		return this.isCoop
+			? this.map((teamMember) => teamMember.ilScore).reduce(add) / this.length
+			: this.leader.ilScore;
 	}
 
 	/**
@@ -202,7 +206,9 @@ export default class EntrantTeam extends Array {
 		// calculate team Elo as specified in the config
 		// if the team has more than one member
 		return this.isCoop
-			? eloConfig.calculateTeamElo(this.map((member) => (sqlite.getUserElo.get(member.id, gameName, categoryName) ?? eloConfig.start)))
+			? eloConfig.calculateTeamElo(this.map((member) => (
+				sqlite.getUserElo.get(member.id, gameName, categoryName) ?? eloConfig.start
+			)))
 			: (sqlite.getUserElo.get(this.leader.id, gameName, categoryName) ?? eloConfig.start);
 	}
 
@@ -224,7 +230,15 @@ export default class EntrantTeam extends Array {
 		const elo = this.getElo();
 		for (let team2 of this.race.teams) {
 			if (this !== team2) {
-				eloChange += calculateEloMatchup(elo, this.state, this.doneTime, bind(team2, "getElo"), team2.state, team2.doneTime, this.race.game.config.race.elo) * team2.length;
+				eloChange += calculateEloMatchup(
+					elo,
+					this.state,
+					this.doneTime,
+					bind(team2, "getElo"),
+					team2.state,
+					team2.doneTime,
+					this.race.game.config.race.elo,
+				) * team2.length;
 			}
 		}
 

@@ -111,7 +111,12 @@ Guild.prototype.init = async function (guildInput) {
 	delete this.helpStrings;
 	log("initialized guild", this);
 
-	invertObject(client.cleanUpGuildName(this.srName), guildInput.aliases, client.srGuilds, this);
+	invertObject(
+		client.cleanUpGuildName(this.srName),
+		guildInput.aliases,
+		client.srGuilds,
+		this,
+	);
 };
 
 /** Gets the game that matches the input the closest */
@@ -120,12 +125,17 @@ Guild.prototype.getGame = function (input) {
 };
 
 /** Gets the guild member that matches the input the closest */
-Guild.prototype.getMember = async function (input) {
+Guild.prototype.getUserID = function (input) {
 	const { sqlite } = this;
 	input = input.trim();
 
-	const id = getUserID(input) ?? sqlite.getUserIDFromName.get(input) ?? sqlite.getUserIDFromNickname.get(input);
-	return id ? await this.members.fetch(id).catch(noop) ?? null : null;
+	return (
+		getUserID(input)
+		?? sqlite.getUserIDFromName.get(input)
+		?? sqlite.getUserIDFromNickname.get(input)
+		?? null
+	);
+	//return id ? await this.members.fetch(id).catch(noop) ?? null : null;
 };
 
 /** Gets the name of a user, even if they aren't a member anymore */

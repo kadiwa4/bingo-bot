@@ -72,7 +72,8 @@ export const commands = {
 				return;
 			}
 
-			if (!await client.useCommand(message, mentionedMember, args.slice(userInput.length).trim())) {
+			const commandInput = args.slice(userInput.length).trim()
+			if (!await client.useCommand(message, mentionedMember, commandInput)) {
 				message.inlineReply("Command not found.");
 			}
 		},

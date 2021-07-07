@@ -125,7 +125,8 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 			}
 		}
 
-		await command.onUse(onError, message, userOrMember, inputMatch[3] ?? null)?.catch?.(onError);
+		await command.onUse(onError, message, userOrMember, inputMatch[3] ?? null)
+			?.catch?.(onError);
 	} catch (error) {
 		onError(error);
 	}
