@@ -88,7 +88,9 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
 	// 0 and 1) that is calculated by comparing the previous Elos.
 	// the better the team (judging by the current Elos), the higher the expectations
 	// it's then multiplied by the max Elo increase
-	const expectedScore = eloConfig.maxEloGain / (1 + eloConfig.base ** ((team2Elo - team1Elo) / eloConfig.dividend));
+	const expectedScore = eloConfig.maxEloGain / (
+		1 + eloConfig.base ** ((team2Elo - team1Elo) / eloConfig.dividend)
+	);
 
 	if (team1State === team2State) {
 		// both teams finished
@@ -272,7 +274,10 @@ export function isMod(message, member) {
 		assert(authorMember);
 	}
 
-	return member.guild.owner === authorMember || member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id));
+	return (
+		member.guild.owner === authorMember
+		|| member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id))
+	);
 }
 
 /**
@@ -367,7 +372,10 @@ export function toTable(array, consistentWidthProperties, cloneObjects, lineStri
 * @param {string} [indexColumns] The UNIQUE INDEX' columns
 */
 BetterSqlite3.prototype.createTable = function (tableName, tableColumns, indexName, indexColumns) {
-	if (this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;").pluck().get(tableName)) {
+	if (
+		this.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?;")
+			.pluck().get(tableName)
+	) {
 		return;
 	}
 

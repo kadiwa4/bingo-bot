@@ -81,7 +81,10 @@ const { Events } = Discord.Constants;
 
 // new incoming Discord message
 client.on(Events.MESSAGE_CREATE, function onMessage(message) {
-	if (!message.author.bot && (!message.guild || (message.content.startsWith(message.guild.commandPrefix) && message.guild.srName))) {
+	if (!message.author.bot && (
+		!message.guild
+		|| (message.content.startsWith(message.guild.commandPrefix) && message.guild.srName)
+	)) {
 		client.useCommand(message, message.member ?? message.author);
 	}
 });

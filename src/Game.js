@@ -129,11 +129,21 @@ export default class Game {
 					}
 
 					category.games.push(game);
-					invertObject(cleanedUpCategoryName, multiCategoryInput.aliases, game.categories, category);
+					invertObject(
+						cleanedUpCategoryName,
+						multiCategoryInput.aliases,
+						game.categories,
+						category,
+					);
 				}
 			}
 
-			invertObject(cleanedUpCategoryName, categoryInput?.aliases, this.categories, category);
+			invertObject(
+				cleanedUpCategoryName,
+				categoryInput?.aliases,
+				this.categories,
+				category,
+			);
 		}
 
 		if (!this.defaultCategory) {

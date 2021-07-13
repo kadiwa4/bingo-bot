@@ -2,12 +2,10 @@ import Command from "../Command.js";
 import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
-import Race from "../Race.js";
-import { calculateEloMatchup, clean, formatTime, getUserID, increasePlace, MULTI_GAME, toTable } from "../misc.js";
+import { calculateEloMatchup, clean, formatTime, increasePlace, MULTI_GAME, toTable } from "../misc.js";
 
 import assert from "assert";
 
-import BetterSqlite3 from "better-sqlite3";
 import Discord from "discord.js";
 
 export const id = "race_info";
@@ -68,9 +66,7 @@ export const commands = {
 					// say race is done if it is, otherwise say it's in progress and show the time
 					message.multiReply(
 						onError,
-						`**${race} is ${race.state === RaceState.ACTIVE
-							? `in progress. Current time: ${formatTime(Date.now() / 1000 - race.startTime)}`
-							: `done!${race.everyoneForfeited ? "" : " Results will be recorded soon."}`}**\n`,
+						`**${race} is ${race.state === RaceState.ACTIVE ? `in progress. Current time: ${formatTime(Date.now() / 1000 - race.startTime)}` : `done!${race.everyoneForfeited ? "" : " Results will be recorded soon."}`}**\n`,
 						`**${race.gameCategoryLevel} race (cont):**\n`,
 						function* () {
 							// list done entrants
@@ -136,9 +132,10 @@ export const commands = {
 
 			async function teamMembers(result) {
 				return result.team_name
-					? `\t${(await Promise.all(sqlite.getTeamUserIDs.all(parseInt(result.user_or_team_id))
-						.map((userID) => guild.getUserName(userID))))
-						.join("\n\t")}\n`
+					? `\t${(await Promise.all(
+							sqlite.getTeamUserIDs.all(parseInt(result.user_or_team_id))
+								.map((userID) => guild.getUserName(userID))
+						)).join("\n\t")}\n`
 					: "";
 			}
 
@@ -175,7 +172,11 @@ export const commands = {
 			/** @type {Discord.TextChannel} */
 			const { race } = message.channel;
 
-			if (!race.category.isIL || (race.state !== RaceState.JOINING && race.state !== RaceState.COUNTDOWN && race.state !== RaceState.ACTIVE)) {
+			if (!race.category.isIL || (
+				race.state !== RaceState.JOINING
+				&& race.state !== RaceState.COUNTDOWN
+				&& race.state !== RaceState.ACTIVE
+			)) {
 				// no IL race happening
 				return;
 			}
@@ -395,8 +396,15 @@ export const commands = {
 
 			for (let row of resultsSinceRace) {
 				if (row.team_name) {
-					for (let teamMember of sqlite.getTeamUserIDsAndElo.all(row.user_or_team_id, race.game, race.category)) {
-						sqlite.updateUserElo.run(teamMember.elo - row.elo_change, teamMember.user_id, race.game, race.category);
+					for (let teamMember of (
+						sqlite.getTeamUserIDsAndElo.all(row.user_or_team_id, race.game, race.category)
+					)) {
+						sqlite.updateUserElo.run(
+							teamMember.elo - row.elo_change,
+							teamMember.user_id,
+							race.game,
+							race.category,
+						);
 
 						if (row.race_id === raceID) {
 							revertUserStat(teamMember.user_id, row);
@@ -404,7 +412,12 @@ export const commands = {
 					}
 				} else {
 					const elo = sqlite.getUserElo.get(row.user_or_team_id, race.game, race.category);
-					sqlite.updateUserElo.run(elo - row.elo_change, row.user_or_team_id, race.game, race.category);
+					sqlite.updateUserElo.run(
+						elo - row.elo_change,
+						row.user_or_team_id,
+						race.game,
+						race.category,
+					);
 
 					if (row.race_id === raceID) {
 						revertUserStat(row.user_or_team_id, row);
@@ -486,26 +499,16 @@ export const commands = {
 				return;
 			}
 
-			let id;
-			let userName;
+			const id = guild.getUserID(splitArgs[0]);
+			if (!id) {
+				message.inlineReply(`User “${clean(splitArgs[0].trim(), message)}” not found.`, { split: true });
+				return;
+			}
 
-			const mentionedMember = await guild.getMember(splitArgs[0]);
-			if (mentionedMember) {
-				id = mentionedMember.id;
-				userName = mentionedMember.cleanName;
-			} else {
-				id = getUserID(splitArgs[0]);
-				if (!id) {
-					message.inlineReply(`User “${splitArgs[0].trim()}” not found.`, { split: true });
-					return;
-				}
-
-				userName = await guild.getUserName(id);
-
-				if (!userName) {
-					message.inlineReply(`User ${id} not found.`);
-					return;
-				}
+			const userName = await guild.getUserName(id);
+			if (!userName) {
+				message.inlineReply(`Server member ${id} not found.`);
+				return;
 			}
 
 			showUserStats(onError, guild, message, id, userName, splitArgs[1], false);
@@ -561,16 +564,21 @@ function showUserStats(onError, guild, message, userID, userName, gameInput, fro
 				return;
 			}
 
-			yield* toTable(stats2, [ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ], false, (stat) => (
-				// \xA0 is a non-breaking space
-				`  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
-				}\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count
-				}\`   ${emotes.secondPlace}\xA0\`${stat.second_place_count
-				}\`   ${emotes.thirdPlace}\xA0\`${stat.third_place_count
-				}\`   ${emotes.forfeited}\xA0\`${stat.forfeit_count
-				}\`   ${emotes.elo}\xA0\`${Math.floor(stat.elo).toString().padStart(4)
-				}\`   ${emotes.racing}\xA0\`${formatTime(stat.pb, false)}\`\n`
-			));
+			yield* toTable(
+				stats2,
+				[ "race_count", "first_place_count", "second_place_count", "third_place_count", "forfeit_count" ],
+				false,
+				(stat) => (
+					// \xA0 is a non-breaking space
+					`  ${stat.category}:\n\t${emotes.done}\xA0\`${stat.race_count
+					}\`   ${emotes.firstPlace}\xA0\`${stat.first_place_count
+					}\`   ${emotes.secondPlace}\xA0\`${stat.second_place_count
+					}\`   ${emotes.thirdPlace}\xA0\`${stat.third_place_count
+					}\`   ${emotes.forfeited}\xA0\`${stat.forfeit_count
+					}\`   ${emotes.elo}\xA0\`${Math.floor(stat.elo).toString().padStart(4)
+					}\`   ${emotes.racing}\xA0\`${formatTime(stat.pb, false)}\`\n`
+				),
+			);
 		}
 	);
 }
@@ -603,7 +611,15 @@ function recalculateElo(sqlite, eloConfig, row, teams, game, category) {
 	const team1Length = team1.members?.length ?? 1;
 
 	for (let team2 of teams) {
-		let eloChange = calculateEloMatchup(team1.oldElo, team1.state, team1.time, team2.oldElo, team2.state, team2.time, eloConfig);
+		let eloChange = calculateEloMatchup(
+			team1.oldElo,
+			team1.state,
+			team1.time,
+			team2.oldElo,
+			team2.state,
+			team2.time,
+			eloConfig,
+		);
 
 		team1.eloChange += eloChange * (team2.members?.length ?? 1);
 		team2.eloChange -= eloChange * team1Length;
@@ -624,11 +640,21 @@ function recordRaceElo(sqlite, teams, raceID, game, category) {
 		if ("members" in team) {
 			sqlite.updateCoopEloChange.run(team.eloChange, raceID, team.userOrTeamID);
 			for (let member of team.members) {
-				sqlite.updateUserElo.run(member.elo + team.eloChange, member.user_id, game, category);
+				sqlite.updateUserElo.run(
+					member.elo + team.eloChange,
+					member.user_id,
+					game,
+					category,
+				);
 			}
 		} else {
 			sqlite.updateSoloEloChange.run(team.eloChange, raceID, team.userOrTeamID);
-			sqlite.updateUserElo.run(team.oldElo + team.eloChange, team.userOrTeamID, game, category);
+			sqlite.updateUserElo.run(
+				team.oldElo + team.eloChange,
+				team.userOrTeamID,
+				game,
+				category,
+			);
 		}
 	}
 }

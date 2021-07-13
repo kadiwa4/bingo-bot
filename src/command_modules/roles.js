@@ -106,12 +106,20 @@ export const commands = {
 			}
 
 			// sr.c replaces characters whose char code is higher than 0xFF with question marks
-			if (guild.unicodeNameFix && srcTag.includes("?") && srcTag.length === discordTag.length && srcTag.slice(-5) === discordTag.slice(-5)) {
+			if (
+				guild.unicodeNameFix
+				&& srcTag.includes("?")
+				&& srcTag.length === discordTag.length
+				&& srcTag.slice(-5) === discordTag.slice(-5)
+			) {
 				let tagsMatch = true;
 				let index = 0;
 				// the last 5 characters (e.g. '#0872') have already been checked
 				for (let srcChar of srcTag.slice(0, -5)) {
-					if (srcChar !== discordTag[index] && (srcChar !== "?" || discordTag.charCodeAt(index) < 0x100)) {
+					if (
+						srcChar !== discordTag[index]
+						&& (srcChar !== "?" || discordTag.charCodeAt(index) < 0x100)
+					) {
 						tagsMatch = false;
 						break;
 					}
@@ -160,7 +168,12 @@ function setUpdateAllRolesTimeout(guild) {
 	}
 
 	clearTimeout(guild.updateAllRolesTimeout);
-	guild.updateAllRolesTimeout = setTimeout(updateAllRoles, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1, onError, guild);
+	guild.updateAllRolesTimeout = setTimeout(
+		updateAllRoles,
+		86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1,
+		onError,
+		guild,
+	);
 }
 
 async function updateAllRoles(onError, guild) {
@@ -195,7 +208,12 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 	/** @type {Set<string>} */
 	let newRoles;
 	if (srcID) {
-		const result = await callSRC(onError ?? logError, guild, `/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`);
+		const result = await callSRC(
+			onError ?? logError,
+			guild,
+			`/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`,
+		);
+
 		if (!result) {
 			return;
 		}
@@ -221,7 +239,10 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 			log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
 			guild.sqlite.deleteSrcUser(member.id);
 		} else if (addToDB) {
-			guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: path.match(/s\/([^/]+)\/p/)[1] });
+			guild.sqlite.addSrcUser.run({
+				discord_id: member.id,
+				src_id: path.match(/s\/([^/]+)\/p/)[1],
+			});
 		}
 
 		newRoles = guild.getSRRoles(member, srcResponse.data);
@@ -239,7 +260,13 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 		}
 	}
 
-	await member.roles.set([ ...allRoles ], (!message || message?.author === member.user) ? undefined : `responsible user: '${message.author.tag}'`);
+	await member.roles.set(
+		[ ...allRoles ],
+		(!message || message?.author === member.user)
+			? undefined
+			: `responsible user: '${message.author.tag}'`,
+	);
+
 	message?.acknowledge(member);
 }
 

@@ -106,7 +106,9 @@ export default class Command {
 	 * @returns {?string}
 	 */
 	getUsage(guild) {
-		return this.names ? `\`${this.getDisplayNames(guild)}${this.usage ? ` ${this.usage}` : ""}\`` : null;
+		return this.names
+			? `\`${this.getDisplayNames(guild)}${this.usage ? ` ${this.usage}` : ""}\``
+			: null;
 	}
 
 	/**
@@ -115,7 +117,10 @@ export default class Command {
 	 * @returns {?string}
 	 */
 	getExample(guild) {
-		if ((!this.names && this.fakeNames.length === 0) || (!this.example && (!guild || !this.examples))) {
+		if (
+			(!this.names && this.fakeNames.length === 0)
+			|| (!this.example && (!guild || !this.examples))
+		) {
 			return null;
 		}
 

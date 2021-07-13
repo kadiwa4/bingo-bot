@@ -191,8 +191,10 @@ export default class Race {
 	 */
 	checkIfStillGoing() {
 		// every entrant team either has to be done or has to have forfeited
-		return (this.state === RaceState.ACTIVE && this.teams.every((team) => team.state !== TeamState.NOT_DONE))
-			? this.end() : "";
+		return (
+			this.state === RaceState.ACTIVE
+			&& this.teams.every((team) => team.state !== TeamState.NOT_DONE)
+		) ? this.end() : "";
 	}
 
 	/**
@@ -530,7 +532,9 @@ export default class Race {
 	 * @readonly
 	 */
 	get averageLevelChoiceCount() {
-		return Math.floor(this.entrants.map((entrant) => entrant.ilChoiceCount ?? 0).reduce((x, y) => x + y, 0));
+		return Math.floor(
+			this.entrants.map((entrant) => entrant.ilChoiceCount ?? 0).reduce((x, y) => x + y, 0)
+		);
 	}
 
 	/**
@@ -565,7 +569,9 @@ export default class Race {
 	 */
 	showJoiningEntrants(onError, message, firstHeading, otherHeading) {
 		if (this.category.isIL) {
-			const ilScoreWidth = Math.max(...this.entrants.map((entrant) => entrant.ilScore.toString().length));
+			const ilScoreWidth = Math.max(
+				...this.entrants.map((entrant) => entrant.ilScore.toString().length)
+			);
 
 			// show IL race status
 			/** @param {Discord.GuildMember} entrant */
@@ -580,9 +586,7 @@ export default class Race {
 					yield team.isCoop
 						// \xA0 is a non-breaking space
 						// sort team entrants and loop through them
-						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice()
-							.sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore)
-							.map(entrantString).join("")}`
+						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore).map(entrantString).join("")}`
 						: entrantString(team.leader, false);
 				}
 			}.bind(this));
