@@ -54,7 +54,7 @@ const lbp = {
 		"814156861221634089",
 	],
 	modRoleIDs: [ "795064134609666118" ],
-	moduleIDs: [ "race_control" ],
+	moduleIDs: [ "race_control", "race_coop" ],
 	cleanUpGameName: function bobCleanUpGameName(input) {
 		return input.toLowerCase()
 			.replace(/\W/g, "")

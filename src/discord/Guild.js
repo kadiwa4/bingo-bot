@@ -53,7 +53,7 @@ Guild.prototype.init = async function (guildInput) {
 	moduleIDs.push(...guildInput.moduleIDs);
 
 	for (let moduleID of moduleIDs) {
-		// wait so that moduleIDs gets updated in time
+		// wait so that this.moduleIDs gets updated in time
 		await this.loadModule(guildInput, moduleID);
 	}
 
