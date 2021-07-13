@@ -179,7 +179,8 @@ declare global {
 			timerOffset?: number;
 
 			/**
-			 * How many members can be in a team
+			 * How many members can be in a team. If greater than 1,
+			 * you have to include the `race_coop` command module
 			 * @default 1
 			 */
 			maxTeamSize?: number;
