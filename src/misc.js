@@ -18,15 +18,6 @@ export const WHITESPACE_PLUS = new RegExp(`${WHITESPACE}+`, "g");
 export function noop() {}
 
 /**
- * Adds the two numbers
- * @param {number} a
- * @param {number} b
- */
-export function add(a, b) {
-	return a + b;
-}
-
-/**
  * Adds the member to the user_names table or updates it
  * @param {Discord.GuildMember} member
  */
@@ -150,9 +141,33 @@ export function decodeHTML(text) {
  * @returns {string}
  */
 export function formatTime(time, canHideHours = true) {
+	let sliceStart = (canHideHours && time < 3600) ? -10 : -13;
 	return !time
 		? `${canHideHours ? "" : "--:"}--:--.--`
-		: `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice((canHideHours && time < 3600) ? -10 : -13, -2)}`;
+		: `${(time < 0) ? "−" : ""}${new Date(Math.abs(1000 * time)).toISOString().slice(sliceStart, -2)}`;
+}
+
+/**
+ * Formats a positive time in HH:mm:ss.ss, removing all leading zeros
+ * @param {number} time The time in seconds
+ * @returns {string}
+ */
+export function formatTimeShort(time) {
+	let sliceStart;
+	if (time < 10) {
+		sliceStart = -6;
+	} else if (time < 60) {
+		sliceStart = -7;
+	} else if (time < 600) {
+		sliceStart = -9;
+	} else if (time < 3600) {
+		sliceStart = -10;
+	} else if (time < 36000) {
+		sliceStart = -12;
+	} else {
+		sliceStart = -13;
+	}
+	return new Date(1000 * time).toISOString().slice(sliceStart, -2);
 }
 
 /**
@@ -316,6 +331,42 @@ export function logError(text, guild) {
  */
 export function newMap() {
 	return Object.create(null);
+}
+
+/**
+ * Parses a user-input time and returns it as a number
+ * @param {string} input
+ * @returns {number | null}
+ */
+export function parseTime(input) {
+	let match = input.match(/^(((\d\d?):)?(\d\d?):)?(\d\d?(\.\d{1,3})?)$/);
+	if (match) {
+		let time = parseFloat(match[5]);
+		if (match[4]) {
+			time += 60 * parseInt(match[4], 10);
+			if (match[3]) {
+				time += 3600 * parseInt(match[3], 10);
+			}
+		}
+		return time;
+	}
+
+	match = input.match(/^((\d\d?)\s*(hr?|hours?)\s*)?((\d\d?)\s*(m|min(ute)?s?)\s*)?((\d\d?(\.\d{1,3})?)\s*(s|sec(ond)?s?))?$/);
+	if (match && (match[9] || match[5] || match[2])) {
+		let time = 0;
+		if (match[9]) {
+			time += parseFloat(match[9]);
+		}
+		if (match[5]) {
+			time += 60 * parseInt(match[5], 10);
+		}
+		if (match[2]) {
+			time += 3600 * parseInt(match[2], 10);
+		}
+		return time;
+	}
+
+	return null;
 }
 
 /** Returns a promise that resolves after the specified time */

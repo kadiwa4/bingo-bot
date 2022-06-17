@@ -5,7 +5,7 @@ import Command from "../Command.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import Race from "../Race.js";
-import { clean, formatTime, hasProperties, invertObject, MULTI_GAME, newMap } from "../misc.js";
+import { clean, formatTime, formatTimeShort, hasProperties, invertObject, MULTI_GAME, newMap, parseTime } from "../misc.js";
 
 import assert from "assert";
 
@@ -160,6 +160,7 @@ export function init(guild, guildInput) {
 		user_or_team_id TEXT NOT NULL,
 		team_name TEXT,
 		time INT,
+		penalty INT,
 		elo_change REAL NOT NULL,
 		forfeited INT NOT NULL`,
 		"idx_results_race",
@@ -206,7 +207,7 @@ export function init(guild, guildInput) {
 		getResultTeamIDs: database.prepare("SELECT user_or_team_id FROM results WHERE race_id = ? AND team_name IS NOT NULL;").pluck(),
 		getTeamRaceCount: database.prepare("SELECT COUNT(*) FROM results WHERE user_or_team_id = ? AND team_name IS NOT NULL;").pluck(),
 		getRaceTeamCount: database.prepare("SELECT COUNT(*) FROM results WHERE race_id = ?;").pluck(),
-		addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @elo_change, @forfeited);"),
+		addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, penalty, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @penalty, @elo_change, @forfeited);"),
 		updateSoloEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NULL;"),
 		updateCoopEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NOT NULL;"),
 		deleteResults: database.prepare("DELETE FROM results WHERE race_id = ?;"),
@@ -601,7 +602,7 @@ export const commands = {
 			}
 
 			team.state = TeamState.DONE;
-			team.doneTime = message.createdTimestamp / 1000 - race.startTime;
+			team.doneTime = message.createdTimestamp / 1000 + team.penalty - race.startTime;
 			team.calculateEloChange();
 			team.place = 1;
 			// loop through all other teams
@@ -626,7 +627,7 @@ export const commands = {
 				team.place.toOrdinal(),
 				" place (",
 				team.eloChangeString,
-				`) with a time of ${formatTime(team.doneTime)}`,
+				`) with a time of ${formatTime(team.doneTime)}${team.penalty ? ` (penalty: ${formatTimeShort(team.penalty)})` : ""}`,
 			];
 
 			// update race state
@@ -753,6 +754,42 @@ export const commands = {
 					race.clean(!race.everyoneForfeited);
 			}
 
+			message.acknowledge(member);
+		},
+	},
+	penalty: {
+		names: [ "penalty" ],
+		description: "Gives you/your team a time penalty for the upcoming race/race series",
+		usage: "[<timespan>]",
+		example: "penalty 3:44.67",
+		category: HelpCategory.PRE_RACE,
+		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
+		onUse: function racePenalty(onError, message, member, arg) {
+			/** @type {Discord.TextChannel} */
+			const { race } = message.channel;
+			const { team } = member;
+
+			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
+				// user isn't racing here / race state isn't JOINING
+				return;
+			}
+
+			let time;
+			if (arg) {
+				time = parseTime(arg);
+				if (!time) {
+					this.showUsage(...arguments);
+					return;
+				}
+				if (time === 0) {
+					time = null;
+				}
+			} else {
+				time = null;
+			}
+
+			team.penalty = time;
 			message.acknowledge(member);
 		},
 	},

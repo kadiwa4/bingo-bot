@@ -2,7 +2,7 @@ import Command from "../Command.js";
 import EntrantTeam from "../EntrantTeam.js";
 import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
-import { calculateEloMatchup, clean, formatTime, increasePlace, MULTI_GAME, toTable } from "../misc.js";
+import { calculateEloMatchup, clean, formatTime, formatTimeShort, increasePlace, MULTI_GAME, toTable } from "../misc.js";
 
 import assert from "assert";
 
@@ -152,7 +152,7 @@ export const commands = {
 						const members = await teamMembers(result).catch(onError);
 						assert(name && members !== undefined);
 
-						yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}\n${members}`;
+						yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}${result.penalty ? ` (penalty: ${formatTimeShort(result.penalty)})` : ""}\n${members}`;
 
 						if (!result.forfeited) {
 							increasePlace(placeObject, result.time);

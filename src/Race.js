@@ -296,6 +296,7 @@ export default class Race {
 				user_or_team_id: userOrTeamID,
 				team_name: team.isCoop ? team.name : null,
 				time: team.doneTime,
+				penalty: team.penalty,
 				elo_change: team.eloChange,
 				forfeited: +(team.state === TeamState.FORFEITED),
 			});

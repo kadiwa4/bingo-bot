@@ -1,7 +1,7 @@
 /// <reference path="./types.d.ts" />
 
 import { TeamState } from "./enums.js";
-import { add, bind, calculateEloMatchup } from "./misc.js";
+import { bind, calculateEloMatchup } from "./misc.js";
 import Race from "./Race.js";
 
 import Discord from "discord.js";
@@ -36,6 +36,12 @@ export default class EntrantTeam extends Array {
 		 * @type {?number}
 		 */
 		this.doneTime = null;
+
+		/**
+		 * The time in seconds that will be added to the team's time once it's done
+		 * @type {?number}
+		 */
+		this.penalty = null;
 
 		/**
 		 * The 1-based team place or null if not done
@@ -188,7 +194,7 @@ export default class EntrantTeam extends Array {
 	 */
 	get ilScoreAverage() {
 		return this.isCoop
-			? this.map((teamMember) => teamMember.ilScore).reduce(add) / this.length
+			? this.map((teamMember) => teamMember.ilScore).reduce((x, y) => x + y) / this.length
 			: this.leader.ilScore;
 	}
 
