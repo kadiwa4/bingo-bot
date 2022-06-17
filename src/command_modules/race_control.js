@@ -602,7 +602,7 @@ export const commands = {
 			}
 
 			team.state = TeamState.DONE;
-			team.doneTime = message.createdTimestamp / 1000 + team.penalty - race.startTime;
+			team.doneTime = message.createdTimestamp / 1000 + (team.penalty ?? 0) - race.startTime;
 			team.calculateEloChange();
 			team.place = 1;
 			// loop through all other teams
