@@ -287,7 +287,7 @@ export function invertObject(cleanedUpName, aliases, object, outputValue) {
 export function isMod(message, member) {
 	let authorMember = message.member;
 	if (!authorMember) {
-		authorMember = member.guild.members.cache.get(message.author);
+		authorMember = member.guild.members.cache.get(message.author.id);
 		assert(authorMember);
 	}
 
