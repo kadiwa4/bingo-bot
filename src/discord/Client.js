@@ -1,7 +1,6 @@
-import Command from "../Command.js";
 import { addUserNames, log, logError, isMod, WHITESPACE } from "../misc.js";
 
-import Discord, { Client } from "discord.js";
+import { ChannelType, Client } from "discord.js";
 
 /** Takes a user-input string and cleans it up so that it can then be used as a key in an object */
 Client.prototype.cleanUpGuildName = function (input) {
@@ -26,7 +25,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 		}
 
 		const { author, channel, client, content, guild } = message;
-		logError(`error while executing command '${content}' by ${author.id} (${author.tag}) in channel ${channel.id} (${channel.type === "dm" ? "DMs" : channel.name}):\n${error?.stack ?? error}`, guild);
+		logError(`error while executing command '${content}' by ${author.id} (${author.tag}) in channel ${channel.id} (${channel.type === ChannelType.DM ? "DMs" : channel.name}):\n${error?.stack ?? error}`, guild);
 		try {
 			const ownerMessage = `An error occured (see the log for details):\n\`\`\`${error}\`\`\``;
 			if (author.id === client.owner.id) {
@@ -38,7 +37,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 
 			message.respondedError = true;
 		} catch {
-			throw new Error("couldn't send error messages on discord; giving up", guild);
+			throw new Error("couldn't send error messages on discord; giving up");
 		}
 	}
 
@@ -56,7 +55,6 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 
 		const commandName = inputMatch[2].toLowerCase();
 
-		/** @type {Command} */
 		const command = this.commands[commandName];
 
 		if (!command) {
@@ -125,8 +123,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 			}
 		}
 
-		await command.onUse(onError, message, userOrMember, inputMatch[3] ?? null)
-			?.catch?.(onError);
+		await command.onUse(onError, message, userOrMember, inputMatch[3] ?? null)?.catch(onError);
 	} catch (error) {
 		onError(error);
 	}

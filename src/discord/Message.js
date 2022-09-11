@@ -1,6 +1,6 @@
-import { bind, hasProperties, noop } from "../misc.js";
+import { noop } from "../misc.js";
 
-import Discord, { Message } from "discord.js";
+import { ChannelType, Message } from "discord.js";
 
 /** Reacts with an emote that shows that the message was understood */
 Message.prototype.acknowledge = function (member) {
@@ -52,37 +52,10 @@ Message.prototype.multiReply = async function (onError, firstHeading, otherHeadi
 	}
 };
 
-// https://gist.github.com/Allvaa/0320f06ee793dc88e4e209d3ea9f6256
-// this is already in #master (https://github.com/discordjs/discord.js/pull/4874)
-// but not in #stable, it'll be merged in version 13
-Message.prototype.inlineReply = async function (content, options) {
-	if (this.channel.type === "dm") {
+Message.prototype.inlineReply = function () {
+	if (this.channel.type === ChannelType.DM) {
 		return this.channel.send(...arguments);
 	}
 
-	const mentionRepliedUser = (options ?? content)?.allowedMentions?.repliedUser ? (options ?? content).allowedMentions.repliedUser : true;
-	delete ((options ?? content)?.allowedMentions ?? {}).repliedUser;
-
-	const apiMessage = (content instanceof Discord.APIMessage) ? content.resolveData() : Discord.APIMessage.create(this.channel, content, options).resolveData();
-	Object.assign(apiMessage.data, { message_reference: { message_id: this.id } });
-
-	if (!apiMessage.data.allowed_mentions || !hasProperties(apiMessage.data.allowed_mentions)) {
-		apiMessage.data.allowed_mentions = { parse: [ "users", "roles", "everyone" ] };
-	}
-
-	if (!apiMessage.data.allowed_mentions.replied_user) {
-		Object.assign(apiMessage.data.allowed_mentions, { replied_user: mentionRepliedUser });
-	}
-
-	if (Array.isArray(apiMessage.data.content)) {
-		return Promise.all(apiMessage.split().map((x) => {
-			x.data.allowed_mentions = apiMessage.data.allowed_mentions;
-			return x;
-		}).map(bind(this, "inlineReply")));
-	}
-
-	const { data, files } = await apiMessage.resolveFiles();
-	return this.client.api.channels[this.channel.id].messages
-		.post({ data, files })
-		.then((d) => this.client.actions.MessageCreate.handle(d).message);
+	return this.reply(...arguments);
 };

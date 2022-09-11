@@ -390,6 +390,7 @@ export default class Race {
 		}
 
 		clearTimeout(this.endTimeout);
+		this.endTimeout = null;
 	}
 
 	/** Prepares the next IL race */

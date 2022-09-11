@@ -24,7 +24,7 @@ Guild.prototype.init = async function (guildInput) {
 
 	EventEmitter.call(this);
 
-	this.roles.fetch();
+	await this.roles.fetch();
 	const roleCache = this.roles.cache;
 
 	this.srName = guildInput.name;
@@ -140,7 +140,7 @@ Guild.prototype.getUserID = function (input) {
 
 /** Gets the name of a user, even if they aren't a member anymore */
 Guild.prototype.getUserName = async function (id) {
-	let member = this.member(id);
+	let member = this.members.cache.get(id);
 	if (member) {
 		return member.cleanName;
 	}
@@ -157,7 +157,7 @@ Guild.prototype.getUserName = async function (id) {
 	}
 
 	const user = await this.client.users.fetch(id).catch(noop);
-	return user ? Discord.Util.escapeMarkdown(user.username) : null;
+	return user ? Discord.escapeMarkdown(user.username) : null;
 };
 
 /**

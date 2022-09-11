@@ -46,7 +46,7 @@ export const commands = {
 
 				const id = guild.getUserID(arg);
 				if (!id) {
-					message.inlineReply(`User “${clean(arg, message)}” not found.`, { split: true });
+					message.inlineReply(`User “${clean(arg, message)}” not found.`);
 					return;
 				}
 
@@ -96,7 +96,7 @@ export const commands = {
 
 			const members = team.map((member) => `${member.readyEmote} ${member.cleanName}`)
 				.join("\n  ");
-			message.inlineReply(`${team}'s members were updated to:\n  ${members}${race.checkNotCountingDown()}`, { split: true });
+			message.inlineReply(`${team}'s members were updated to:\n  ${members}${race.checkNotCountingDown()}`);
 		},
 	},
 	raceTeamname: {

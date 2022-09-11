@@ -501,7 +501,7 @@ export const commands = {
 
 			const id = guild.getUserID(splitArgs[0]);
 			if (!id) {
-				message.inlineReply(`User “${clean(splitArgs[0].trim(), message)}” not found.`, { split: true });
+				message.inlineReply(`User “${clean(splitArgs[0].trim(), message)}” not found.`);
 				return;
 			}
 

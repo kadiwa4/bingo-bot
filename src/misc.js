@@ -42,7 +42,7 @@ export function addUserNames(member) {
  * @template {{ bind(thisArg: any, ...argArray: any[]): F; }} F
  * @param {*} object
  * @param {string | number} functionKey
- * @param {any[]} [args]
+ * @param {any[]} args
  * @returns {F}
  */
 export function bind(object, functionKey, ...args) {
@@ -99,7 +99,7 @@ export function calculateEloMatchup(team1Elo, team1State, team1Time, team2Elo, t
  * @param {Discord.Message} message The message containing that string
  */
 export function clean(text, message) {
-	return Discord.Util.escapeMarkdown(Discord.Util.cleanContent(text, message));
+	return Discord.escapeMarkdown(Discord.cleanContent(text, message));
 }
 
 /**
@@ -108,7 +108,7 @@ export function clean(text, message) {
  */
 export function cleanName(name) {
 	// \u200B is a zero-width space
-	return Discord.Util.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
+	return Discord.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
 }
 
 /** HTML codes for the function `decodeHTML` */
@@ -256,7 +256,7 @@ export function increasePlace(placeObject, time) {
  * @param {NodeJS.Dict<T>} object The object to be changed
  * @param {T} outputValue The value to be set in the output object
  */
-export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outputValue) {
+export function invertObject(cleanedUpName, aliases, object, outputValue) {
 	/** @param {string} name */
 	function add(name) {
 		const conflictingProperty = object[name];
@@ -271,8 +271,10 @@ export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outp
 		add(cleanedUpName);
 	}
 
-	for (let name of aliases) {
-		add(name);
+	if (aliases) {
+		for (let name of aliases) {
+			add(name);
+		}
 	}
 }
 
@@ -285,12 +287,12 @@ export function invertObject(cleanedUpName, aliases = FROZEN_ARRAY, object, outp
 export function isMod(message, member) {
 	let authorMember = message.member;
 	if (!authorMember) {
-		authorMember = member.guild.member(message.author);
+		authorMember = member.guild.members.cache.get(message.author);
 		assert(authorMember);
 	}
 
 	return (
-		member.guild.owner === authorMember
+		member.guild.ownerId === authorMember.id
 		|| member.guild.modRoles.some((role) => authorMember.roles.cache.has(role.id))
 	);
 }
@@ -381,7 +383,7 @@ export const setTimeoutPromise = util.promisify(setTimeout);
  */
 export function toTable(array, consistentWidthProperties, cloneObjects, lineString) {
 	if (array.length === 0) {
-		return FROZEN_ARRAY;
+		return [];
 	}
 
 	const properties = new Set(consistentWidthProperties);

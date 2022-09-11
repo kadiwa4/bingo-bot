@@ -21,7 +21,6 @@ Object.defineProperties(GuildMember.prototype, {
 		 * @this GuildMember
 		 */
 		get: function cleanName_() {
-			// \u200B is a zero-width space
 			return cleanName(this.displayName);
 		},
 	},

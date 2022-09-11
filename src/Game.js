@@ -100,7 +100,7 @@ export default class Game {
 	 */
 	setUpCategories(guild, categoriesInput, multiGame) {
 		for (let categoryName in categoriesInput) {
-			/** @type {GuildInput.Category | GuildInput.MultiGameCategory} */
+			/** @type {?GuildInput.Category | ?GuildInput.MultiGameCategory} */
 			const categoryInput = categoriesInput[categoryName];
 			const category = new Category(categoryName, categoryInput);
 
@@ -115,14 +115,14 @@ export default class Game {
 			const cleanedUpCategoryName = this.config.cleanUpCategory(categoryName).name;
 			if (multiGame) {
 				category.games = [];
-				if (!("games" in categoryInput)) {
+				if (!(categoryInput && "games" in categoryInput)) {
 					throw new Error(`no property 'games' of multi-game category '${categoryName}'`);
 				}
 
 				/** @type {GuildInput.MultiGameCategory} */
 				const multiCategoryInput = categoryInput;
 				for (let input of multiCategoryInput.games) {
-					/** @type {Game} */
+					/** @type {?Game} */
 					const game = guild.getGame(input);
 					if (!game) {
 						throw new Error(`couldn't find game '${input}' for multi-game category '${categoryName}'`);

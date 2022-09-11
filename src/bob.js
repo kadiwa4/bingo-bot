@@ -66,9 +66,10 @@ if (discordAuthToken === TOKEN_HERE || discordAuthToken.length === 0) {
 
 // initialize client
 const client = new Discord.Client({
-	disableMentions: "everyone",
-	messageEditHistoryMaxSize: 0,
-	ws: { intents: [ "DIRECT_MESSAGES", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILDS" ] },
+	allowedMentions: {
+		parse: [ "roles", "users" ],
+	},
+	intents: [ "DirectMessages", "GuildMembers", "GuildMessages", "Guilds" ],
 });
 
 client.databases = [];
@@ -77,10 +78,8 @@ log("connected to discord");
 
 // event handlers
 
-const { Events } = Discord.Constants;
-
 // new incoming Discord message
-client.on(Events.MESSAGE_CREATE, function onMessage(message) {
+client.on("messageCreate", function onMessage(message) {
 	if (!message.author.bot && (
 		!message.guild
 		|| (message.content.startsWith(message.guild.commandPrefix) && message.guild.srName)
@@ -90,7 +89,7 @@ client.on(Events.MESSAGE_CREATE, function onMessage(message) {
 });
 
 // guild member left or was kicked/banned
-client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
+client.on("guildMemberRemove", function onMemberRemove(member) {
 	if (member.team) {
 		/** @type {{ race: Race; }} */
 		const { race } = member.team;
@@ -99,55 +98,56 @@ client.on(Events.GUILD_MEMBER_REMOVE, function onMemberRemove(member) {
 });
 
 // unhandled promise rejection
-process.on("unhandledRejection", async function onUnhandledRejection(error) {
+process.on("unhandledRejection", function onUnhandledRejection(error) {
 	logError(`unhandled promise rejection: ${error?.stack ?? error}`);
 
-	await client.user.setStatus("invisible").catch(noop);
+	client.user?.setStatus("invisible");
 
 	process.exit(1);
 });
 
 // process exit
 process.on("exit", function onExit() {
-	for (let database of client.databases) {
-		database.close();
+	if (client.databases) {
+		for (let database of client.databases) {
+			database.close();
+		}
 	}
 
 	log("exited");
 });
 
 // uncaught JS exception
-process.on("uncaughtException", async function onUncaughtException(error) {
+process.on("uncaughtException", function onUncaughtException(error) {
 	logError(`uncaught error: ${error?.stack ?? error}`);
 
-	await client.user.setStatus("invisible").catch(noop);
+	client.user?.setStatus("invisible");
 
 	process.exit(1);
 });
 
 // keyboard interrupt
-process.on("SIGINT", async function onKeyboardInterrupt() {
+process.on("SIGINT", function onKeyboardInterrupt() {
 	log("keyboard interrupt");
 
-	await client.user.setStatus("invisible");
+	client.user?.setStatus("invisible");
 
 	process.exit(0);
 });
 
-client.application = await client.fetchApplication();
 client.commands = newMap();
 client.config = {};
 client.modules = newMap();
 client.srGuilds = newMap();
 
-const { owner } = client.application;
+const { owner } = await client.application.fetch();
 if (owner instanceof Discord.User) {
 	client.owner = owner;
 } else {
 	client.owner = owner.owner.user;
 }
 
-client.owner.createDM();
+await client.owner.createDM();
 
 // load all guild configs in `src/guild_configs`
 for (let file of fs.readdirSync("./src/guild_configs")) {

@@ -15,7 +15,7 @@ export default class CommandModule {
 
 		if (this.defaultConfig) {
 			Object.assign(client.config, this.defaultConfig);
-			delete this.defaultConfig;
+			this.defaultConfig = null;
 		}
 	}
 
@@ -65,6 +65,6 @@ CommandModule.prototype.dependencyIDs = null;
 
 /**
  * Default config for this command module
- * @type {Config}
+ * @type {?Config}
  */
 CommandModule.prototype.defaultConfig = null;

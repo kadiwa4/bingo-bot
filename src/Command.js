@@ -95,7 +95,7 @@ export default class Command {
 
 		/** @type {string} */
 		const prefix = guild?.commandPrefix ?? "";
-		return `${prefix}${this.names.concat(this.fakeNames).join(`\`/\`${prefix}`)}`;
+		return `${prefix}${(this.names ?? []).concat(this.fakeNames).join(`\`/\`${prefix}`)}`;
 	}
 
 	/**
@@ -137,7 +137,7 @@ export default class Command {
 
 	/**
 	 * Returns the first alias
-	 * @param {Discord.Guild} guild
+	 * @param {Discord.Guild} [guild]
 	 */
 	getFirstAlias(guild) {
 		return `\`${guild?.commandPrefix ?? ""}${this.aliases[0]}\``;
