@@ -69,7 +69,7 @@ const client = new Discord.Client({
 	allowedMentions: {
 		parse: [ "roles", "users" ],
 	},
-	intents: [ "DirectMessages", "GuildMembers", "GuildMessages", "Guilds" ],
+	intents: [ "DirectMessages", "GuildMembers", "GuildMessages", "Guilds", "MessageContent" ],
 });
 
 client.databases = [];
