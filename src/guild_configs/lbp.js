@@ -24,7 +24,7 @@ const ilCategory = {
 };
 
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
-const LIGHTHOUSE_REGEX = /https?:\/\/[a-z\.]*\.[a-z]{2,4}\/slot\/[1-9]*/mi;
+const LIGHTHOUSE_REGEX = /[a-z\.]*\.[a-z]{2,4}\/slot\/[1-9]*/mi;
 
 /**
  * @param {string} input
@@ -61,17 +61,9 @@ function lbpCommunityLevels(message, member, args, cleanArgs) {
 	if (match = null) {
 		return false;
 	}
-	var level = match[0].trim();
-	chooseCommunityLevel(getCommunityUrl(level), message);
+	var level = `https://${match[0].trim()}`;
+	chooseCommunityLevel(level, message);
 	return true;
-}
-function getCommunityUrl(level) {
-    if (level.startsWith("http:")) {
-        
-    } else if (!level.startsWith("https:")) {
-        level = `https://${level}`;
-    }
-    return level;
 }
 function chooseCommunityLevel(level, message) {
     "use-strict";
