@@ -367,7 +367,7 @@ export const commands = {
 		},
 	},
 	raceCategory: {
-		names: [ "category" ],
+		names: [ "category", "c" ],
 		description: "Sets the (game and) category",
 		usage: "[<game name> /] <category name>",
 		category: HelpCategory.PRE_RACE,
@@ -483,23 +483,35 @@ export const commands = {
 			}
 
 			const cleanArgs = clean(args, message);
-			// choose community level if configured
-			if (communityLevels?.(message, member, args, cleanArgs)) {
-				return;
-			}
-
 			let note = "";
-			const level = race.game.getLevel(args);
-			if (!level) {
-				// use unofficial level
-				note = `\n**Note:** That's not an official level in ${race.game} though; did you mean something else?`;
-				race.level = cleanArgs;
-			} else {
-				race.level = level;
-			}
-
-			race.entrantWhoChoseIL = member;
-			message.inlineReply(`Level updated to ${race.level}.${note}`);
+			// choose community level if configured
+			var communityLevel = null;
+			communityLevels?.(message, member, args, cleanArgs).then(
+				(resolve) => {
+					communityLevel = resolve;
+					if (communityLevel) {
+						race.level = communityLevel;
+					}
+					else
+					{
+						const level = race.game.getLevel(args);
+						if (!level) {
+							// use unofficial level
+							note = `\n**Note:** That's not an official level in ${race.game} though; did you mean something else?`;
+							race.level = cleanArgs;
+						} else {
+							race.level = level;
+						}
+					}
+		
+					race.entrantWhoChoseIL = member;
+					message.inlineReply(`Level updated to ${race.level}.${note}`);
+				}
+			).catch(
+				(err) => {
+					message.inlineReply(err.message);
+				}
+			);
 		},
 	},
 	raceReady: {
