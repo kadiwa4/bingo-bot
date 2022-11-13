@@ -191,8 +191,11 @@ declare global {
 			 */
 			sayWhoChoosesNextIL?: boolean;
 
-			/** Chooses community levels. If it returns a string, that means a community level was chosen */
-			communityLevels?(onError: (error: any) => void, message: Discord.Message, member: Discord.GuildMember, args: string, cleanArgs: string): Promise<string | null>;
+			/**
+			 * Chooses community levels. If it returns an object, that means a community level was chosen.
+			 * `note` is an optional note to be appended to the message.
+			 */
+			communityLevels?(onError: (error: any) => void, message: Discord.Message, member: Discord.GuildMember, args: string, cleanArgs: string): Promise<{ level: string; note?: string; } | null>;
 
 			/** Game-specific configuration for elo */
 			elo?: Elo;

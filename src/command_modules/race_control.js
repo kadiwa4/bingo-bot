@@ -454,7 +454,7 @@ export const commands = {
 		},
 	},
 	raceLevel: {
-		names: [ "level" ],
+		names: [ "level", "l" ],
 		description: "Sets the level",
 		usage: "<level name>",
 		category: HelpCategory.IL_RACE,
@@ -486,8 +486,12 @@ export const commands = {
 			let note = "";
 			// choose community level if configured
 			const communityLevel = await communityLevels?.(onError, message, member, args, cleanArgs).catch(onError);
+			if (communityLevel === undefined) {
+				return;
+			}
 			if (communityLevel) {
-				race.level = communityLevel;
+				race.level = communityLevel.level;
+				note = communityLevel.note ?? "";
 			} else {
 				const level = race.game.getLevel(args);
 				if (!level) {

@@ -54,7 +54,7 @@ const lbpRateLimiter = new misc.RateLimiter();
 /**
  * @param {(error: any) => void} onError
  * @param {string} cleanArgs
- * @returns {Promise<string | null>}
+ * @returns {Promise<{ level: string; note?: string; } | null>}
  */
 async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 	const match = cleanArgs.match(LIGHTHOUSE_REGEX);
@@ -64,7 +64,10 @@ async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 	const hostname = match[1];
 	const path = match[2];
 	if (!knownLighthouseInstances.includes(hostname)) {
-		throw new Error(`${hostname} is not a known/trusted instance of Project Lighthouse (yet?)`);
+		return {
+			level: `<https://${hostname}${path}>`,
+			note: `\n**Note**: ${hostname} is not a known/trusted instance of Project Lighthouse (yet?).`
+		};
 	}
 
 	await lbpRateLimiter.wait(5000);
@@ -72,7 +75,7 @@ async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 	const start = data.search(`<h1>`) + 4;
 	const end = data.search(`</h1>`);
 	const title = misc.decodeHTML(data.substring(start, end).trim());
-	return `${title} – <https://${hostname}${path}>`;
+	return { level: `${title} – <https://${hostname}${path}>` };
 }
 
 const gameRoles = {
