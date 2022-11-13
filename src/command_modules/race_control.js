@@ -10,7 +10,6 @@ import { clean, formatTime, formatTimeShort, hasProperties, invertObject, MULTI_
 import assert from "assert";
 
 import Discord from "discord.js";
-import { resolve } from "path";
 
 export const id = "race_control";
 export const dependencyIDs = [ "race_info" ];
