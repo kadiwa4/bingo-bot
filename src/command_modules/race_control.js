@@ -460,7 +460,7 @@ export const commands = {
 		category: HelpCategory.IL_RACE,
 		raceChannelOnly: true,
 		/** @param {Discord.GuildMember} member */
-		onUse: function raceLevel(onError, message, member, args) {
+		onUse: async function raceLevel(onError, message, member, args) {
 			/** @type {Discord.TextChannel} */
 			const { client, guild, race } = message.channel;
 			const { communityLevels } = race.game.config.race;
@@ -485,33 +485,22 @@ export const commands = {
 			const cleanArgs = clean(args, message);
 			let note = "";
 			// choose community level if configured
-			var communityLevel = null;
-			communityLevels?.(message, member, args, cleanArgs).then(
-				(resolve) => {
-					communityLevel = resolve;
-					if (communityLevel) {
-						race.level = communityLevel;
-					}
-					else
-					{
-						const level = race.game.getLevel(args);
-						if (!level) {
-							// use unofficial level
-							note = `\n**Note:** That's not an official level in ${race.game} though; did you mean something else?`;
-							race.level = cleanArgs;
-						} else {
-							race.level = level;
-						}
-					}
-		
-					race.entrantWhoChoseIL = member;
-					message.inlineReply(`Level updated to ${race.level}.${note}`);
+			const communityLevel = await communityLevels?.(onError, message, member, args, cleanArgs).catch(onError);
+			if (communityLevel) {
+				race.level = communityLevel;
+			} else {
+				const level = race.game.getLevel(args);
+				if (!level) {
+					// use unofficial level
+					note = `\n**Note:** That's not an official level in ${race.game} though; did you mean something else?`;
+					race.level = cleanArgs;
+				} else {
+					race.level = level;
 				}
-			).catch(
-				(err) => {
-					message.inlineReply(err.message);
-				}
-			);
+			}
+
+			race.entrantWhoChoseIL = member;
+			message.inlineReply(`Level updated to ${race.level}.${note}`);
 		},
 	},
 	raceReady: {

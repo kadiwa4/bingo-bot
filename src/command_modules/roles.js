@@ -292,6 +292,5 @@ async function callSRC(onError, guild, path) {
 		await setTimeoutPromise(prevApiCallTimestamp - Date.now());
 	}
 
-	log(`sr.c request: ${path}`, guild);
 	return httpsGet("www.speedrun.com", path).catch(onError);
 }

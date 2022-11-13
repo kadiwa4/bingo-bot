@@ -50,59 +50,26 @@ function lbpCleanUpLevelName(input) {
 }
 
 /**
+ * @param {(error: any) => void} onError
  * @param {string} cleanArgs
  * @returns {Promise<string | null>}
  */
-function lbpCommunityLevels(message, member, args, cleanArgs) {
-	return new Promise((resolve, reject) => {
-		let myResolve = resolve;
-		const match = cleanArgs.match(LIGHTHOUSE_REGEX);
-		if (!match) {
-			resolve(null);
-		}
-		const hostname = match[1];
-		const path = match[2];
-		chooseCommunityLevel(hostname, path).then(
-			(resolve) => {
-				myResolve(resolve);
-			}
-		).catch(
-			(err) => {
-				misc.logError(err);
-				reject(err);
-			}
-		);
-	});
-}
-/**
- * @param {string} hostname
- * @param {string} path
- * @returns {Promise<string>}
- */
-function chooseCommunityLevel(hostname, path) {
-	return new Promise((resolve, reject) => {
-		let myResolve = resolve;
-		if (!knownLighthouseInstances.includes(hostname))
-		{
-			reject(new Error(`${hostname} is not a known/trusted instance of Project Lighthouse (yet?)`));
-		}
-		misc.httpsGet(hostname, path).then(
-			(resolve) => {
-				const data = resolve.content;
-				console.log(data);
-				const start = data.search(`<h1>`) + 4;
-				const end = data.search(`</h1>`);
-				const title = misc.decodeHTML(data.substring(start, end).trim());
-				console.log(`${title} - https://${hostname}${path}`);
-				myResolve(`${title} - https://${hostname}${path}`);
-			}
-		).catch(
-			(err) => {
-				misc.logError(err);
-				reject(err);
-			}
-		);
-	});
+async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
+	const match = cleanArgs.match(LIGHTHOUSE_REGEX);
+	if (!match) {
+		return null;
+	}
+	const hostname = match[1];
+	const path = match[2];
+	if (!knownLighthouseInstances.includes(hostname)) {
+		throw new Error(`${hostname} is not a known/trusted instance of Project Lighthouse (yet?)`);
+	}
+
+	const data = (await misc.httpsGet(hostname, path).catch(onError)).content;
+	const start = data.search(`<h1>`) + 4;
+	const end = data.search(`</h1>`);
+	const title = misc.decodeHTML(data.substring(start, end).trim());
+	return `${title} – <https://${hostname}${path}>`;
 }
 
 const gameRoles = {
