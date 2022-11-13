@@ -6,7 +6,6 @@ import * as misc from "../misc.js";
 import Race from "../Race.js";
 
 import Discord from "discord.js";
-import https from "https";
 
 const emotes = {
 	ppjE: "<:ppjE:230442929859198977>",
@@ -17,6 +16,7 @@ const emotes = {
 
 const ilAliases = [ "il", "ils" ];
 const anyNCAliases = [ "anynooverlord", "nocreate", "nooverlord", "anync", "anyno", "nc", "no" ];
+const knownLighthouseInstances = [ "lighthouse.lbpunion.com", "beacon.lbpunion.com", "lnfinite.site" ];
 
 const ilCategory = {
 	aliases: ilAliases,
@@ -24,7 +24,7 @@ const ilCategory = {
 };
 
 const COOP_REGEX = /coop|[2-5]p(layers?)?/;
-const LIGHTHOUSE_REGEX = /[a-z\.]*\.[a-z]{2,4}\/slot\/[1-9]*/mi;
+const LIGHTHOUSE_REGEX = /([a-z\.]+\.[a-z]{2,4})(\/slot\/[0-9]+)/i;
 
 /**
  * @param {string} input
@@ -50,51 +50,59 @@ function lbpCleanUpLevelName(input) {
 }
 
 /**
- * @param {Discord.Message} message
- * @param {Discord.GuildMember} member
- * @param {string} args
  * @param {string} cleanArgs
- * @returns {boolean}
+ * @returns {Promise<string | null>}
  */
 function lbpCommunityLevels(message, member, args, cleanArgs) {
-	var match = message.content.match(LIGHTHOUSE_REGEX);
-	if (match = null) {
-		return false;
-	}
-	var level = `https://${match[0].trim()}`;
-	chooseCommunityLevel(level, message);
-	return true;
+	return new Promise((resolve, reject) => {
+		let myResolve = resolve;
+		const match = cleanArgs.match(LIGHTHOUSE_REGEX);
+		if (!match) {
+			resolve(null);
+		}
+		const hostname = match[1];
+		const path = match[2];
+		chooseCommunityLevel(hostname, path).then(
+			(resolve) => {
+				myResolve(resolve);
+			}
+		).catch(
+			(err) => {
+				misc.logError(err);
+				reject(err);
+			}
+		);
+	});
 }
-function chooseCommunityLevel(level, message) {
-    "use-strict";
-    https.get(level, (result) => {
-        var { statusCode } = result;
-        if (statusCode === 302) {
-            chooseCommunityLevel(result.headers.location, message, onEnd);
-            return;
-        }
-        if (statusCode !== 200) {
-            message.channel.send(`Couldn't follow ${level}; got a ${statusCode} response.`);
-            return;
-        }
-
-        var dataQueue = "";
-        result.on("data", (dataBuffer) => {
-            dataQueue += dataBuffer;
-        });
-        result.on("end", () => {
-            var start = dataQueue.search(`<h1>`) + 4;
-            var end = dataQueue.search(`</h1>`);
-            var title = misc.decodeHTML(dataQueue.substring(start, end).trim());
-
-			const { race } = message.channel;
-			race.level = title;
-            message.channel.send(`Level updated to ${title}.`);
-        });
-    }).on('error', (e) => {
-        misc.log(e, true);
-        misc.logError(e, level, message);
-    });
+/**
+ * @param {string} hostname
+ * @param {string} path
+ * @returns {Promise<string>}
+ */
+function chooseCommunityLevel(hostname, path) {
+	return new Promise((resolve, reject) => {
+		let myResolve = resolve;
+		if (!knownLighthouseInstances.includes(hostname))
+		{
+			reject(new Error(`${hostname} is not a known/trusted instance of Project Lighthouse (yet?)`));
+		}
+		misc.httpsGet(hostname, path).then(
+			(resolve) => {
+				const data = resolve.content;
+				console.log(data);
+				const start = data.search(`<h1>`) + 4;
+				const end = data.search(`</h1>`);
+				const title = misc.decodeHTML(data.substring(start, end).trim());
+				console.log(`${title} - https://${hostname}${path}`);
+				myResolve(`${title} - https://${hostname}${path}`);
+			}
+		).catch(
+			(err) => {
+				misc.logError(err);
+				reject(err);
+			}
+		);
+	});
 }
 
 const gameRoles = {
