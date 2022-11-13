@@ -539,3 +539,23 @@ Object.defineProperties(Object.prototype, {
 		},
 	},
 });
+
+export class RateLimiter {
+	constructor() {
+		this.timestamp = 0;
+	}
+
+	/**
+	 * @param {number} delayAfter The milliseconds of delay after this invocation of this function
+	 */
+	async wait(delayAfter) {
+		const now = Date.now();
+		if (this.timestamp < now) {
+			this.timestamp = now + delayAfter;
+		} else {
+			let prevTimestamp = this.timestamp;
+			this.timestamp += delayAfter;
+			await setTimeoutPromise(prevTimestamp - now);
+		}
+	}
+}

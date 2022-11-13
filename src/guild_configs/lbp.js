@@ -49,6 +49,8 @@ function lbpCleanUpLevelName(input) {
 		.replace("introduction", "intro");
 }
 
+const lbpRateLimiter = new misc.RateLimiter();
+
 /**
  * @param {(error: any) => void} onError
  * @param {string} cleanArgs
@@ -65,6 +67,7 @@ async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 		throw new Error(`${hostname} is not a known/trusted instance of Project Lighthouse (yet?)`);
 	}
 
+	await lbpRateLimiter.wait(5000);
 	const data = (await misc.httpsGet(hostname, path).catch(onError)).content;
 	const start = data.search(`<h1>`) + 4;
 	const end = data.search(`</h1>`);

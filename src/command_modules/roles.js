@@ -1,6 +1,6 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { clean, decodeHTML, httpsGet, isMod, log, logError, setTimeoutPromise } from "../misc.js";
+import { clean, decodeHTML, httpsGet, isMod, log, logError, RateLimiter } from "../misc.js";
 
 import assert from "assert";
 
@@ -270,7 +270,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 	message?.acknowledge(member);
 }
 
-let srcCallTimestamp = 0;
+const srcRateLimiter = new RateLimiter();
 
 /**
  * Gets a speedrun.com page over HTTPS
@@ -283,14 +283,6 @@ async function callSRC(onError, guild, path) {
 	// - delay after API call: 1 sec
 	// - delay after downloading any other sr.c page: 5 sec
 	// API: https://github.com/speedruncomorg/api/tree/master/version1
-	let apiPauseLength = path.startsWith("/api") ? 1000 : 5000;
-	if (srcCallTimestamp < Date.now()) {
-		srcCallTimestamp = Date.now() + apiPauseLength;
-	} else {
-		let prevApiCallTimestamp = srcCallTimestamp;
-		srcCallTimestamp += apiPauseLength;
-		await setTimeoutPromise(prevApiCallTimestamp - Date.now());
-	}
-
+	await srcRateLimiter.wait(path.startsWith("/api") ? 1000 : 5000);
 	return httpsGet("www.speedrun.com", path).catch(onError);
 }
