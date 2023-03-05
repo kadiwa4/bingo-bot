@@ -189,6 +189,7 @@ const lbp = {
 					aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
 					default: true
 				},
+				"100% No Overlord": { aliases: [ "100nocreate", "100no", "100nc" ] },
 				"All Levels": { aliases: [ "al" ] },
 				"Demo%": null,
 				"Individual Levels": ilCategory

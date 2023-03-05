@@ -245,8 +245,7 @@ export function init(guild, guildInput) {
 export const commands = {
 	race: {
 		names: [ "race" ],
-		aliases: [ "join", "unleave", "unexit" ],
-		fakeNames: [ "r" ],
+		aliases: [ "join" ],
 		description: "Starts a new race, or joins the currently open race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
@@ -320,7 +319,7 @@ export const commands = {
 		},
 	},
 	raceQuit: {
-		names: [ "quit", "q" ],
+		names: [ "quit" ],
 		aliases: [ "leave", "exit", "unrace" ],
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
@@ -367,7 +366,7 @@ export const commands = {
 		},
 	},
 	raceCategory: {
-		names: [ "category", "c" ],
+		names: [ "category" ],
 		description: "Sets the (game and) category",
 		usage: "[<game name> /] <category name>",
 		category: HelpCategory.PRE_RACE,
@@ -454,7 +453,7 @@ export const commands = {
 		},
 	},
 	raceLevel: {
-		names: [ "level", "l" ],
+		names: [ "level" ],
 		description: "Sets the level",
 		usage: "<level name>",
 		category: HelpCategory.IL_RACE,
@@ -508,8 +507,7 @@ export const commands = {
 		},
 	},
 	raceReady: {
-		names: [ "ready" ],
-		fakeNames: [ "r" ],
+		names: [ "ready", "r" ],
 		description: "Indicates that you're ready to start",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
@@ -563,21 +561,6 @@ export const commands = {
 				race.stopCountdown();
 				message.inlineReply(`${member.cleanName} isn't ready; stopping countdown.`);
 			}
-		},
-	},
-	raceR: {
-		aliases: [ "r" ],
-		description: "Starts a new race, joins the currently open race or indicates that you're ready to start",
-		raceChannelOnly: true,
-		/** @param {Discord.GuildMember} member */
-		onUse: function raceR(onError, message, member) {
-			/** @type {Discord.TextChannel} */
-			const { client, race } = message.channel;
-
-			// depending on the situation, run either the command `ready` or `race`
-			return client.commands[
-				(race.hasEntrant(member) && race.state === RaceState.JOINING) ? "ready" : "race"
-			].onUse(...arguments);
 		},
 	},
 	raceDone: {

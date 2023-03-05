@@ -89,13 +89,13 @@ export default class Command {
 	 * @returns {?string}
 	 */
 	getDisplayNames(guild) {
-		if (!this.names && this.fakeNames.length === 0) {
+		if (!this.names) {
 			return null;
 		}
 
 		/** @type {string} */
 		const prefix = guild?.commandPrefix ?? "";
-		return `${prefix}${(this.names ?? []).concat(this.fakeNames).join(`\`/\`${prefix}`)}`;
+		return prefix + this.names.join(`\`/\`${prefix}`);
 	}
 
 	/**
@@ -118,7 +118,7 @@ export default class Command {
 	 */
 	getExample(guild) {
 		if (
-			(!this.names && this.fakeNames.length === 0)
+			!this.names
 			|| (!this.example && (!guild || !this.examples))
 		) {
 			return null;
@@ -168,13 +168,6 @@ export default class Command {
  * @default [] // (frozen)
  */
 Command.prototype.aliases = FROZEN_ARRAY;
-
-/**
- * Other command names that are displayed but don't actually work
- * @type {string[] | readonly string[]}
- * @default [] // (frozen)
- */
-Command.prototype.fakeNames = FROZEN_ARRAY;
 
 /**
  * The command usage without the command names.

@@ -51,9 +51,9 @@ If you want properties on discord.js types to work, go to `node_modules/discord.
 ## Commands
 
 **Pre-race commands**
-* `race`/`r` – Starts a new race, or joins the currently open race.
-* `quit`/`q` – Leaves the race.
-* `category`/`c [<game name> /] <category name>` – Sets the (game and) category.
+* `race` – Starts a new race, or joins the currently open race.
+* `quit` – Leaves the race.
+* `category [<game name> /] <category name>` – Sets the (game and) category.
 * `ready`/`r` – Indicates that you're ready to start.
 * `unready`/`ur` – Indicates that you're not actually ready.
 * `penalty [<timespan>]` – Gives you/your team a time penalty for the upcoming race/race series
@@ -72,7 +72,7 @@ If you want properties on discord.js types to work, go to `node_modules/discord.
 * `randomteams [<team size>]` – Randomly assigns entrants to teams of the given size.
 
 **IL-race commands**
-* `level`/`l <level name>` – Sets the level.
+* `level <level name>` – Sets the level.
 * `ilresults` – Shows the ILs that have been raced so far in this series.
 
 **Stat commands**

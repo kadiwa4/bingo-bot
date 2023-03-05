@@ -7,7 +7,7 @@
 	"scripts": {
 		"start": "node ./src/bob.js"
 	},
-	"repository": "github:TadCordle/bingo-bot",
+	"repository": "github:kadiwa4/bingo-bot",
 	"keywords": [],
 	"author": "RbdJellyfish (https://tadcordle.github.io/)",
 	"contributors": [
@@ -15,9 +15,9 @@
 	],
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/TadCordle/bingo-bot/issues"
+		"url": "https://github.com/kadiwa4/bingo-bot/issues"
 	},
-	"homepage": "https://github.com/TadCordle/bingo-bot#readme",
+	"homepage": "https://github.com/kadiwa4/bingo-bot#readme",
 	"dependencies": {
 		"@discordjs/collection": "^1.3.0",
 		"better-sqlite3": "^8.1.0",
