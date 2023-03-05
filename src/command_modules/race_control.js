@@ -808,7 +808,7 @@ export const commands = {
 
 			team.loadTime = loadTime;
 			for (let team2 of race.teams) {
-				if (team2 !== team) {
+				if (loadTime === null || team2 !== team) {
 					team2.setDefaultLoadTime();
 				}
 			}

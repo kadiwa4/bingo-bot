@@ -613,7 +613,7 @@ export default class Race {
 				}
 
 				for (let entrant of soloEntrants) {
-					yield entrantString(entrant) + team.loadTime === null ? "\n" : ` (${formatTimeShort(team.loadTime)}\xA0loads)\n`;
+					yield entrantString(entrant) + (entrant.team.loadTime === null ? "\n" : ` (${formatTimeShort(entrant.team.loadTime)}\xA0loads)\n`);
 				}
 			}.bind(this));
 		}
