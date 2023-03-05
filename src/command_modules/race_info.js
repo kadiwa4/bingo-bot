@@ -103,17 +103,18 @@ export const commands = {
 				return;
 			}
 
-			let raceID = guild.raceID - 1;
-
+			let race;
 			if (args) {
-				raceID = parseInt(args);
+				const raceID = parseInt(args);
 				if (Number.isNaN(raceID) || raceID <= 0) {
 					this.showUsage(...arguments);
 					return;
 				}
+				race = sqlite.getRace.get(raceID);
+			} else {
+				race = sqlite.getPreviousRace.get();
 			}
 
-			const race = sqlite.getRace.get(raceID);
 			if (!race) {
 				message.inlineReply("Race not found.");
 				return;
@@ -144,10 +145,10 @@ export const commands = {
 			// \xA0 is a non-breaking space
 			message.multiReply(
 				onError,
-				`${messageStart}ID\xA0\`${raceID}\`):**\n`,
+				`${messageStart}ID\xA0\`${race.race_id}\`):**\n`,
 				`${messageStart}cont):**\n`,
 				async function* () {
-					for (let result of sqlite.getResults.all(raceID)) {
+					for (let result of sqlite.getResults.all(race.race_id)) {
 						const name = await userOrTeamName(result).catch(onError);
 						const members = await teamMembers(result).catch(onError);
 						assert(name && members !== undefined);

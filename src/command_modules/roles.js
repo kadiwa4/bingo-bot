@@ -237,7 +237,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 			}
 
 			log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
-			guild.sqlite.deleteSrcUser(member.id);
+			guild.sqlite.deleteSrcUser.run(member.id);
 		} else if (addToDB) {
 			guild.sqlite.addSrcUser.run({
 				discord_id: member.id,

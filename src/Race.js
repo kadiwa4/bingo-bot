@@ -224,7 +224,7 @@ export default class Race {
 		this.clean(!everyoneForfeited);
 		if (this.leaveWhenDone.size > 0) {
 			const leavingEntrants = [];
-			let lastLeavingEntrant;
+			let lastLeavingEntrant = null;
 			for (let entrant of this.leaveWhenDone) {
 				entrant.team.remove(entrant);
 				this.resetEntrant(entrant);
@@ -235,6 +235,7 @@ export default class Race {
 				lastLeavingEntrant = entrant;
 			}
 
+			this.leaveWhenDone = new Set();
 			this.checkCategoryCoop();
 			messageStart += (leavingEntrants.length > 0)
 				? `${leavingEntrants.join(", ")} and ${lastLeavingEntrant} have left the race. `

@@ -188,6 +188,7 @@ export function init(guild, guildInput) {
 	Object.assign(guild.sqlite, {
 		// set up SQLite queries for setting/retrieving race information
 		getRace: database.prepare("SELECT * FROM races WHERE race_id = ?;"),
+		getPreviousRace: database.prepare("SELECT * FROM races ORDER BY race_id DESC;"),
 		getMaxRaceID: database.prepare("SELECT MAX(race_id) FROM races;").pluck(),
 		getGames: database.prepare("SELECT DISTINCT game FROM races;").pluck(),
 		addRace: database.prepare("INSERT OR REPLACE INTO races (race_id, game, category, level) VALUES (@race_id, @game, @category, @level);"),
