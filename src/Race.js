@@ -5,7 +5,7 @@ import { RaceState, TeamState } from "./enums.js";
 import Game from "./Game.js";
 
 import Discord from "discord.js";
-import { bind } from "./misc.js";
+import { bind, formatTimeShort } from "./misc.js";
 
 /** Keeps track of the current stage of racing in a race channel */
 export default class Race {
@@ -296,7 +296,7 @@ export default class Race {
 				user_or_team_id: userOrTeamID,
 				team_name: team.isCoop ? team.name : null,
 				time: team.doneTime,
-				penalty: team.penalty,
+				load_time: team.loadTime,
 				elo_change: team.eloChange,
 				forfeited: +(team.state === TeamState.FORFEITED),
 			});
@@ -570,6 +570,8 @@ export default class Race {
 	 * @param {string} otherHeading
 	 */
 	showJoiningEntrants(onError, message, firstHeading, otherHeading) {
+		// \xA0 is a non-breaking space
+
 		if (this.category.isIL) {
 			const ilScoreWidth = Math.max(
 				...this.entrants.map((entrant) => entrant.ilScore.toString().length)
@@ -586,7 +588,6 @@ export default class Race {
 				for (let team of this.teams.slice()
 					.sort((team1, team2) => team2.ilScoreAverage - team1.ilScoreAverage)) {
 					yield team.isCoop
-						// \xA0 is a non-breaking space
 						// sort team entrants and loop through them
 						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore).map(entrantString).join("")}`
 						: entrantString(team.leader, false);
@@ -596,7 +597,7 @@ export default class Race {
 			// show full game race status
 			/** @param {Discord.GuildMember} entrant */
 			const entrantString = function (entrant) {
-				return `  ${entrant.readyEmote} ${entrant.cleanName}\n`;
+				return `  ${entrant.readyEmote} ${entrant.cleanName}`;
 			};
 
 			const soloEntrants = [];
@@ -604,14 +605,14 @@ export default class Race {
 			message.multiReply(onError, firstHeading, otherHeading, function* () {
 				for (let team of this.teams) {
 					if (team.isCoop) {
-						yield `  ${team}\n\t${team.map(entrantString).join("\t")}`;
+						yield `  ${team}${team.loadTime === null ? "" : ` (${formatTimeShort(team.loadTime)}\xA0loads)`}\n\t${team.map(entrantString).join("\n\t")}\n`;
 					} else {
 						soloEntrants.push(team.leader);
 					}
 				}
 
 				for (let entrant of soloEntrants) {
-					yield entrantString(entrant);
+					yield entrantString(entrant) + team.loadTime === null ? "\n" : ` (${formatTimeShort(team.loadTime)}\xA0loads)\n`;
 				}
 			}.bind(this));
 		}

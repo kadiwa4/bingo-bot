@@ -38,10 +38,10 @@ export default class EntrantTeam extends Array {
 		this.doneTime = null;
 
 		/**
-		 * The time in seconds that will be added to the team's time once it's done
+		 * The time in seconds that will be subtracted from the team's time once it's done
 		 * @type {?number}
 		 */
-		this.penalty = null;
+		this.loadTime = null;
 
 		/**
 		 * The 1-based team place or null if not done
@@ -270,6 +270,15 @@ export default class EntrantTeam extends Array {
 		];
 
 		(await this.endMessage).edit(this.splitDoneMessageContent.join(""));
+	}
+
+	setDefaultLoadTime() {
+		if (!this.isCoop) {
+			this.loadTime = this.guild.sqlite.getLatestLoadTime.get(this[0].id) ?? null;
+		}
+		if (this.loadTime === null) {
+			this.loadTime = this.race.category.defaultLoadTime ?? 0;
+		}
 	}
 
 	/**

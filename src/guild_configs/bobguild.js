@@ -68,13 +68,16 @@ const lbp = {
 			aliases: [ "lbp1", "1" ],
 			default: true,
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 240 },
 				"100%": null,
 				"Any% No Overlord": {
 					aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
 					default: true,
+					defaultLoadTime: 240,
 				},
+				"100% No Overlord": { aliases: [ "100nocreate", "100no", "100nc" ] },
 				"All Levels": { aliases: [ "al" ] },
+				"Demo%": null,
 				"Individual Levels": ilCategory,
 			},
 			levels: {
@@ -147,7 +150,10 @@ const lbp = {
 		"LittleBigPlanet (PSP)": {
 			aliases: [ "psp", "lbpp", "p" ],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 330,
+				},
 				"100%": null,
 				"Individual Levels": ilCategory,
 			},
@@ -209,13 +215,15 @@ const lbp = {
 		"LittleBigPlanet 2": {
 			aliases: [ "2" ],
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 150 },
 				"100%": null,
 				"Any% No Create": {
 					aliases: anyNCAliases,
 					default: true,
+					defaultLoadTime: 150,
 				},
 				"All Levels": { aliases: [ "al" ] },
+				"Demo%": null,
 				"Individual Levels": ilCategory,
 			},
 			levels: {
@@ -277,9 +285,12 @@ const lbp = {
 			},
 		},
 		"LittleBigPlanet PS Vita": {
-			aliases: [ "vita", "lbpv", "v" ],
+			aliases: [ "vita", "lbpv", "v"],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 840,
+				},
 				"100%": null,
 				"Individual Levels": ilCategory,
 			},
@@ -333,7 +344,10 @@ const lbp = {
 		"LittleBigPlanet Karting": {
 			aliases: [ "karting", "lbpk", "k" ],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 1440,
+				},
 				"100%": null,
 				"Individual Levels": ilCategory,
 			},
@@ -394,16 +408,31 @@ const lbp = {
 				"The Garage at the End of the Craftverse": { aliases: [ "tgateotc", "gateotc" ] },
 			},
 		},
+		"Run Sackboy! Run!": {
+			aliases: [ "r", "rsr", "run", "runsackboy", "rsbr" ],
+			categories: {
+				"First Loop": {
+					aliases: [ "first", "1st", "1stloop", "loop1" ],
+					default: true
+				},
+				"Second Loop": { aliases: [ "second", "2nd", "2ndloop", "loop2" ] },
+				"100%": null,
+			},
+		},
 		"LittleBigPlanet 3": {
 			aliases: [ "3" ],
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 60 },
 				"100%": null,
 				"Any% No Create": {
 					aliases: anyNCAliases,
 					default: true,
+					defaultLoadTime: 660,
 				},
-				"All Main Quests": { aliases: [ "amq" ] },
+				"All Main Quests": {
+					aliases: [ "amq" ],
+					defaultLoadTime: 1200,
+				},
 				"Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] },
 				"Individual Levels": ilCategory,
 			},
@@ -446,8 +475,14 @@ const lbp = {
 		"Sackboy: A Big Adventure": {
 			aliases: [ "saba", "sackboy", "s" ],
 			categories: {
-				"Any%": { default: true },
-				"New Game+": { aliases: [ "ng" ] },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 600,
+				},
+				"New Game+": {
+					aliases: [ "ng" ],
+					defaultLoadTime: 600,
+				},
 				"100%": null,
 				"Individual Levels": ilCategory,
 			},

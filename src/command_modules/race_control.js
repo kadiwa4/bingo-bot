@@ -160,7 +160,7 @@ export function init(guild, guildInput) {
 		user_or_team_id TEXT NOT NULL,
 		team_name TEXT,
 		time INT,
-		penalty INT,
+		load_time INT,
 		elo_change REAL NOT NULL,
 		forfeited INT NOT NULL`,
 		"idx_results_race",
@@ -207,7 +207,8 @@ export function init(guild, guildInput) {
 		getResultTeamIDs: database.prepare("SELECT user_or_team_id FROM results WHERE race_id = ? AND team_name IS NOT NULL;").pluck(),
 		getTeamRaceCount: database.prepare("SELECT COUNT(*) FROM results WHERE user_or_team_id = ? AND team_name IS NOT NULL;").pluck(),
 		getRaceTeamCount: database.prepare("SELECT COUNT(*) FROM results WHERE race_id = ?;").pluck(),
-		addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, penalty, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @penalty, @elo_change, @forfeited);"),
+		getLatestLoadTime: database.prepare("SELECT load_time FROM results WHERE user_or_team_id = ? AND team_name IS NULL ORDER BY race_id DESC;").pluck(),
+		addResult: database.prepare("INSERT OR REPLACE INTO results (race_id, user_or_team_id, team_name, time, load_time, elo_change, forfeited) VALUES (@race_id, @user_or_team_id, @team_name, @time, @load_time, @elo_change, @forfeited);"),
 		updateSoloEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NULL;"),
 		updateCoopEloChange: database.prepare("UPDATE results SET elo_change = ? WHERE race_id = ? AND user_or_team_id = ? AND team_name IS NOT NULL;"),
 		deleteResults: database.prepare("DELETE FROM results WHERE race_id = ?;"),
@@ -302,9 +303,16 @@ export const commands = {
 				case RaceState.JOINING:
 					// join existing race
 					if (race.addEntrant(member)) {
-						message.acknowledge(member);
-						if (race.state === RaceState.COUNTDOWN) {
-							message.inlineReply(`${member.cleanName} joined; stopping countdown.`);
+						if (race.teams[0].loadTime === null) {
+							if (race.state === RaceState.COUNTDOWN) {
+								message.inlineReply(`${member.cleanName} joined; stopping countdown.`);
+							} else {
+								message.acknowledge(member);
+							}
+						} else {
+							member.team.setDefaultLoadTime();
+							const stoppingCountdown = race.state === RaceState.COUNTDOWN ? "; stopping countdown" : "";
+							message.inlineReply(`${member.cleanName} joined (loading time: ${formatTimeShort(member.team.loadTime)})${stoppingCountdown}.`);
 						}
 					}
 
@@ -421,6 +429,12 @@ export const commands = {
 				if (category.multiGame) {
 					// switch to game "Multiple Games" in case that wasn't the game
 					game = guild.games[MULTI_GAME];
+				}
+
+				if (race.teams[0].loadTime !== null && category.isIL) {
+					for (let team of race.teams) {
+						team.loadTime = null;
+					}
 				}
 			} else {
 				// use unofficial category
@@ -589,8 +603,14 @@ export const commands = {
 				return;
 			}
 
+			const realTime = message.createdTimestamp / 1000 - race.startTime;
+			if (team.loadTime && realTime <= team.loadTime) {
+				message.inlineReply(`You can't be done, your loading time of ${formatTimeShort(team.loadTime)}) hasn't even elapsed! (Current time: ${formatTime(realTime)})`);
+				return;
+			}
+
 			team.state = TeamState.DONE;
-			team.doneTime = message.createdTimestamp / 1000 + (team.penalty ?? 0) - race.startTime;
+			team.doneTime = realTime - (team.loadTime ?? 0);
 			team.calculateEloChange();
 			team.place = 1;
 			// loop through all other teams
@@ -603,8 +623,7 @@ export const commands = {
 					// team2 finished before team
 					team.place += 1;
 				} else if (team.doneTime < team2.doneTime) {
-					// team2 is slower but already finished,
-					// this happens due to some discord messages arriving slower than others
+					// team2 is slower but already finished, e.g. because it has shorter loading times
 					team2.correctDoneMessage(1);
 				}
 				// else the team is tied and the place isn't increased
@@ -615,7 +634,7 @@ export const commands = {
 				team.place.toOrdinal(),
 				" place (",
 				team.eloChangeString,
-				`) with a time of ${formatTime(team.doneTime)}${team.penalty ? ` (penalty: ${formatTimeShort(team.penalty)})` : ""}`,
+				") with a time of " + formatTime(team.doneTime) + (team.loadTime === null ? "" : ` (loading time: ${formatTimeShort(team.loadTime)})`),
 			];
 
 			// update race state
@@ -745,17 +764,18 @@ export const commands = {
 			message.acknowledge(member);
 		},
 	},
-	penalty: {
-		names: [ "penalty" ],
-		description: "Gives you/your team a time penalty for the upcoming race/race series",
+	raceLoads: {
+		names: [ "loads" ],
+		aliases: [ "load", "loadtime", "loadingtime" ],
+		description: "Sets your (team's) loading time for the upcoming race",
 		usage: "[<timespan>]",
-		example: "penalty 3:44.67",
+		example: "loads 3:44.67",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
 		/** @param {Discord.GuildMember} member */
-		onUse: function racePenalty(onError, message, member, arg) {
+		onUse: function raceLoads(onError, message, member, arg) {
 			/** @type {Discord.TextChannel} */
-			const { race } = message.channel;
+			const { guild, race } = message.channel;
 			const { team } = member;
 
 			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
@@ -763,22 +783,69 @@ export const commands = {
 				return;
 			}
 
-			let time;
+			let loadTime = null;
 			if (arg) {
-				time = parseTime(arg);
-				if (!time) {
+				loadTime = parseTime(arg);
+				if (!loadTime) {
 					this.showUsage(...arguments);
 					return;
 				}
-				if (time === 0) {
-					time = null;
+
+				if (team.loadTime !== null) {
+					team.loadTime = loadTime;
+					message.acknowledge(member);
 				}
-			} else {
-				time = null;
+			} else if (team.loadTime !== null) {
+				message.inlineReply(`Your loading time is currently set to ${formatTimeShort(team.loadTime)}. Change it using: ${this.usage}`);
+				return;
 			}
 
-			team.penalty = time;
-			message.acknowledge(member);
+			if (race.category.isIL) {
+				message.inlineReply("Can't use load-removed time for IL races!");
+				return;
+			}
+
+			team.loadTime = loadTime;
+			for (let team2 of race.teams) {
+				if (team2 !== team) {
+					team2.setDefaultLoadTime();
+				}
+			}
+
+			race.showJoiningEntrants(
+				onError,
+				message,
+				`Loading time set (use \`${guild.commandPrefix}clearloads\` to undo).\n**Updated ${race}:**\n`,
+				`**${race.gameCategoryLevel} race (cont):**\n`
+			);
 		},
 	},
+	raceRemoveLoads: {
+		names: [ "clearloads" ],
+		aliases: [ "removeloads", "resetloads", "clearloadtimes", "removeloadtimes", "resetloadtimes", "clearloadingtimes", "removeloadingtimes", "resetloadingtimes", "realtime" ],
+		description: "Resets everyone's loading times",
+		category: HelpCategory.PRE_RACE,
+		raceChannelOnly: true,
+		/** @param {Discord.GuildMember} member */
+		onUse: function raceLoads(onError, message, member) {
+			/** @type {Discord.TextChannel} */
+			const { race } = message.channel;
+
+			if (!race.hasEntrant(member) || race.state !== RaceState.JOINING) {
+				// user isn't racing here / race state isn't JOINING
+				return;
+			}
+
+			if (race.teams[0].loadTime === null) {
+				message.inlineReply("Already using real-time mode.");
+				return;
+			}
+
+			for (let team of race.teams) {
+				team.loadTime = null;
+			}
+
+			message.acknowledge(member);
+		},
+	}
 };

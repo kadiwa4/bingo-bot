@@ -13,8 +13,13 @@ export default class Category {
 
 		if (!categoryInput) {
 			this.officialCategory = false;
-		} else if (categoryInput.il) {
+			return
+		}
+		if (categoryInput.il) {
 			this.isIL = true;
+		}
+		if (categoryInput.defaultLoadTime !== undefined) {
+			this.defaultLoadTime = categoryInput.defaultLoadTime;
 		}
 	}
 
@@ -57,6 +62,9 @@ export default class Category {
 
 /** Whether or not the category is an IL category */
 Category.prototype.isIL = false;
+
+/** @type {?number} */
+Category.prototype.defaultLoadTime = null;
 
 /** Whether or not the category ends with "(Co-op)" */
 Category.prototype.isCoop = false;

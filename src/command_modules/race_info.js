@@ -152,7 +152,7 @@ export const commands = {
 						const members = await teamMembers(result).catch(onError);
 						assert(name && members !== undefined);
 
-						yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}${result.penalty ? ` (penalty: ${formatTimeShort(result.penalty)})` : ""}\n${members}`;
+						yield `  ${result.forfeited ? game.config.emotes.forfeited : game.placeEmote(placeObject.place)} \`${formatTime(result.time, false)}\` – ${name}${result.load_time ? ` (${formatTimeShort(result.load_time)}\x0Aloads)` : ""}\n${members}`;
 
 						if (!result.forfeited) {
 							increasePlace(placeObject, result.time);

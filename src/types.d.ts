@@ -91,6 +91,8 @@ declare global {
 
 			/** Whether or not the category is an Individual Level category. If it is one, that should be apparent from the name */
 			il?: boolean;
+
+			defaultLoadTime?: number;
 		}
 
 		/** Type of normal category input objects */

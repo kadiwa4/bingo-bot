@@ -56,7 +56,8 @@ If you want properties on discord.js types to work, go to `node_modules/discord.
 * `category [<game name> /] <category name>` – Sets the (game and) category.
 * `ready`/`r` – Indicates that you're ready to start.
 * `unready`/`ur` – Indicates that you're not actually ready.
-* `penalty [<timespan>]` – Gives you/your team a time penalty for the upcoming race/race series
+* `loads [<timespan>]` – Sets your (team's) loading time for the upcoming race
+* `clearloads` – Resets everyone's loading times
 
 **Mid-race commands**
 * `done`/`d` – Indicates that you/your team finished.

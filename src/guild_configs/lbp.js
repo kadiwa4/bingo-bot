@@ -183,16 +183,17 @@ const lbp = {
 			aliases: [ "lbp1", "1" ],
 			default: true,
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 240 },
 				"100%": null,
 				"Any% No Overlord": {
 					aliases: [ "anynocreate", "nooverlord", "nocreate", "anyno", "anync", "no", "nc" ],
-					default: true
+					default: true,
+					defaultLoadTime: 240,
 				},
 				"100% No Overlord": { aliases: [ "100nocreate", "100no", "100nc" ] },
 				"All Levels": { aliases: [ "al" ] },
 				"Demo%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Introduction": { default: true },
@@ -258,15 +259,18 @@ const lbp = {
 				"The Collector": null,
 				"Spline Rider": null,
 				"Rotor Tubes": null,
-				"Jetpack Tunnel": null
-			}
+				"Jetpack Tunnel": null,
+			},
 		},
 		"LittleBigPlanet (PSP)": {
 			aliases: [ "psp", "lbpp", "p" ],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 330,
+				},
 				"100%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"The Introduction": { default: true },
@@ -298,43 +302,44 @@ const lbp = {
 
 				"Crashing the Party": null,
 				"Road to Joy": null,
-				"The Procession": { aliases: [ "carnival" ] }
-			}
+				"The Procession": { aliases: [ "carnival" ] },
+			},
 		},
 		"Sackboy's Prehistoric Moves": {
 			aliases: [ "lbpspm", "lbpm", "m" ],
 			categories: {
 				"Any%": { default: true },
 				"100%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Learning to Move": {
 					aliases: [ "intro" ],
-					default: true
+					default: true,
 				},
 				"Prehistoric Paradise": null,
 				"Inside Big Rex": null,
 				"Cro-Magnon City": null,
 				"Hot Stepping": null,
-				"Fossil Fight": null
+				"Fossil Fight": null,
 			},
 			config: {
-				race: { maxTeamSize: 5 }
-			}
+				race: { maxTeamSize: 5 },
+			},
 		},
 		"LittleBigPlanet 2": {
 			aliases: [ "2" ],
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 150 },
 				"100%": null,
 				"Any% No Create": {
 					aliases: anyNCAliases,
-					default: true
+					default: true,
+					defaultLoadTime: 150,
 				},
 				"All Levels": { aliases: [ "al" ] },
 				"Demo%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Introduction": { default: true },
@@ -391,15 +396,18 @@ const lbp = {
 				"Into The Heart Of The Negativatron": null,
 				"Rocket Funland": null,
 				"Ping Pang Pong": null,
-				"Space Pool": null
-			}
+				"Space Pool": null,
+			},
 		},
 		"LittleBigPlanet PS Vita": {
 			aliases: [ "vita", "lbpv", "v"],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 840,
+				},
 				"100%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Introduction": { default: true },
@@ -445,20 +453,23 @@ const lbp = {
 				"In The Clutches Of Evil": null,
 				"Zombie Springtime": null,
 				"Eye Ball Maze": null,
-				"Sorting Panic": null
-			}
+				"Sorting Panic": null,
+			},
 		},
 		"LittleBigPlanet Karting": {
 			aliases: [ "karting", "lbpk", "k" ],
 			categories: {
-				"Any%": { default: true },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 1440,
+				},
 				"100%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Karting Lessons": {
 					aliases: [ "intro" ],
-					default: true
+					default: true,
 				},
 				"Garden Grip": null,
 				"After The Wedding": null,
@@ -509,8 +520,8 @@ const lbp = {
 				"Ride Scroller": null,
 				"Full Tilt": null,
 
-				"The Garage at the End of the Craftverse": { aliases: [ "tgateotc", "gateotc" ] }
-			}
+				"The Garage at the End of the Craftverse": { aliases: [ "tgateotc", "gateotc" ] },
+			},
 		},
 		"Run Sackboy! Run!": {
 			aliases: [ "r", "rsr", "run", "runsackboy", "rsbr" ],
@@ -520,21 +531,25 @@ const lbp = {
 					default: true
 				},
 				"Second Loop": { aliases: [ "second", "2nd", "2ndloop", "loop2" ] },
-				"100%": null
+				"100%": null,
 			},
 		},
 		"LittleBigPlanet 3": {
 			aliases: [ "3" ],
 			categories: {
-				"Any%": null,
+				"Any%": { defaultLoadTime: 60 },
 				"100%": null,
 				"Any% No Create": {
 					aliases: anyNCAliases,
-					default: true
+					default: true,
+					defaultLoadTime: 660,
 				},
-				"All Main Quests": { aliases: [ "amq" ] },
+				"All Main Quests": {
+					aliases: [ "amq" ],
+					defaultLoadTime: 1200,
+				},
 				"Profile Corruption%": { aliases: [ "corruption", "pc", "crash" ] },
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Introduction": { default: true },
@@ -569,16 +584,22 @@ const lbp = {
 				"The Great Escape": null,
 				"Even Bosses Wear Hats Sometimes": null,
 				"Battle Of The Airwaves": null,
-				"Joust In Time": null
-			}
+				"Joust In Time": null,
+			},
 		},
 		"Sackboy: A Big Adventure": {
 			aliases: [ "saba", "sackboy", "s" ],
 			categories: {
-				"Any%": { default: true },
-				"New Game+": { aliases: [ "ng" ] },
+				"Any%": {
+					default: true,
+					defaultLoadTime: 600,
+				},
+				"New Game+": {
+					aliases: [ "ng" ],
+					defaultLoadTime: 600,
+				},
 				"100%": null,
-				"Individual Levels": ilCategory
+				"Individual Levels": ilCategory,
 			},
 			levels: {
 				"Trial 1: Ain't Seen Nothing Yeti": { aliases: [ "trial1", "aintseennothingyeti" ] },
@@ -598,7 +619,7 @@ const lbp = {
 				"Trial 15: Fish 'N' Slips": { aliases: [ "trial15", "fishnslips" ] },
 				"Trial 16: The Ripsnorter": {
 					aliases: [ "trial16", "ripsnorter", "alltrials" ],
-					default: true
+					default: true,
 				},
 
 				"A Big Adventure": null,
@@ -683,8 +704,8 @@ const lbp = {
 				"Best in Throw": null,
 				"High and Mighty": null,
 				"In Full Swing": null,
-				"Little Big Finale": null
-			}
+				"Little Big Finale": null,
+			},
 		},
 		"DLC": {
 			aliases: [ "lbpdlc", "lbpseriesdlc", "seriesdlc" ],
@@ -692,13 +713,13 @@ const lbp = {
 				"Individual Levels": {
 					aliases: ilAliases,
 					default: true,
-					il: true
-				}
+					il: true,
+				},
 			},
 			levels: {
 				"Metal Gear Solid Level Pack": {
 					aliases: [ "mgs" ],
-					default: true
+					default: true,
 				},
 				"Pirates of the Caribbean Level Kit": { aliases: [ "potc" ] },
 				"Marvel Level Pack": null,
@@ -763,14 +784,14 @@ const lbp = {
 				"Cereal Isle": null,
 				"Watermill Valley": null,
 				"Mighty Mite LBP8 Little Big Mountain Mission": { aliases: [ "mightymite", "mightymitelbp8", "littlebigmountainmission" ] },
-				"TAKLAMAKAN 'Go and never come back'": { aliases: [ "taklamakan", "goandnevercomeback" ] }
+				"TAKLAMAKAN 'Go and never come back'": { aliases: [ "taklamakan", "goandnevercomeback" ] },
 			},
 			config: {
 				cleanUpLevelName: function lbpdlcCleanUpLevelName(input) {
 					return lbpCleanUpLevelName(input).replace(/(level|move)?(pack|kit)/g, "");
-				}
-			}
-		}
+				},
+			},
+		},
 	},
 	multiGame: {
 		categories: {
