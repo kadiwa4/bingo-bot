@@ -1,10 +1,11 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { clean, decodeHTML, httpsGet, isMod, log, logError, RateLimiter } from "../misc.js";
+import { clean, httpsGet, isMod, log, logError, RateLimiter } from "../misc.js";
 
 import assert from "assert";
 
 import Discord from "discord.js";
+import { decode } from "html-entities";
 
 export const id = "roles";
 
@@ -36,7 +37,6 @@ export function init(guild, guildInput) {
 	guild.allSRRoles = guildInput.roles.init?.(guild);
 	guild.getSRRoles = guildInput.roles.getRoles;
 	guild.srcAPIFilter = guildInput.roles.srcAPIFilter;
-	guild.unicodeNameFix = guildInput.roles.unicodeNameFix ?? false;
 
 	setUpdateAllRolesTimeout(guild);
 }
@@ -97,43 +97,13 @@ export const commands = {
 				return;
 			}
 
-			/** @type {string} */
-			const discordTag = member.user.tag;
-			const srcTag = decodeHTML(tagMatch[1]);
-			if (srcTag === discordTag) {
-				updateRoles(onError, message, member, args, true).catch(onError);
+			const srcTag = decode(tagMatch[1]);
+			if (srcTag !== member.user.tag) {
+				message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${member.user.cleanTag}). You can update it at https://www.speedrun.com/editprofile. If you have issues with this, contact a moderator.`);
 				return;
 			}
 
-			// sr.c replaces characters whose char code is higher than 0xFF with question marks
-			if (
-				guild.unicodeNameFix
-				&& srcTag.includes("?")
-				&& srcTag.length === discordTag.length
-				&& srcTag.slice(-5) === discordTag.slice(-5)
-			) {
-				let tagsMatch = true;
-				let index = 0;
-				// the last 5 characters (e.g. '#0872') have already been checked
-				for (let srcChar of srcTag.slice(0, -5)) {
-					if (
-						srcChar !== discordTag[index]
-						&& (srcChar !== "?" || discordTag.charCodeAt(index) < 0x100)
-					) {
-						tagsMatch = false;
-						break;
-					}
-					index += 1;
-				}
-
-				if (tagsMatch) {
-					updateRoles(onError, message, member, args, true).catch(onError);
-					return;
-				}
-			}
-
-			message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${member.user.cleanTag}). You can update it at https://www.speedrun.com/editprofile. If you have issues with this, contact a moderator.`);
-			return;
+			updateRoles(onError, message, member, args, true).catch(onError);
 		},
 	},
 	rolesRemove: {

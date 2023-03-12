@@ -6,6 +6,7 @@ import * as misc from "../misc.js";
 import Race from "../Race.js";
 
 import Discord from "discord.js";
+import { decode } from "html-entities";
 
 const emotes = {
 	ppjE: "<:ppjE:230442929859198977>",
@@ -74,7 +75,7 @@ async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 	const data = (await misc.httpsGet(hostname, path).catch(onError)).content;
 	const start = data.search(`<h1>`) + 4;
 	const end = data.search(`</h1>`);
-	const title = misc.decodeHTML(data.substring(start, end).trim());
+	const title = decode(data.substring(start, end).trim());
 	return { level: `${title} – <https://${hostname}${path}>` };
 }
 
@@ -879,7 +880,6 @@ const lbp = {
 			return newRoles;
 		},
 		srcAPIFilter: "?series=v7emqr49",
-		unicodeNameFix: false
 	},
 	config: {
 		race: {

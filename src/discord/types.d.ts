@@ -1252,7 +1252,6 @@ export class Guild extends AnonymousGuild, EventEmitter { // edited
   public allSRRoles?: Set<string>;
   public getSRRoles?(member: Discord.GuildMember, srcData: any[]): Set<string>;
   public srcAPIFilter?: string;
-  public unicodeNameFix?: boolean;
 }
 
 export class GuildAuditLogs<T extends GuildAuditLogsResolvable = AuditLogEvent> {

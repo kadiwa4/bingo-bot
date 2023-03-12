@@ -111,29 +111,6 @@ export function cleanName(name) {
 	return Discord.escapeMarkdown(name.replace(/<(#|@[!&]?)(\d+>)/, "<$1\u200B$2"));
 }
 
-/** HTML codes for the function `decodeHTML` */
-const entities = Object.assign(newMap(), {
-	amp: "&",
-	apos: "'",
-	lt: "<",
-	gt: ">",
-	quot: "\"",
-	nbsp: " ",
-});
-
-/**
- * Decodes characters that need to be escaped in HTML
- * https://github.com/intesso/decode-html
- * @param {string} text The HTML-encoded text
- */
-export function decodeHTML(text) {
-	return text.replace(/&([a-z]+);/ig, (match, entity) => {
-		entity = entity.toLowerCase();
-		// return original string if there is no matching entity (no replace)
-		return entities[entity] ?? match;
-	});
-}
-
 /**
  * Formats a time in (HH:)mm:ss.ss
  * @param {number} time The time in seconds

@@ -129,15 +129,6 @@ declare global {
 			 * @default ""
 			 */
 			srcAPIFilter: string;
-
-			/**
-			 * Speedrun.com replaces characters with a char code > `0xFF` with question marks.
-			 * If `unicodeNameFix` is true, users with affected names can still easily link their speedrun.com account.
-			 * However, this also allows other Discord users with Nitro to connect that speedrun.com account to their own Discord account.
-			 * They will most likely have to change their Discord name (not nickname) to steal the account, though
-			 * @default false
-			 */
-			unicodeNameFix?: boolean;
 		}
 	}
 
