@@ -795,6 +795,7 @@ export const commands = {
 				if (team.loadTime !== null) {
 					team.loadTime = loadTime;
 					message.acknowledge(member);
+					return;
 				}
 			} else if (team.loadTime !== null) {
 				message.inlineReply(`Your loading time is currently set to ${formatTimeShort(team.loadTime)}. Change it using: ${this.usage}`);
