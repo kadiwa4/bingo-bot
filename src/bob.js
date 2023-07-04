@@ -27,7 +27,6 @@ import "./discord/Client.js";
 import "./discord/Guild.js";
 import "./discord/GuildMember.js";
 import "./discord/Message.js";
-import "./discord/User.js";
 
 import { log, logError, newMap, noop } from "./misc.js";
 import Race from "./Race.js";

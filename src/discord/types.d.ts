@@ -2730,8 +2730,6 @@ export class User extends PartialTextBasedChannel(Base) {
 
   // edited
   public isEntrant?: boolean;
-
-  public readonly cleanTag: string;
 }
 
 export class UserContextMenuCommandInteraction<
