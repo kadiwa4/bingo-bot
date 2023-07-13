@@ -175,15 +175,16 @@ export function hasProperties(object) {
  * Gets a web page over HTTPS
  * @param {string} hostname The hostname
  * @param {string} path The path, starting with '/'
- * @returns {Promise<{ content: string; path: string; }>}
+ * @param {NodeJS.Dict<string>} [headers] Extra headers
+ * @returns {Promise<{ content: Buffer; path: string; headers: NodeJS.Dict<string>; }>}
  */
-export function httpsGet(hostname, path) {
+export function httpsGet(hostname, path, headers) {
 	return new Promise((resolve, reject) => {
 		https.get({
 			hostname: hostname,
 			path: path,
 			port: 443,
-			headers: { "User-Agent": "bingo-bot/0.2" },
+			headers: Object.assign({ "User-Agent": "bingo-bot/0.2" }, headers),
 		}, (message) => {
 			const bufferList = new BufferList();
 			const { statusCode, statusMessage } = message;
@@ -199,7 +200,7 @@ export function httpsGet(hostname, path) {
 
 			message.on("data", bind(bufferList, "append"));
 			message.on("end", function onEnd() {
-				resolve({ content: bufferList.toString("utf-8"), path });
+				resolve({ content: bufferList.slice(), path, headers: message.headers });
 			});
 		}).on("error", reject);
 	});

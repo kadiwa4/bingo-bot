@@ -72,7 +72,7 @@ async function lbpCommunityLevels(onError, message, member, args, cleanArgs) {
 	}
 
 	await lbpRateLimiter.wait(5000);
-	const data = (await misc.httpsGet(hostname, path).catch(onError)).content;
+	const data = (await misc.httpsGet(hostname, path).catch(onError)).content.toString("utf8");
 	const start = data.search(`<h1>`) + 4;
 	const end = data.search(`</h1>`);
 	const title = decode(data.substring(start, end).trim());

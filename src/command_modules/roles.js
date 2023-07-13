@@ -3,6 +3,7 @@ import { HelpCategory } from "../enums.js";
 import { clean, httpsGet, isMod, log, logError, RateLimiter } from "../misc.js";
 
 import assert from "assert";
+import zlib from "zlib";
 
 import Discord from "discord.js";
 import { decode } from "html-entities";
@@ -80,19 +81,29 @@ export const commands = {
 				}
 			}
 
-			const response = (await callSRC(onErrorCatch404, guild, `/user/${args}`))?.content;
-			if (!response) {
+			// The servers supply more up-to-date versions of gzipped pages than
+			// non-gzipped ones for some reason. At least if you don't have any
+			// cookies set.
+			const response = (await callSRC(onErrorCatch404, `/user/${args}`, { "Accept-Encoding": "gzip" }));
+			if (!response?.content) {
 				return;
 			}
 
-			if (response.slice(0, 1000).includes("<title>speedrun.com</title>")) {
+			let content;
+			if ("content-encoding" in response.headers) {
+				content = zlib.gunzipSync(response.content).toString("utf8");
+			} else {
+				content = response.content.toString("utf8");
+			}
+
+			if (content.slice(0, 1000).includes("<title>speedrun.com</title>")) {
 				// this can't be a user site, the title would be something else if it was
-				message.inlineReply("speedrun.com user site not found.");
+				message.inlineReply("speedrun.com user not found.");
 				return;
 			}
 
 			const actualTag = member.user.tag.replace(/#0$/, "");
-			const tagMatch = response.slice(20000).match(/data-original-title="Discord: ([^"]+)"/);
+			const tagMatch = content.slice(20000).match(/data-original-title="Discord: ([^"]+)"/);
 			if (!tagMatch) {
 				message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${clean(actualTag, message)}\`) at https://www.speedrun.com/editprofile.`);
 				return;
@@ -190,7 +201,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 		}
 
 		const { content, path } = result;
-		const srcResponse = JSON.parse(content);
+		const srcResponse = JSON.parse(content.toString("utf8"));
 		if ("status" in srcResponse) {
 			if (message) {
 				message.inlineReply("speedrun.com user not found.");
@@ -246,14 +257,14 @@ const srcRateLimiter = new RateLimiter();
 /**
  * Gets a speedrun.com page over HTTPS
  * @param {ErrorFunction} onError Function that gets called to catch an error
- * @param {Discord.Guild} guild The guild
  * @param {string} path The path, starting with '/'
- * @returns {Promise<{ content: string; path: string; } | void>}
+ * @param {NodeJS.Dict<string>} [headers] Extra headers
+ * @returns {Promise<{ content: Buffer; path: string; headers: NodeJS.Dict<string>; } | void>}
  */
-async function callSRC(onError, guild, path) {
+async function callSRC(onError, path, headers) {
 	// - delay after API call: 1 sec
 	// - delay after downloading any other sr.c page: 5 sec
 	// API: https://github.com/speedruncomorg/api/tree/master/version1
 	await srcRateLimiter.wait(path.startsWith("/api") ? 1000 : 5000);
-	return httpsGet("www.speedrun.com", path).catch(onError);
+	return httpsGet("www.speedrun.com", path, headers).catch(onError);
 }
