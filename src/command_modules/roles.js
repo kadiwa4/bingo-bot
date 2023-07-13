@@ -192,7 +192,6 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 	if (srcID) {
 		const result = await callSRC(
 			onError ?? logError,
-			guild,
 			`/api/v1/users/${srcID}/personal-bests${guild.srcAPIFilter}`,
 		);
 
