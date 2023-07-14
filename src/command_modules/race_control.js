@@ -7,7 +7,7 @@ import Game from "../Game.js";
 import Race from "../Race.js";
 import { clean, formatTime, formatTimeShort, hasProperties, invertObject, MULTI_GAME, newMap, parseTime } from "../misc.js";
 
-import assert from "assert";
+import assert from "node:assert";
 
 import Discord from "discord.js";
 

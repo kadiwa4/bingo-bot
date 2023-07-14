@@ -5,8 +5,8 @@ import Command from "../Command.js";
 import CommandModule from "../CommandModule.js";
 import { addUserNames, bind, getUserID, invertObject, log, newMap, noop } from "../misc.js";
 
-import EventEmitter from "events";
-import fs from "fs";
+import EventEmitter from "node:events";
+import fs from "node:fs";
 
 import BetterSqlite3 from "better-sqlite3";
 import Discord, { Guild } from "discord.js";

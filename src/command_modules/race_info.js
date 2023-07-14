@@ -4,7 +4,7 @@ import { HelpCategory, RaceState, TeamState } from "../enums.js";
 import Game from "../Game.js";
 import { calculateEloMatchup, clean, formatTime, formatTimeShort, increasePlace, MULTI_GAME, toTable } from "../misc.js";
 
-import assert from "assert";
+import assert from "node:assert";
 
 import Discord from "discord.js";
 

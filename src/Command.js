@@ -3,7 +3,7 @@ import CommandModule from "./CommandModule.js";
 import { HelpCategory } from "./enums.js";
 import { FROZEN_ARRAY } from "./misc.js";
 
-import assert from "assert";
+import assert from "node:assert";
 
 import Discord from "discord.js";
 

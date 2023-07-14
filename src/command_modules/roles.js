@@ -2,8 +2,8 @@ import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
 import { clean, httpsGet, isMod, log, logError, RateLimiter } from "../misc.js";
 
-import assert from "assert";
-import zlib from "zlib";
+import assert from "node:assert";
+import zlib from "node:zlib";
 
 import Discord from "discord.js";
 import { decode } from "html-entities";

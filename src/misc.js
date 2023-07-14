@@ -1,9 +1,9 @@
 /// <reference path="./types.d.ts" />
 import { TeamState } from "./enums.js";
 
-import assert from "assert";
-import https from "https";
-import util from "util";
+import assert from "node:assert";
+import https from "node:https";
+import util from "node:util";
 
 import BetterSqlite3 from "better-sqlite3";
 import { BufferList } from "bl";
