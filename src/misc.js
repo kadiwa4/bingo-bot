@@ -175,16 +175,15 @@ export function hasProperties(object) {
  * Gets a web page over HTTPS
  * @param {string} hostname The hostname
  * @param {string} path The path, starting with '/'
- * @param {NodeJS.Dict<string>} [headers] Extra headers
- * @returns {Promise<{ content: Buffer; path: string; headers: NodeJS.Dict<string>; }>}
+ * @returns {Promise<{ content: string; path: string; }>}
  */
-export function httpsGet(hostname, path, headers) {
+export function httpsGet(hostname, path) {
 	return new Promise((resolve, reject) => {
 		https.get({
 			hostname: hostname,
 			path: path,
 			port: 443,
-			headers: Object.assign({ "User-Agent": "bingo-bot/0.2" }, headers),
+			headers: { "User-Agent": "bingo-bot/0.2" },
 		}, (message) => {
 			const bufferList = new BufferList();
 			const { statusCode, statusMessage } = message;
@@ -194,16 +193,29 @@ export function httpsGet(hostname, path, headers) {
 			}
 
 			if (statusCode !== 200) {
-				reject(new Error(`https://${hostname}${path} responded '${statusCode} ${statusMessage}'`));
+				reject(new StatusCodeError(`https://${hostname}${path} responded '${statusCode} ${statusMessage}'`, statusCode));
 				return;
 			}
 
 			message.on("data", bind(bufferList, "append"));
 			message.on("end", function onEnd() {
-				resolve({ content: bufferList.slice(), path, headers: message.headers });
+				resolve({ content: bufferList.toString("utf8"), path });
 			});
 		}).on("error", reject);
 	});
+}
+
+export class StatusCodeError extends Error {
+	/**
+	 * @param {string} message
+	 * @param {number} code
+	 */
+	constructor(message, code) {
+		super();
+		this.name = this.constructor.name;
+		this.message = message;
+		this.code = code;
+	}
 }
 
 /**
