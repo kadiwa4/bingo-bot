@@ -832,14 +832,14 @@ const lbp = {
 			return new Set(allRoles);
 		},
 		getRoles: function lbpGetRoles(member, srcData) {
-			const { guild } = member;
+			const { client, guild } = member;
 
 			/** @type {Set<string>} */
 			const newRoles = new Set();
 			const wrCounts = { fullGame: 0, il: 0 };
 			for (let run of srcData) {
-				// filters out LBPCE
-				if (run.run.game === "76r33je6") {
+				// filters out LBPCE and Ultimate Sackboy
+				if (run.run.game in ["76r33je6", "26893951"]) {
 					continue;
 				}
 
@@ -847,8 +847,13 @@ const lbp = {
 					wrCounts[run.run.level ? "il" : "fullGame"] += 1;
 				}
 
-				newRoles.add(gameRoles[gameNameFromID[run.run.game]]
-					?? multiCategoryFromID[run.run.category].games.map((game) => gameRoles[game.name]));
+				const roles = gameRoles[gameNameFromID[run.run.game]]
+					?? multiCategoryFromID[run.run.category]?.games.map((game) => gameRoles[game.name]);
+				if (!roles) {
+					client.owner.dmChannel.send(`LBP category "${run.run.game}" / "${run.run.category}" not found :(`);
+					continue;
+				}
+				newRoles.add(roles);
 			}
 
 			if (wrCounts.fullGame > 0) {
