@@ -839,7 +839,7 @@ const lbp = {
 			const wrCounts = { fullGame: 0, il: 0 };
 			for (let run of srcData) {
 				// filters out LBPCE and Ultimate Sackboy
-				if (run.run.game in ["76r33je6", "26893951"]) {
+				if (["76r33je6", "26893951"].indexOf(run.run.game) !== -1) {
 					continue;
 				}
 
