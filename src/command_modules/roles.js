@@ -88,16 +88,15 @@ export const commands = {
 				return;
 			}
 
-			const actualTag = member.user.tag.replace(/#0$/, "");
 			const tagMatch = response.content.match(/"networkId": ?5, ?"value": ?"([^"]+)"/);
 			if (!tagMatch) {
-				message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${clean(actualTag, message)}\`) at <https://www.speedrun.com/users/${args}/settings/socials>.`);
+				message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${clean(member.user.tag, message)}\`) at <https://www.speedrun.com/users/${args}/settings/socials>.`);
 				return;
 			}
 
 			const srcTag = decode(tagMatch[1]).replace(/#0$/, "");
-			if (srcTag !== actualTag) {
-				message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${clean(actualTag, message)}). You can update it at <https://www.speedrun.com/users/${args}/settings/socials>. If you have issues with this, contact a moderator.`);
+			if (srcTag !== member.user.tag) {
+				message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${clean(member.user.tag, message)}). You can update it at <https://www.speedrun.com/users/${args}/settings/socials>. If you have issues with this, contact a moderator.`);
 				return;
 			}
 

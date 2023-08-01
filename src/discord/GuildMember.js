@@ -12,7 +12,7 @@ Object.defineProperties(GuildMember.prototype, {
 		get: function displayName() {
 			return (this.id === "159245797328814081") ? "bean"
 				// the line from the original function
-				: (this.nickname ?? this.user.username);
+				: (this.nickname ?? this.user.displayName);
 		},
 	},
 	cleanName: {
