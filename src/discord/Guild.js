@@ -65,6 +65,7 @@ Guild.prototype.init = async function (guildInput) {
 	const database = this.database = new BetterSqlite3(`${this.dataFolder}/db.sqlite`);
 	client.databases.push(database);
 
+	// name holds the username, nickname holds the nickname or global name
 	database.createTable(
 		"user_names",
 		`user_id TEXT PRIMARY KEY,
@@ -75,7 +76,6 @@ Guild.prototype.init = async function (guildInput) {
 	this.sqlite = {
 		getUserNames: database.prepare("SELECT name, nickname FROM user_names WHERE user_id = ?;"),
 		getUserIDFromName: database.prepare("SELECT user_id FROM user_names WHERE name = ? COLLATE NOCASE;").pluck(),
-		getUserIDFromNickname: database.prepare("SELECT user_id FROM user_names WHERE nickname = ? COLLATE NOCASE;").pluck(),
 		addUserNames: database.prepare("INSERT OR REPLACE INTO user_names (user_id, name, nickname) VALUES (@user_id, @name, @nickname);"),
 	};
 
@@ -129,13 +129,7 @@ Guild.prototype.getUserID = function (input) {
 	const { sqlite } = this;
 	input = input.trim();
 
-	return (
-		getUserID(input)
-		?? sqlite.getUserIDFromName.get(input)
-		?? sqlite.getUserIDFromNickname.get(input)
-		?? null
-	);
-	//return id ? await this.members.fetch(id).catch(noop) ?? null : null;
+	return getUserID(input) ?? sqlite.getUserIDFromName.get(input) ?? null;
 };
 
 /** Gets the name of a user, even if they aren't a member anymore */
