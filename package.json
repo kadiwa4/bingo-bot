@@ -19,12 +19,12 @@
 	},
 	"homepage": "https://github.com/kadiwa4/bingo-bot#readme",
 	"dependencies": {
-		"@discordjs/collection": "^1.5.2",
-		"better-sqlite3": "^8.5.0",
+		"@discordjs/collection": "^1.5.3",
+		"better-sqlite3": "^9.4.0",
 		"bl": "^4.1.0",
 		"discord.js": "^14.12.1",
 		"html-entities": "^2.3.3",
-		"ws": "^8.13.0"
+		"ws": "8.14.2"
 	},
 	"engines": {
 		"node": ">=14"
