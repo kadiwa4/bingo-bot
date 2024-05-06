@@ -838,8 +838,8 @@ const lbp = {
 			const newRoles = new Set();
 			const wrCounts = { fullGame: 0, il: 0 };
 			for (let run of srcData) {
-				// filters out LBPCE and Ultimate Sackboy
-				if (["76r33je6", "26893951"].indexOf(run.run.game) !== -1) {
+				// filter out LBPCE and Ultimate Sackboy
+				if (["76r33je6", "26893951"].includes(run.run.game)) {
 					continue;
 				}
 

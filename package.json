@@ -11,7 +11,7 @@
 	"keywords": [],
 	"author": "RbdJellyfish (https://tadcordle.github.io/)",
 	"contributors": [
-		"KaDiWa"
+		"kadiwa"
 	],
 	"license": "ISC",
 	"bugs": {
@@ -23,10 +23,9 @@
 		"better-sqlite3": "^9.4.0",
 		"bl": "^4.1.0",
 		"discord.js": "^14.12.1",
-		"html-entities": "^2.3.3",
-		"ws": "8.14.2"
+		"html-entities": "^2.3.3"
 	},
 	"engines": {
-		"node": ">=14"
+		"node": ">=18"
 	}
 }
