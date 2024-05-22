@@ -198,7 +198,7 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 
 		if (srcResponse.data.length === 0) {
 			if (message) {
-				message.inlineReply(`Couldn't find any ${guild.srName} runs on your speedrun.com account.`);
+				message.inlineReply(`Couldn't find any verified ${guild.srName} runs on your speedrun.com account.`);
 				return;
 			}
 
