@@ -1,8 +1,10 @@
-.vs*/
-.DS_STORE
-node_modules/
+.*
+!/.editorconfig
+!/.eslintrc.json
+!/.gitignore
+/data
+/discord_auth.json
+/logs
+/node_modules
+
 *.code-workspace
-data/
-logs/
-*gitignore*
-discord_auth.json
