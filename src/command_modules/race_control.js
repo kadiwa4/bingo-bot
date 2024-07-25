@@ -329,7 +329,7 @@ export const commands = {
 	},
 	raceQuit: {
 		names: [ "quit", "q" ],
-		aliases: [ "leave", "exit", "unrace" ],
+		aliases: [ "leave", "exit", "unrace", "die", "bye" ],
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
