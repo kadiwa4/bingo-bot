@@ -328,7 +328,7 @@ export const commands = {
 		},
 	},
 	raceQuit: {
-		names: [ "quit" ],
+		names: [ "quit", "q" ],
 		aliases: [ "leave", "exit", "unrace" ],
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
@@ -375,7 +375,7 @@ export const commands = {
 		},
 	},
 	raceCategory: {
-		names: [ "category" ],
+		names: [ "category", "c" ],
 		description: "Sets the (game and) category",
 		usage: "[<game name> /] <category name>",
 		category: HelpCategory.PRE_RACE,
@@ -468,7 +468,7 @@ export const commands = {
 		},
 	},
 	raceLevel: {
-		names: [ "level" ],
+		names: [ "level", "l" ],
 		description: "Sets the level",
 		usage: "<level name>",
 		category: HelpCategory.IL_RACE,
