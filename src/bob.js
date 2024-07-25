@@ -171,7 +171,7 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
 		throw new Error(`'src/guild_configs/${file}' doesn't have the property 'id'`);
 	}
 
-
+	// check if bot has access to guild in the guild config, if not continue
 	let guild;
 	try
 	{
