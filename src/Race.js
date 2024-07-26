@@ -40,6 +40,12 @@ export default class Race {
 		this.state = RaceState.NO_RACE;
 
 		/**
+		 * Is a new race
+		 * @type {boolean}
+		 */
+		this.newRace = true;
+
+		/**
 		 * Array of all current entrant teams in the race
 		 * @type {EntrantTeam[]}
 		 */
@@ -261,10 +267,8 @@ export default class Race {
 			if (isIL) {
 				this.newIL();
 			} else {
-				this.channel.race = new Race(this.channel, this.game);
-				this.resetEntrants();
+				this.closeRace();
 			}
-
 			return;
 		}
 
@@ -367,8 +371,7 @@ export default class Race {
 
 			this.newIL();
 		} else {
-			this.channel.race = new Race(this.channel, this.game);
-			this.resetEntrants();
+			this.closeRace();
 		}
 	}
 
@@ -442,6 +445,7 @@ export default class Race {
 	 * Adds an entrant as a new team. Returns true if successful
 	 * or false if the entrant has already joined a race
 	 * @param {Discord.GuildMember} member The guild member to be added
+	 * @param {boolean} newRace Is a new race
 	 * @returns {boolean}
 	 */
 	addEntrant(member) {
@@ -450,8 +454,13 @@ export default class Race {
 		}
 
 		this.teams.push(new EntrantTeam(this, member));
+		if (this.newRace)
+		{
+			this.newRace = false;
+			member.ilScore = 0;
+		}
+		member.ilScore ??= 0;
 		member.isReady = false;
-		member.ilScore = 0;
 		member.ilChoiceCount = this.averageLevelChoiceCount;
 		member.user.isEntrant = true;
 		return true;
@@ -486,7 +495,7 @@ export default class Race {
 			}
 		} else {
 			// close down race if this is the last person leaving
-			this.channel.race = new Race(this.channel, this.game);
+			this.closeRace();
 			note = " Closing race.";
 		}
 
@@ -494,9 +503,10 @@ export default class Race {
 	}
 
 	/**
-	 * Resets all race entrants
+	 * Resets the race
 	 */
-	resetEntrants() {
+	closeRace() {
+		this.channel.race = new Race(this.channel, this.game);
 		for (let entrant of this.entrantIterator()) {
 			this.resetEntrant(entrant);
 		}
@@ -507,12 +517,11 @@ export default class Race {
 	 * @param {Discord.GuildMember} entrant The race entrant to be reset
 	 */
 	resetEntrant(entrant) {
-		entrant.ilChoiceCount = 0;
-		entrant.ilScore = 0;
 		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
 		entrant.team = null;
 		entrant.user.isEntrant = false;
+		entrant.ilChoiceCount = 0;
 	}
 
 	/**

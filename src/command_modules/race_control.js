@@ -749,12 +749,11 @@ export const commands = {
 
 				case RaceState.COUNTDOWN:
 					race.stopCountdown();
-					// don't break so that race gets reset
+					// fall through so that race gets reset
 
 				case RaceState.JOINING:
 				case RaceState.ACTIVE:
-					race.channel.race = new Race(race.channel, race.game);
-					race.resetEntrants();
+					race.closeRace();
 					break;
 
 				case RaceState.DONE:
