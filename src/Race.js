@@ -46,6 +46,12 @@ export default class Race {
 		this.teams = [];
 
 		/**
+		 * Array of members who have been in the race for cleanup
+		 * @type {Set<Discord.GuildMember>}
+		 */
+		this.allEntrantsEver = new Set();
+
+		/**
 		 * Array of IL-race results since the IL series started
 		 * @type {ILResult[]}
 		 */
@@ -227,7 +233,7 @@ export default class Race {
 			let lastLeavingEntrant = null;
 			for (let entrant of this.leaveWhenDone) {
 				entrant.team.remove(entrant);
-				this.resetEntrant(entrant);
+				this.resetEntrant(entrant, false);
 				if (lastLeavingEntrant) {
 					leavingEntrants.push(lastLeavingEntrant);
 				}
@@ -261,10 +267,8 @@ export default class Race {
 			if (isIL) {
 				this.newIL();
 			} else {
-				this.channel.race = new Race(this.channel, this.game);
-				this.resetEntrants();
+				this.closeRace();
 			}
-
 			return;
 		}
 
@@ -367,8 +371,7 @@ export default class Race {
 
 			this.newIL();
 		} else {
-			this.channel.race = new Race(this.channel, this.game);
-			this.resetEntrants();
+			this.closeRace();
 		}
 	}
 
@@ -450,8 +453,9 @@ export default class Race {
 		}
 
 		this.teams.push(new EntrantTeam(this, member));
+		this.allEntrantsEver.add(member);
+		member.ilScore ??= 0;
 		member.isReady = false;
-		member.ilScore = 0;
 		member.ilChoiceCount = this.averageLevelChoiceCount;
 		member.user.isEntrant = true;
 		return true;
@@ -464,7 +468,7 @@ export default class Race {
 	 */
 	removeEntrant(entrant) {
 		entrant.team.remove(entrant);
-		this.resetEntrant(entrant);
+		this.resetEntrant(entrant, false);
 		this.checkCategoryCoop();
 
 		let note = "";
@@ -486,7 +490,7 @@ export default class Race {
 			}
 		} else {
 			// close down race if this is the last person leaving
-			this.channel.race = new Race(this.channel, this.game);
+			this.closeRace();
 			note = " Closing race.";
 		}
 
@@ -494,25 +498,30 @@ export default class Race {
 	}
 
 	/**
-	 * Resets all race entrants
+	 * Resets the race
 	 */
-	resetEntrants() {
-		for (let entrant of this.entrantIterator()) {
-			this.resetEntrant(entrant);
+	closeRace() {
+		this.channel.race = new Race(this.channel, this.game);
+		for (let entrant of this.allEntrantsEver) {
+			this.resetEntrant(entrant, true);
 		}
 	}
 
 	/**
 	 * Resets a race entrant when they leave the race
 	 * @param {Discord.GuildMember} entrant The race entrant to be reset
+	 * @param {boolean} clearILScore
 	 */
-	resetEntrant(entrant) {
-		entrant.ilChoiceCount = 0;
-		entrant.ilScore = 0;
+	resetEntrant(entrant, clearILScore) {
 		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
 		entrant.team = null;
 		entrant.user.isEntrant = false;
+		entrant.ilChoiceCount = 0;
+		if (clearILScore)
+        {
+			entrant.ilScore = 0;
+		}
 	}
 
 	/**
