@@ -203,7 +203,7 @@ const lbp = {
                 "Skate to Victory": { aliases: [ "skate" ] },
                 "Tie Skipping": { aliases: [ "tie" ] },
                 "Castle Climb Challenge": { aliases: [ "castleclimb" ] },
-                "Skateboard Freefall": { aliases: [ "freefall" ] },
+                "Skateboard Freefall": { aliases: [ "skateboard", "skamtebord", "freefall" ] },
                 "Die%": null,
 
 
@@ -248,7 +248,7 @@ const lbp = {
                 "Endurance Dojo": { aliases: [ "endurance", "dojo" ] },
                 "Sensei's Lost Castle": { aliases: [ "lostcastle", "sensei" ] },
                 "The Terrible Oni's Volcano": { aliases: [ "oni", "volcano", "terribleoni" ] },
-                "Daruma San": { aliases: [ "daruma", "san" ] },
+                "Daruma San": { aliases: [ "daruma" ] },
                 "Wheel of Misfortune": { aliases: [ "misfortune" ] },
                 "Roller Castle": null,
 
@@ -412,7 +412,7 @@ const lbp = {
                 "Full Metal Rabbit": { aliases: [ "fmr", "fma", "fullmetalrbd", "fullmetalrabid" ] },
                 "Where In The World Is Avalon Centrifuge?": { aliases: [ "witwiac" ] },
                 "Fight of the Bumblebee": { aliases: [ "fightofbumblebees", "flightofbumblebee", "flightofbumblebees" ] },
-                "Into The Heart Of The Negativitron": null,
+                "Into The Heart Of The Negativitron": { aliases: [ "ithotn" ] },
                 "Rocket Funland": null,
                 "Ping Pang Pong": null,
                 "Space Pool": null,
@@ -519,7 +519,7 @@ const lbp = {
                 "Sugar Rush": { aliases: [ "sugar" ] },
                 "Current Events": { aliases: [ "current" ] },
                 "Cakes on a Train": { aliases: [ "cake", "cakes" ] },
-                "Don't Go Baking My Kart": { aliases: [ "dgbmh", "baking" ] },
+                "Don't Go Baking My Kart": { aliases: [ "dgbmk", "baking" ] },
 
 
                 "Future Perfect": { aliases: [ "future", "perfect" ] },
@@ -784,7 +784,7 @@ const lbp = {
                 "Seaside Surprise Level Kit": { aliases: [ "seaside" ] },
 
 
-                "Act 1: Introduction": { aliases: [ "act1", "intro", "introduction" ] },
+                "Act 1: Introduction": { aliases: [ "act1", "intro" ] },
                 "Act 2: VR Training": { aliases: [ "act2", "vrtraining" ] },
                 "Act 3: The Mission": { aliases: [ "act3", "mission" ] },
                 "Act 4: The Level Factory": { aliases: [ "act4", "levelfactory" ] },
