@@ -40,16 +40,16 @@ export default class Race {
 		this.state = RaceState.NO_RACE;
 
 		/**
-		 * Is a new race
-		 * @type {boolean}
-		 */
-		this.newRace = true;
-
-		/**
 		 * Array of all current entrant teams in the race
 		 * @type {EntrantTeam[]}
 		 */
 		this.teams = [];
+
+		/**
+		 * Array of members who have been in the race for cleanup
+		 * @type {Set<Discord.GuildMember>}
+		 */
+		this.allEntrantsEver = new Set();
 
 		/**
 		 * Array of IL-race results since the IL series started
@@ -233,7 +233,7 @@ export default class Race {
 			let lastLeavingEntrant = null;
 			for (let entrant of this.leaveWhenDone) {
 				entrant.team.remove(entrant);
-				this.resetEntrant(entrant);
+				this.resetEntrant(entrant, false);
 				if (lastLeavingEntrant) {
 					leavingEntrants.push(lastLeavingEntrant);
 				}
@@ -445,7 +445,6 @@ export default class Race {
 	 * Adds an entrant as a new team. Returns true if successful
 	 * or false if the entrant has already joined a race
 	 * @param {Discord.GuildMember} member The guild member to be added
-	 * @param {boolean} newRace Is a new race
 	 * @returns {boolean}
 	 */
 	addEntrant(member) {
@@ -454,11 +453,7 @@ export default class Race {
 		}
 
 		this.teams.push(new EntrantTeam(this, member));
-		if (this.newRace)
-		{
-			this.newRace = false;
-			member.ilScore = 0;
-		}
+		this.allEntrantsEver.add(member);
 		member.ilScore ??= 0;
 		member.isReady = false;
 		member.ilChoiceCount = this.averageLevelChoiceCount;
@@ -473,7 +468,7 @@ export default class Race {
 	 */
 	removeEntrant(entrant) {
 		entrant.team.remove(entrant);
-		this.resetEntrant(entrant);
+		this.resetEntrant(entrant, false);
 		this.checkCategoryCoop();
 
 		let note = "";
@@ -507,21 +502,26 @@ export default class Race {
 	 */
 	closeRace() {
 		this.channel.race = new Race(this.channel, this.game);
-		for (let entrant of this.entrantIterator()) {
-			this.resetEntrant(entrant);
+		for (let entrant of this.allEntrantsEver) {
+			this.resetEntrant(entrant, true);
 		}
 	}
 
 	/**
 	 * Resets a race entrant when they leave the race
 	 * @param {Discord.GuildMember} entrant The race entrant to be reset
+	 * @param {boolean} clearILScore
 	 */
-	resetEntrant(entrant) {
+	resetEntrant(entrant, clearILScore) {
 		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
 		entrant.team = null;
 		entrant.user.isEntrant = false;
 		entrant.ilChoiceCount = 0;
+		if (clearILScore)
+        {
+			entrant.ilScore = 0;
+		}
 	}
 
 	/**
