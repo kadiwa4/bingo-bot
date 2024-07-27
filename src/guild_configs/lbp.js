@@ -532,7 +532,7 @@ const lbp = {
                 "Stuck In Jam": null,
 
 
-                "Roots Of All Evil": { aliases: [ "rooe", "roots" ] },
+                "Roots Of All Evil": { aliases: [ "roae", "roots" ] },
                 "Firebug Circuit": { aliases: [ "firebug" ] },
                 "On the Wormpath": { aliases: [ "wormpath" ] },
                 "Venus Speedtrap RC": null,
