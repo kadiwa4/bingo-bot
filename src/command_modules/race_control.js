@@ -247,7 +247,6 @@ export function init(guild, guildInput) {
 export const commands = {
 	race: {
 		names: [ "race", "join" ],
-		aliases: ["j" ],
 		description: "Starts a new race, or joins the currently open race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
@@ -328,7 +327,7 @@ export const commands = {
 		},
 	},
 	raceQuit: {
-		names: [ "quit", "q" ],
+		names: [ "quit" ],
 		aliases: [ "leave", "exit", "unrace", "die", "bye" ],
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
@@ -375,7 +374,7 @@ export const commands = {
 		},
 	},
 	raceCategory: {
-		names: [ "category", "c" ],
+		names: [ "category" ],
 		description: "Sets the (game and) category",
 		usage: "[<game name> /] <category name>",
 		category: HelpCategory.PRE_RACE,
@@ -468,7 +467,7 @@ export const commands = {
 		},
 	},
 	raceLevel: {
-		names: [ "level", "l" ],
+		names: [ "level" ],
 		description: "Sets the level",
 		usage: "<level name>",
 		category: HelpCategory.IL_RACE,
