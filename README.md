@@ -51,7 +51,7 @@ If you want properties on discord.js types to work, go to `node_modules/discord.
 ## Commands
 
 **Pre-race commands**
-* `race` – Starts a new race, or joins the currently open race.
+* `race`/`join` – Starts a new race, or joins the currently open race.
 * `quit` – Leaves the race.
 * `category [<game name> /] <category name>` – Sets the (game and) category.
 * `ready`/`r` – Indicates that you're ready to start.
