@@ -246,8 +246,7 @@ export function init(guild, guildInput) {
 /** @type {NodeJS.Dict<Command>} */
 export const commands = {
 	race: {
-		names: [ "race" ],
-		aliases: [ "join" ],
+		names: [ "race", "join" ],
 		description: "Starts a new race, or joins the currently open race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,
@@ -329,7 +328,7 @@ export const commands = {
 	},
 	raceQuit: {
 		names: [ "quit" ],
-		aliases: [ "leave", "exit", "unrace" ],
+		aliases: [ "leave", "exit", "unrace", "die", "bye" ],
 		description: "Leaves the race",
 		category: HelpCategory.PRE_RACE,
 		raceChannelOnly: true,

@@ -171,7 +171,15 @@ for (let file of fs.readdirSync("./src/guild_configs")) {
 		throw new Error(`'src/guild_configs/${file}' doesn't have the property 'id'`);
 	}
 
-	const guild = await client.guilds.fetch(guildInput.id);
+	// check if bot has access to guild in the guild config, if not continue
+	let guild;
+	try
+	{
+		guild = await client.guilds.fetch(guildInput.id);
+	} catch (error) {
+		log(`bot does not have access to ${guildInput.abbreviation}`)
+		continue;
+	}
 
 	try {
 		await guild.init(guildInput);
