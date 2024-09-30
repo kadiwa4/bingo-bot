@@ -1407,7 +1407,6 @@ export class GuildMember extends PartialTextBasedChannel(Base) {
 
   // edited
   public ilChoiceCount?: number;
-  public ilScore?: number;
   public isReady?: boolean;
   public leaveWhenDoneMessage?: ?Promise<Message>;
   public team?: ?EntrantTeam;

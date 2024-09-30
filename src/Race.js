@@ -40,16 +40,17 @@ export default class Race {
 		this.state = RaceState.NO_RACE;
 
 		/**
-		 * Is a new race
-		 * @type {boolean}
-		 */
-		this.newRace = true;
-
-		/**
 		 * Array of all current entrant teams in the race
 		 * @type {EntrantTeam[]}
 		 */
 		this.teams = [];
+
+		/**
+		 * Maps from a user's ID to their score in this IL series
+		 * (if they've ever been an entrant)
+		 * @type {NodeJS.Dict<number>}
+		 */
+		this.userScores = Object.create(null);
 
 		/**
 		 * Array of IL-race results since the IL series started
@@ -358,7 +359,7 @@ export default class Race {
 
 				const pointGain = this.teams.length - team.place + 1;
 				for (let member of team) {
-					member.ilScore += pointGain;
+					this.userScores[member.id] += pointGain;
 				}
 			}
 
@@ -445,7 +446,6 @@ export default class Race {
 	 * Adds an entrant as a new team. Returns true if successful
 	 * or false if the entrant has already joined a race
 	 * @param {Discord.GuildMember} member The guild member to be added
-	 * @param {boolean} newRace Is a new race
 	 * @returns {boolean}
 	 */
 	addEntrant(member) {
@@ -454,14 +454,9 @@ export default class Race {
 		}
 
 		this.teams.push(new EntrantTeam(this, member));
-		if (this.newRace)
-		{
-			this.newRace = false;
-			member.ilScore = 0;
-		}
-		member.ilScore ??= 0;
-		member.isReady = false;
+		this.userScores[member.id] ??= 0;
 		member.ilChoiceCount = this.averageLevelChoiceCount;
+		member.isReady = false;
 		member.user.isEntrant = true;
 		return true;
 	}
@@ -517,11 +512,11 @@ export default class Race {
 	 * @param {Discord.GuildMember} entrant The race entrant to be reset
 	 */
 	resetEntrant(entrant) {
+		entrant.ilChoiceCount = 0;
 		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
 		entrant.team = null;
 		entrant.user.isEntrant = false;
-		entrant.ilChoiceCount = 0;
 	}
 
 	/**
@@ -584,13 +579,13 @@ export default class Race {
 
 		if (this.category.isIL) {
 			const ilScoreWidth = Math.max(
-				...this.entrants.map((entrant) => entrant.ilScore.toString().length)
+				...this.entrants.map((entrant) => this.userScores[entrant.id].toString().length)
 			);
 
 			// show IL race status
 			/** @param {Discord.GuildMember} entrant */
 			const entrantString = function (entrant, fiveSpaces) {
-				return `  \`${entrant.ilScore.toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
+				return `  \`${this.userScores[entrant.id].toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
 			};
 
 			message.multiReply(onError, firstHeading, otherHeading, function* () {
@@ -599,7 +594,7 @@ export default class Race {
 					.sort((team1, team2) => team2.ilScoreAverage - team1.ilScoreAverage)) {
 					yield team.isCoop
 						// sort team entrants and loop through them
-						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore).map(entrantString).join("")}`
+						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => this.userScores[entrant2.id] - this.userScores[entrant1.id]).map(entrantString).join("")}`
 						: entrantString(team.leader, false);
 				}
 			}.bind(this));
