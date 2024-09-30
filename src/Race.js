@@ -455,6 +455,7 @@ export default class Race {
 
 		this.teams.push(new EntrantTeam(this, member));
 		this.userScores[member.id] ??= 0;
+		// late joiners can have fractional ilChoiceCounts, but that is okay
 		member.ilChoiceCount = this.averageLevelChoiceCount;
 		member.isReady = false;
 		member.user.isEntrant = true;
@@ -535,13 +536,14 @@ export default class Race {
 	}
 
 	/**
-	 * The average number of times a current entrant has chosen a level
+	 * The average number of times a current entrant has chosen a level.
+	 * Not necessarily an integer
 	 * @readonly
 	 */
 	get averageLevelChoiceCount() {
-		return Math.floor(
-			this.entrants.map((entrant) => entrant.ilChoiceCount ?? 0).reduce((x, y) => x + y, 0)
-		);
+		const { entrants } = this;
+		return entrants.map((entrant) => entrant.ilChoiceCount).reduce((x, y) => x + y)
+			/ entrants.length;
 	}
 
 	/**
