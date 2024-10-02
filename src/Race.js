@@ -46,6 +46,13 @@ export default class Race {
 		this.teams = [];
 
 		/**
+		 * Maps from a user's ID to their score in this IL series
+		 * (if they've ever been an entrant)
+		 * @type {NodeJS.Dict<number>}
+		 */
+		this.userScores = Object.create(null);
+
+		/**
 		 * Array of IL-race results since the IL series started
 		 * @type {ILResult[]}
 		 */
@@ -261,10 +268,8 @@ export default class Race {
 			if (isIL) {
 				this.newIL();
 			} else {
-				this.channel.race = new Race(this.channel, this.game);
-				this.resetEntrants();
+				this.closeRace();
 			}
-
 			return;
 		}
 
@@ -354,7 +359,7 @@ export default class Race {
 
 				const pointGain = this.teams.length - team.place + 1;
 				for (let member of team) {
-					member.ilScore += pointGain;
+					this.userScores[member.id] += pointGain;
 				}
 			}
 
@@ -367,8 +372,7 @@ export default class Race {
 
 			this.newIL();
 		} else {
-			this.channel.race = new Race(this.channel, this.game);
-			this.resetEntrants();
+			this.closeRace();
 		}
 	}
 
@@ -450,9 +454,10 @@ export default class Race {
 		}
 
 		this.teams.push(new EntrantTeam(this, member));
-		member.isReady = false;
-		member.ilScore = 0;
+		this.userScores[member.id] ??= 0;
+		// late joiners can have fractional ilChoiceCounts, but that is okay
 		member.ilChoiceCount = this.averageLevelChoiceCount;
+		member.isReady = false;
 		member.user.isEntrant = true;
 		return true;
 	}
@@ -486,7 +491,7 @@ export default class Race {
 			}
 		} else {
 			// close down race if this is the last person leaving
-			this.channel.race = new Race(this.channel, this.game);
+			this.closeRace();
 			note = " Closing race.";
 		}
 
@@ -494,9 +499,10 @@ export default class Race {
 	}
 
 	/**
-	 * Resets all race entrants
+	 * Resets the race
 	 */
-	resetEntrants() {
+	closeRace() {
+		this.channel.race = new Race(this.channel, this.game);
 		for (let entrant of this.entrantIterator()) {
 			this.resetEntrant(entrant);
 		}
@@ -508,7 +514,6 @@ export default class Race {
 	 */
 	resetEntrant(entrant) {
 		entrant.ilChoiceCount = 0;
-		entrant.ilScore = 0;
 		entrant.isReady = false;
 		entrant.leaveWhenDoneMessage = null;
 		entrant.team = null;
@@ -531,13 +536,14 @@ export default class Race {
 	}
 
 	/**
-	 * The average number of times a current entrant has chosen a level
+	 * The average number of times a current entrant has chosen a level.
+	 * Not necessarily an integer
 	 * @readonly
 	 */
 	get averageLevelChoiceCount() {
-		return Math.floor(
-			this.entrants.map((entrant) => entrant.ilChoiceCount ?? 0).reduce((x, y) => x + y, 0)
-		);
+		const { entrants } = this;
+		return entrants.map((entrant) => entrant.ilChoiceCount).reduce((x, y) => x + y)
+			/ entrants.length;
 	}
 
 	/**
@@ -575,13 +581,13 @@ export default class Race {
 
 		if (this.category.isIL) {
 			const ilScoreWidth = Math.max(
-				...this.entrants.map((entrant) => entrant.ilScore.toString().length)
+				...this.entrants.map((entrant) => this.userScores[entrant.id].toString().length)
 			);
 
 			// show IL race status
 			/** @param {Discord.GuildMember} entrant */
 			const entrantString = function (entrant, fiveSpaces) {
-				return `  \`${entrant.ilScore.toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
+				return `  \`${this.userScores[entrant.id].toString().padStart(ilScoreWidth)}\` – ${fiveSpaces === false ? "" : "\t"}${entrant.readyEmote} ${entrant.cleanName}\n`;
 			};
 
 			message.multiReply(onError, firstHeading, otherHeading, function* () {
@@ -590,7 +596,7 @@ export default class Race {
 					.sort((team1, team2) => team2.ilScoreAverage - team1.ilScoreAverage)) {
 					yield team.isCoop
 						// sort team entrants and loop through them
-						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => entrant2.ilScore - entrant1.ilScore).map(entrantString).join("")}`
+						? `  ${team} – avg\xA0${team.ilScoreAverage.toFixed(2)}\n${team.slice().sort((entrant1, entrant2) => this.userScores[entrant2.id] - this.userScores[entrant1.id]).map(entrantString).join("")}`
 						: entrantString(team.leader, false);
 				}
 			}.bind(this));
