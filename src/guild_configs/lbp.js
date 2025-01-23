@@ -886,8 +886,11 @@ const lbp = {
 		getRoles: function lbpGetRoles(member, srcData) {
 			const { client, guild } = member;
 
+			// newRoles starts off as the set of all game roles that the user already has.
+			// That way game runner roles don't get revoked, but WR roles do.
 			/** @type {Set<string>} */
-			const newRoles = new Set();
+			const newRoles = new Set(member.roles.cache.keys())
+				.intersection(new Set(Object.values(gameRoles)));
 			const wrCounts = { fullGame: 0, il: 0 };
 			for (let run of srcData) {
 				// filter out LBPCE and Ultimate Sackboy
