@@ -80,9 +80,6 @@ export const commands = {
 				}
 			}
 
-			// The servers supply more up-to-date versions of gzipped pages than
-			// non-gzipped ones for some reason. At least if you don't have any
-			// cookies set.
 			const response = await callSRC(onErrorCatch404, `/users/${args}`);
 			if (!response?.content) {
 				return;
@@ -245,9 +242,9 @@ const srcRateLimiter = new RateLimiter();
  * @returns {Promise<{ content: string; path: string; } | void>}
  */
 async function callSRC(onError, path) {
-	// - delay after API call: 1 sec
+	// - delay after API call: 1.5 sec
 	// - delay after downloading any other sr.c page: 5 sec
 	// API: https://github.com/speedruncomorg/api/tree/master/version1
-	await srcRateLimiter.wait(path.startsWith("/api") ? 1000 : 5000);
+	await srcRateLimiter.wait(path.startsWith("/api") ? 1500 : 5000);
 	return httpsGet("www.speedrun.com", path).catch(onError);
 }
