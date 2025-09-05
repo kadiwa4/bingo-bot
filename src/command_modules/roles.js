@@ -73,11 +73,17 @@ export const commands = {
 			}
 
 			function onHTTPError(error) {
-				if (error instanceof StatusCodeError && error.code === 404) {
-					message.inlineReply("speedrun.com user not found.");
-				} else {
-					onError(error);
+				if (error instanceof StatusCodeError) {
+					if (error.code === 404) {
+						message.inlineReply("speedrun.com user not found.");
+					} else {
+						message.inlineReply(`Can't determine if the speedrun.com account is yours because that mechanism is not working right now. Instead, you can ask a moderator to enter this command for you:\n\`${guild.commandPrefix}as ${member} roles ${args}\``);
+						message.client.owner.dmChannel.send(errorMessageForOwner(error));
+					}
+					return;
 				}
+
+				onError(error);
 			}
 
 			const response = await callSRC(onHTTPError, `/users/${args}`);

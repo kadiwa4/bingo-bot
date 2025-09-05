@@ -112,6 +112,15 @@ export function cleanName(name) {
 }
 
 /**
+ * Formats an error message to be sent to the bot owner
+ * @param {object} error The error to send
+ * @returns {string}
+ */
+export function errorMessageForOwner(error) {
+	return `An error occurred (see the log for details):\n\`\`\`${error}\`\`\``;
+}
+
+/**
  * Formats a time in (HH:)mm:ss.ss
  * @param {number} time The time in seconds
  * @param {boolean} [canHideHours] Whether to hide the first 2 digits if the time is sub 1 hour

@@ -1,4 +1,4 @@
-import { addUserNames, log, logError, isMod, WHITESPACE } from "../misc.js";
+import { addUserNames, errorMessageForOwner, log, logError, isMod, WHITESPACE } from "../misc.js";
 
 import { ChannelType, Client } from "discord.js";
 
@@ -27,12 +27,11 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 		const { author, channel, client, content, guild } = message;
 		logError(`error while executing command '${content}' by ${author.id} (${author.tag}) in channel ${channel.id} (${channel.type === ChannelType.DM ? "DMs" : channel.name}):\n${error?.stack ?? error}`, guild);
 		try {
-			const ownerMessage = `An error occurred (see the log for details):\n\`\`\`${error}\`\`\``;
 			if (author.id === client.owner.id) {
-				message.inlineReply(ownerMessage);
+				message.inlineReply(errorMessageForOwner(error));
 			} else {
-				client.owner.dmChannel.send(ownerMessage);
-				message.inlineReply(`An error occurred (I told the bot owner):\n\`\`\`${error}\`\`\``);
+				client.owner.dmChannel.send(errorMessageForOwner(error));
+				message.inlineReply(`An error occurred (I notified the bot owner):\n\`\`\`${error}\`\`\``);
 			}
 
 			message.respondedError = true;
