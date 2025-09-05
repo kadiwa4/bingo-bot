@@ -475,6 +475,15 @@ export const commands = {
 				return;
 			}
 
+			const splitArgs = args.split("/");
+			if (splitArgs.length === 2) {
+				// People sometimes confuse the syntax with that of `leaderboard`
+				args = splitArgs[0];
+			} else if (splitArgs.length !== 1) {
+				this.showUsage(...arguments);
+				return;
+			}
+
 			showUserStats(onError, member.guild, message, member.id, member.cleanName, args, true);
 		},
 	},
