@@ -1,6 +1,6 @@
 import Command from "../Command.js";
 import { HelpCategory } from "../enums.js";
-import { clean, httpsGet, isMod, log, logError, RateLimiter, StatusCodeError } from "../misc.js";
+import { clean, errorMessageForOwner, httpsGet, isMod, log, logError, RateLimiter, StatusCodeError } from "../misc.js";
 
 import assert from "node:assert";
 
