@@ -51,8 +51,8 @@ export const commands = {
 		onUse: async function roles(onError, message, member, args) {
 			const { guild } = member;
 
-			if (!args) {
-				const srcID = guild.sqlite.getSrcID.get(member.id);
+			const srcID = guild.sqlite.getSrcID.get(member.id);
+			if (!args || args === srcID) {
 				if (!srcID) {
 					message.inlineReply("Please specify your speedrun.com name.");
 					return;
@@ -72,7 +72,7 @@ export const commands = {
 				return;
 			}
 
-			function onErrorCatch404(error) {
+			function onHTTPError(error) {
 				if (error instanceof StatusCodeError && error.code === 404) {
 					message.inlineReply("speedrun.com user not found.");
 				} else {
@@ -80,7 +80,7 @@ export const commands = {
 				}
 			}
 
-			const response = await callSRC(onErrorCatch404, `/users/${args}`);
+			const response = await callSRC(onHTTPError, `/users/${args}`);
 			if (!response?.content) {
 				return;
 			}
@@ -242,9 +242,17 @@ const srcRateLimiter = new RateLimiter();
  * @returns {Promise<{ content: string; path: string; } | void>}
  */
 async function callSRC(onError, path) {
+	const isApiCall = path.startsWith("/api");
+	// The website doesn't like requests that don't have appropriate values for these headers
+	const headers = isApiCall ? {} : {
+		"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		"accept-encoding": "identity"
+	};
+
 	// - delay after API call: 1.5 sec
 	// - delay after downloading any other sr.c page: 5 sec
-	// API: https://github.com/speedruncomorg/api/tree/master/version1
-	await srcRateLimiter.wait(path.startsWith("/api") ? 1500 : 5000);
-	return httpsGet("www.speedrun.com", path).catch(onError);
+	// API docs on throttling say that 100 req/min would be fine:
+	// https://github.com/speedruncomorg/api/blob/master/throttling.md
+	await srcRateLimiter.wait(isApiCall ? 1500 : 5000);
+	return httpsGet("www.speedrun.com", path, headers).catch(onError);
 }
