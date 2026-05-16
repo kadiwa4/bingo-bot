@@ -30,6 +30,7 @@ export function init(guild, guildInput) {
 		// set up SQLite queries for setting/retrieving speedrun.com user IDs
 		getAllSrcUsers: database.prepare("SELECT * FROM src_users;"),
 		getSrcID: database.prepare("SELECT src_id FROM src_users WHERE discord_id = ?;").pluck(),
+		getDiscordID: database.prepare("SELECT discord_id FROM src_users WHERE src_id = ?;").pluck(),
 		addSrcUser: database.prepare("INSERT OR REPLACE INTO src_users (discord_id, src_id) VALUES (@discord_id, @src_id);"),
 		deleteSrcUser: database.prepare("DELETE FROM src_users WHERE discord_id = ?;"),
 	});
@@ -37,6 +38,7 @@ export function init(guild, guildInput) {
 	guild.allSRRoles = guildInput.roles.init?.(guild);
 	guild.getSRRoles = guildInput.roles.getRoles;
 	guild.srcAPIFilter = guildInput.roles.srcAPIFilter;
+	guild.srRolesColor = guildInput.roles.color ?? null;
 
 	setUpdateAllRolesTimeout(guild);
 }
@@ -51,14 +53,13 @@ export const commands = {
 		onUse: async function roles(onError, message, member, args) {
 			const { guild } = member;
 
-			const srcID = guild.sqlite.getSrcID.get(member.id);
-			if (!args || args === srcID) {
-				if (!srcID) {
+			const prevSRCID = guild.sqlite.getSrcID.get(member.id);
+			if (!args) {
+				if (!prevSRCID) {
 					message.inlineReply("Please specify your speedrun.com name.");
 					return;
 				}
-
-				updateRoles(onError, message, member, srcID).catch(onError);
+				updateRoles(onError, message, member, prevSRCID).catch(onError);
 				return;
 			}
 
@@ -67,43 +68,34 @@ export const commands = {
 				return;
 			}
 
-			if (isMod(message, member)) {
-				updateRoles(onError, message, member, args, true).catch(onError);
+			// get sr.c ID for the specified sr.c username
+			const result = await callSRC(onError ?? logError, `/api/v1/users/${args}`);
+			if (!result) {
+				return;
+			}
+			if ("status" in JSON.parse(result.content)) {
+				message.inlineReply("speedrun.com user not found.");
+				return;
+			}
+			const srcID = result.path.split("/")[4];
+
+			if (srcID === prevSRCID) {
+				updateRoles(onError, message, member, prevSRCID).catch(onError);
 				return;
 			}
 
-			function onHTTPError(error) {
-				if (error instanceof StatusCodeError) {
-					if (error.code === 404) {
-						message.inlineReply("speedrun.com user not found.");
-					} else {
-						message.inlineReply(`Can't determine if the speedrun.com account is yours because that mechanism is not working right now. Instead, you can ask a moderator to enter this command for you:\n\`${guild.commandPrefix}as ${member} roles ${args}\``);
-						message.client.owner.dmChannel.send(errorMessageForOwner(error));
-					}
+			if (!isMod(message, member)) {
+				const otherUserID = guild.sqlite.getDiscordID.get(srcID);
+				if (otherUserID !== undefined) {
+					const otherUser = await guild.client.users.fetch(otherUserID);
+					message.inlineReply(`That speedrun.com account is already linked to ${otherUser.tag}'s account. If it doesn't belong to them, you should tell a moderator about it.`);
 					return;
 				}
-
-				onError(error);
 			}
 
-			const response = await callSRC(onHTTPError, `/users/${args}`);
-			if (!response?.content) {
-				return;
-			}
-
-			const tagMatch = response.content.match(/"networkId": ?5, ?"value": ?"([^"]+)"/);
-			if (!tagMatch) {
-				message.inlineReply(`Can't determine if the speedrun.com account is yours; make sure you've linked your Discord tag (\`${clean(member.user.tag, message)}\`) at <https://www.speedrun.com/users/${args}/settings/socials>.`);
-				return;
-			}
-
-			const srcTag = decode(tagMatch[1]).replace(/#0$/, "");
-			if (srcTag !== member.user.tag) {
-				message.inlineReply(`The Discord tag specified on speedrun.com (${clean(srcTag, message)}) doesn't match your actual one (${clean(member.user.tag, message)}). You can update it at <https://www.speedrun.com/users/${args}/settings/socials>. If you have issues with this, contact a moderator.`);
-				return;
-			}
-
-			updateRoles(onError, message, member, args, true).catch(onError);
+			log(`sr.c role update: linking user ${member.user.tag} to sr.c account ${args} (${srcID})`, guild);
+			updateRoles(onError, message, member, srcID, true).catch(onError);
+			guild.sendToLogChannel(`**Account <@${member.id}> linked to sr.c account** ${args}`, message, guild.srRolesColor);
 		},
 	},
 	rolesRemove: {
@@ -187,13 +179,12 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 			return;
 		}
 
-		const { content, path } = result;
-		const srcResponse = JSON.parse(content);
+		const srcResponse = JSON.parse(result.content);
 		if ("status" in srcResponse) {
 			if (message) {
 				message.inlineReply("speedrun.com user not found.");
 			} else {
-				log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c anymore (previous ID: ${srcID}); removing them`, guild);
+				log(`sr.c role update: ${member.user.tag} doesn't have sr.c anymore (previous ID: ${srcID}); removing them`, guild);
 			}
 
 			return;
@@ -205,13 +196,10 @@ async function updateRoles(onError, message, member, srcID, addToDB = false) {
 				return;
 			}
 
-			log(`sr.c role update: ${member.id} (${member.user.tag}) doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
+			log(`sr.c role update: ${member.user.tag} doesn't have sr.c runs anymore (ID: ${srcID}); removing them`, guild);
 			guild.sqlite.deleteSrcUser.run(member.id);
 		} else if (addToDB) {
-			guild.sqlite.addSrcUser.run({
-				discord_id: member.id,
-				src_id: path.match(/s\/([^/]+)\/p/)[1],
-			});
+			guild.sqlite.addSrcUser.run({ discord_id: member.id, src_id: srcID });
 		}
 
 		newRoles = guild.getSRRoles(member, srcResponse.data);
@@ -248,17 +236,9 @@ const srcRateLimiter = new RateLimiter();
  * @returns {Promise<{ content: string; path: string; } | void>}
  */
 async function callSRC(onError, path) {
-	const isApiCall = path.startsWith("/api");
-	// The website doesn't like requests that don't have appropriate values for these headers
-	const headers = isApiCall ? {} : {
-		"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-		"accept-encoding": "identity"
-	};
-
-	// - delay after API call: 1.5 sec
-	// - delay after downloading any other sr.c page: 5 sec
+	// delay after API call: 1.5 sec
 	// API docs on throttling say that 100 req/min would be fine:
 	// https://github.com/speedruncomorg/api/blob/master/throttling.md
-	await srcRateLimiter.wait(isApiCall ? 1500 : 5000);
-	return httpsGet("www.speedrun.com", path, headers).catch(onError);
+	await srcRateLimiter.wait(1500);
+	return httpsGet("www.speedrun.com", path).catch(onError);
 }

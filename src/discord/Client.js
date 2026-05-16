@@ -25,7 +25,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 		}
 
 		const { author, channel, client, content, guild } = message;
-		logError(`error while executing command '${content}' by ${author.id} (${author.tag}) in channel ${channel.id} (${channel.type === ChannelType.DM ? "DMs" : channel.name}):\n${error?.stack ?? error}`, guild);
+		logError(`error while executing command '${content}' by ${author.tag} (${author.id}) in channel ${channel.id} (${channel.type === ChannelType.DM ? "DMs" : channel.name}):\n${error?.stack ?? error}`, guild);
 		try {
 			if (author.id === client.owner.id) {
 				message.inlineReply(errorMessageForOwner(error));
@@ -118,7 +118,7 @@ Client.prototype.useCommand = async function (message, userOrMember, input) {
 				// log that the command was used
 				// "userOrMember" isn't used here so that the person
 				// who actually sent the command is always blamed (even with the `as` command)
-				log(`${message.author.id} (${message.author.tag}) wrote: '${message.content}'`, guild);
+				log(`${message.author.tag} (${message.author.id}) wrote: '${message.content}'`, guild);
 			}
 		}
 

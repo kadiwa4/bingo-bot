@@ -35,6 +35,7 @@ Guild.prototype.init = async function (guildInput) {
 
 	this.helpStrings = newMap();
 	this.helpMessages = [];
+	this.logChannel = guildInput.logChannelID !== undefined ? this.channels.cache.get(guildInput.logChannelID) : null;
 	this.modRoles = guildInput.modRoleIDs.map(bind(roleCache, "get"));
 
 	// guild command
@@ -219,4 +220,26 @@ Guild.prototype.loadModule = async function (guildInput, moduleID) {
 	}
 
 	await module.loadDependencies(guildInput, this);
+};
+
+/**
+ * Sends a message to the log channel, if such a channel exists.
+ * It is assumed that the action being logged was triggered by a message
+ * @param {string} content The content of the log message
+ * @param {Discord.Message} originalMessage The message that triggered the event which is being logged
+ * @param {number} [color] The UI color to use for the log message
+ * @returns {Promise<?Discord.Message>}
+ */
+Guild.prototype.sendToLogChannel = async function (content, originalMessage, color) {
+	if (!this.logChannel) {
+		return null;
+	}
+	const { author } = originalMessage;
+	const embed = new Discord.EmbedBuilder()
+		.setDescription(content)
+		.setColor(color)
+		.setTimestamp(originalMessage.createdTimestamp)
+		.setAuthor({ name: author.tag, iconURL: author.avatarURL() })
+		.setFooter({ text: `Author: ${author.id} | Message ID: ${originalMessage.id}` });
+	return this.logChannel.send({ embeds: [embed] });
 };

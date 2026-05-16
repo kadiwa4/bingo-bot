@@ -166,6 +166,7 @@ const lbp = {
 	abbreviation: "lbp",
 	guildCommand: "lbp",
 	raceChannelIDs: [ "551242726251954185" ], // #racing
+	logChannelID: "942731910491303976", // #log
 	modRoleIDs: [
 		"485215306990747649", // Moderator
 		"146643995307540480"  // Admin
@@ -940,6 +941,7 @@ const lbp = {
 			return newRoles;
 		},
 		srcAPIFilter: "?series=v7emqr49",
+		color: 0x9B59B6,
 	},
 	config: {
 		race: {

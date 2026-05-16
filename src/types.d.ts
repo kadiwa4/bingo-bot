@@ -25,6 +25,9 @@ declare global {
 		/** Discord channel IDs of channels where races should take place */
 		raceChannelIDs: string[];
 
+		/** Discord channel IDs of channel where log messages can be sent */
+		logChannelID?: string;
+
 		/** Discord role IDs that show that someone is a moderator */
 		modRoleIDs: string[];
 
@@ -129,6 +132,9 @@ declare global {
 			 * @default ""
 			 */
 			srcAPIFilter: string;
+
+			/** Color (hex RGB value) for UI features related to speedrun roles */
+			color?: number;
 		}
 	}
 

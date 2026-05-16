@@ -1218,12 +1218,14 @@ export class Guild extends AnonymousGuild, EventEmitter { // edited
   public games?: NodeJS.Dict<Game>;
   public helpMessages?: string[];
   public helpStrings?: NodeJS.Dict<string[]>;
+  public logChannel?: ?TextChannel;
   public modRoles?: Role[];
   public moduleIDs?: Set<string>;
   public raceChannels?: TextChannel[];
   public raceID?: number;
   public sqlite?: any;
   public srName?: string;
+  public srRolesColor?: ?number;
 
   public async init(guildInput: GuildInput): Promise<void>;
   public cleanUpGameName(input: string): string;
@@ -1231,6 +1233,7 @@ export class Guild extends AnonymousGuild, EventEmitter { // edited
   public getUserID(input: string): ?string;
   public async getUserName(id: string): Promise<?string>;
   public async loadModule(guildInput: GuildInput, moduleID: string): Promise<void>;
+  public async sendToLogChannel(content: string, originalMessage: Discord.Message, color?: number): Promise<?Discord.Message>;
 
   public addListener(event: string | symbol, listener: (...args: any[]) => void): this;
   public on(event: string | symbol, listener: (...args: any[]) => void): this;
